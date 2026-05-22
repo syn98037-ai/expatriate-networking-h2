@@ -76,6 +76,13 @@ export default function App() {
   const [missions,   setMissions]   = useState({});
   const [rooms,      setRooms]      = useState([]);
   const [isAdmin,    setIsAdmin]    = useState(false);
+  const [isMobile,   setIsMobile]   = useState(typeof window !== "undefined" ? window.innerWidth < 768 : true);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   const uid = myProfile?.id;
 
@@ -127,11 +134,13 @@ export default function App() {
     return () => unsubs.forEach(u => u());
   }, [authStatus, isAdmin]);
 
-  // profiles에 adminOverrides 합성 (매칭에 반영)
+  // profiles + adminOverrides 합성 → 매칭에 반영
   const mergedProfiles = profiles.map(p => {
     const ov = adminOverrides[p.id];
     if (!ov) return p;
-    return { ...p, ...ov };
+    // updatedAt 같은 불필요 필드 제외하고 매칭 필드만 덮어쓰기
+    const { updatedAt, ...ovFields } = ov;
+    return { ...p, ...ovFields };
   });
 
   // ── 사진 업로드 헬퍼 ─────────────────────────────────
@@ -145,44 +154,24 @@ export default function App() {
   // ── 회원가입 ─────────────────────────────────────────
   const handleRegister = async (username, password, profileData) => {
     try {
-      const email = `${username}@globalconnect.hmg`;
-      let id = null;
+      // deletedAccounts 확인
+      const deletedSnap = await getDoc(docR("deletedAccounts", username));
+      const isDeleted = deletedSnap.exists();
 
-      // 먼저 신규 가입 시도
-      try {
+      let id;
+      if (isDeleted) {
+        // 관리자가 삭제한 계정 → 새 타임스탬프 suffix로 완전히 새 Auth 계정 생성
+        // username은 Firestore profile에만 저장되므로 내부 email만 달라지면 OK
+        const newEmail = `${username}_new${Date.now()}@globalconnect.hmg`;
+        const cred = await createUserWithEmailAndPassword(auth, newEmail, password);
+        id = cred.user.uid;
+        // deletedAccounts 제거
+        try { await deleteDoc(docR("deletedAccounts", username)); } catch(e) {}
+      } else {
+        // 일반 신규 가입
+        const email = `${username}@globalconnect.hmg`;
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         id = cred.user.uid;
-        // deletedAccounts에 있으면 제거
-        try { await deleteDoc(docR("deletedAccounts", username)); } catch(e) {}
-      } catch(createErr) {
-        if (createErr.code === "auth/email-already-in-use") {
-          // 이미 Auth 계정 존재 → 삭제된 계정인지 확인
-          const deletedSnap = await getDoc(docR("deletedAccounts", username));
-          if (deletedSnap.exists()) {
-            // 삭제된 계정 → 새 비밀번호로 로그인 시도 (기존 비번 동일한 경우)
-            try {
-              const cred = await signInWithEmailAndPassword(auth, email, password);
-              id = cred.user.uid;
-              // 로그인 성공 → deletedAccounts 제거
-              try { await deleteDoc(docR("deletedAccounts", username)); } catch(e) {}
-            } catch(loginErr) {
-              // 비밀번호 다름 → profiles만 새로 만들고 oldId 재사용
-              const deletedData = deletedSnap.data();
-              if (deletedData?.oldId) {
-                // oldId로 프로필 재생성 (Auth 없이 Firestore만)
-                id = deletedData.oldId;
-                try { await deleteDoc(docR("deletedAccounts", username)); } catch(e) {}
-              } else {
-                return "이 아이디는 이미 사용 중입니다. 다른 아이디를 사용해주세요.";
-              }
-            }
-          } else {
-            // 삭제되지 않은 일반 중복 → 오류
-            return "이미 사용 중인 아이디입니다.";
-          }
-        } else {
-          throw createErr;
-        }
       }
 
       let photoUrl = "";
@@ -196,6 +185,7 @@ export default function App() {
       return null;
     } catch (e) {
       if (e.code === "auth/email-already-in-use") return "이미 사용 중인 아이디입니다.";
+      if (e.code === "auth/weak-password") return "비밀번호는 6자 이상이어야 합니다.";
       return e.message;
     }
   };
@@ -353,6 +343,12 @@ export default function App() {
     setAdminOverrides(prev => ({ ...prev, [id]: { ...(prev[id] || {}), ...matchFields } }));
   };
 
+  // ── 관리자: 게시글 삭제 ─────────────────────────────
+  const adminDeletePost = async (postId) => {
+    try { await deleteDoc(docR("posts", postId)); } catch(e) { console.warn(e.message); }
+    setPosts(prev => prev.filter(p => p.id !== postId));
+  };
+
   // ── 관리자: 계정 삭제 ────────────────────────────────
   // Firebase Auth는 Admin SDK 없이 클라이언트에서 삭제 불가
   // → deletedAccounts 컬렉션에 username 기록 → 재가입 시 Auth 계정 덮어쓰기 허용
@@ -420,6 +416,144 @@ export default function App() {
     </div>
   );
 
+  // PC 레이아웃
+  if (!isMobile) {
+    return (
+      <div style={{ width: "100vw", height: "100dvh", background: "#020617", color: "#f1f5f9", fontFamily: "Pretendard,sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <style>{`@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css'); ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(245,158,11,0.3);border-radius:3px} *{box-sizing:border-box;} select option{background:#020617;}`}</style>
+
+        {/* PC 미인증 */}
+        {(authStatus === "unauth" || authStatus === "needProfile") && (
+          <div style={{ display: "flex", height: "100dvh", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#020617 0%,#0a1628 100%)" }}>
+            <div style={{ width: 420, height: "90vh", maxHeight: 780, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 28, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 40px 80px rgba(0,0,0,0.6)" }}>
+              <AuthView onLogin={handleLogin} onRegister={handleRegister} onAdmin={() => setOverlay({ type: "adminAuth" })} />
+            </div>
+          </div>
+        )}
+
+        {/* PC 메인 */}
+        {authStatus === "auth" && (
+          <>
+            {/* PC 상단 헤더 */}
+            <header style={{ padding: "0 32px", height: 60, display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0, background: "rgba(2,6,23,0.95)", backdropFilter: "blur(12px)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 40 }}>
+                <div>
+                  <span style={{ fontSize: 18, fontWeight: 900, background: "linear-gradient(90deg,#fde68a,#f59e0b,#d97706)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Global Connect</span>
+                  <span style={{ fontSize: 10, color: "rgba(251,191,36,0.4)", letterSpacing: "0.15em", marginLeft: 12 }}>HMG 주재원 네트워크</span>
+                </div>
+                {/* PC 상단 탭 네비 */}
+                <nav style={{ display: "flex", gap: 4 }}>
+                  {NAV.map(n => (
+                    <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 14px", borderRadius: 10, background: view === n.id ? "rgba(245,158,11,0.12)" : "none", border: view === n.id ? "1px solid rgba(245,158,11,0.25)" : "1px solid transparent", color: view === n.id ? "#f59e0b" : "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 13, fontWeight: 600, transition: "all 0.2s" }}>
+                      <NavIcon id={n.id} active={view === n.id} />
+                      <span>{n.label}</span>
+                    </button>
+                  ))}
+                </nav>
+              </div>
+              <div onClick={() => setOverlay({ type: "profile" })} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ textAlign: "right" }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{myProfile?.name}</p>
+                  <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>{myProfile?.city} · {myProfile?.country}</p>
+                </div>
+                <Avatar profile={myProfile} size={36} />
+              </div>
+            </header>
+
+            {/* PC 메인 콘텐츠 - 2컬럼 */}
+            <div style={{ flex: 1, display: "flex", overflow: "hidden", padding: "24px 32px", gap: 24 }}>
+              {/* 왼쪽 사이드바 - 내 프로필 */}
+              <aside style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 20 }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
+                    <Avatar profile={myProfile} size={52} />
+                    <div>
+                      <p style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: 0 }}>{myProfile?.name}</p>
+                      <p style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{myProfile?.org}</p>
+                      <p style={{ fontSize: 11, color: "#f59e0b", marginTop: 2, fontWeight: 600 }}>{myProfile?.city} · {myProfile?.country}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    <span style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.22)", color: "#f59e0b", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.concern}</span>
+                    {myProfile?.interest && <span style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#94a3b8", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.interest}</span>}
+                  </div>
+                </div>
+                {/* 미션 요약 */}
+                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 20 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b", margin: "0 0 12px", letterSpacing: "0.08em" }}>MISSIONS</p>
+                  {[
+                    ["티미팅 발송", Math.min(meetings.filter(m => m.fromId === uid).length, 2), 2],
+                    ["티미팅 인증샷", Math.min((missions[uid]?.m2Photos||[]).length, 2), 2],
+                    ["조별 식사 인증", Math.min((missions[uid]?.m3Photos||[]).length, 1), 1],
+                  ].map(([label, cur, tot]) => (
+                    <div key={label} style={{ marginBottom: 10 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <span style={{ fontSize: 11, color: "#94a3b8" }}>{label}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: cur >= tot ? "#4ade80" : "#f59e0b" }}>{cur}/{tot}</span>
+                      </div>
+                      <div style={{ height: 4, background: "rgba(255,255,255,0.07)", borderRadius: 2, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${(cur/tot)*100}%`, background: cur >= tot ? "#4ade80" : "#f59e0b", borderRadius: 2, transition: "width 0.4s" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </aside>
+
+              {/* 메인 콘텐츠 영역 */}
+              <main style={{ flex: 1, overflowY: "auto", minWidth: 0 }}>
+                {renderMain()}
+              </main>
+
+              {/* 오른쪽 사이드바 - 최근 게시글 */}
+              <aside style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto" }}>
+                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 20 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b", margin: 0, letterSpacing: "0.08em" }}>최근 게시글</p>
+                    <button onClick={() => setView("community")} style={{ background: "none", border: "none", color: "#64748b", fontSize: 11, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>더보기</button>
+                  </div>
+                  {posts.slice(0, 5).map(post => (
+                    <div key={post.id} onClick={() => setOverlay({ type: "post", data: post })} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", cursor: "pointer" }}>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+                        <span style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 6 }}>{post.tag}</span>
+                        <span style={{ fontSize: 9, color: "#4b5563" }}>{timeAgo(post.createdAt)}</span>
+                      </div>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{post.title}</p>
+                      <p style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>{post.authorName} · 댓글 {post.commentCount||0}</p>
+                    </div>
+                  ))}
+                  {posts.length === 0 && <p style={{ fontSize: 12, color: "#4b5563", fontStyle: "italic" }}>게시글이 없어요.</p>}
+                </div>
+                {/* 수락된 티미팅 */}
+                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 20 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b", margin: "0 0 12px", letterSpacing: "0.08em" }}>수락된 티미팅</p>
+                  {meetings.filter(m => (m.fromId===uid||m.toId===uid) && m.status==="수락함").length === 0
+                    ? <p style={{ fontSize: 12, color: "#4b5563", fontStyle: "italic" }}>아직 없어요.</p>
+                    : meetings.filter(m => (m.fromId===uid||m.toId===uid) && m.status==="수락함").map(m => (
+                      <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "8px 10px", background: "rgba(34,197,94,0.06)", borderRadius: 12, border: "1px solid rgba(34,197,94,0.15)" }}>
+                        <span style={{ color: "#4ade80", fontSize: 14 }}>✓</span>
+                        <div><p style={{ fontSize: 12, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{m.fromId===uid?m.toName:m.fromName}</p><p style={{ fontSize: 10, color: "#64748b" }}>{m.fromId===uid?m.toOrg:m.fromOrg}</p></div>
+                      </div>
+                    ))
+                  }
+                </div>
+              </aside>
+            </div>
+          </>
+        )}
+
+        {/* 오버레이 (PC에서도 동일) */}
+        {overlay?.type === "profile"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:480,maxHeight:"90vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} /></div></div>}
+        {overlay?.type === "adminAuth"   && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,background:"#020617",borderRadius:24,overflow:"hidden",border:"1px solid rgba(255,255,255,0.1)" }}><AdminAuth onSuccess={() => { setIsAdmin(true); setOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} /></div></div>}
+        {overlay?.type === "admin"       && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:640,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} /></div></div>}
+        {overlay?.type === "chat"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:480,height:"75vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div></div>}
+        {overlay?.type === "post"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"80vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onLike={() => likePost(overlay.data.id)} onBack={() => setOverlay(null)} db={db} /></div></div>}
+        {overlay?.type === "newPost"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div></div>}
+        {overlay?.type === "profileView" && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,height:"70vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => { sendReq(overlay.data); setOverlay(null); }} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} /></div></div>}
+      </div>
+    );
+  }
+
+  // ── 모바일 레이아웃 ──────────────────────────────────
   return (
     <div style={{ width: "100%", maxWidth: 420, margin: "0 auto", height: "100dvh", display: "flex", flexDirection: "column", background: "#020617", color: "#f1f5f9", fontFamily: "Pretendard,sans-serif", position: "relative", overflow: "hidden" }}>
       <style>{`@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css'); ::-webkit-scrollbar{display:none;} *{box-sizing:border-box;} select option{background:#020617;} html,body,#root{height:100%;height:100dvh;overflow:hidden;}`}</style>
@@ -463,7 +597,7 @@ export default function App() {
       {/* 오버레이 */}
       {overlay?.type === "profile"     && <ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} />}
       {overlay?.type === "adminAuth"   && <AdminAuth onSuccess={() => { setIsAdmin(true); setOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} />}
-      {overlay?.type === "admin"       && <AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} />}
+      {overlay?.type === "admin"       && <AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} />}
       {overlay?.type === "chat"        && <ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />}
       {overlay?.type === "post"        && <PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onLike={() => likePost(overlay.data.id)} onBack={() => setOverlay(null)} db={db} />}
       {overlay?.type === "newPost"     && <NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} />}
@@ -497,30 +631,36 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
 
   const doNext = async () => {
     setErrMsg("");
-    if (!uname.trim()) return setErrMsg("아이디를 입력해주세요.");
-    if (uname.trim().length < 4) return setErrMsg("아이디는 4자 이상이어야 합니다.");
-    if (pw.length < 4)  return setErrMsg("비밀번호는 4자 이상이어야 합니다.");
-    if (pw !== pw2)     return setErrMsg("비밀번호가 일치하지 않습니다.");
+    if (!uname.trim())              return setErrMsg("아이디를 입력해주세요.");
+    if (uname.trim().length < 4)   return setErrMsg("아이디는 4자 이상이어야 합니다.");
+    if (pw.length < 6)             return setErrMsg("비밀번호는 6자 이상이어야 합니다.");
+    if (pw !== pw2)                return setErrMsg("비밀번호가 일치하지 않습니다.");
     setLoading(true);
     try {
-      // Firebase Auth에 이미 가입된 이메일인지 확인
-      // createUserWithEmailAndPassword 시도 → 오류 코드로 판단
-      // 단, 실제 계정 생성은 하지 않고 profiles 컬렉션에서 username 중복 확인
-      const snap = await getDoc(docR("deletedAccounts", uname.trim()));
-      const isDeleted = snap.exists();
-      // profiles에서 같은 username 있는지 확인
+      // deletedAccounts 확인 (삭제된 계정이면 재가입 허용)
+      const deletedSnap = await getDoc(docR("deletedAccounts", uname.trim()));
+      if (deletedSnap.exists()) {
+        // 삭제된 계정 → 재가입 허용
+        setLoading(false);
+        setStep(2);
+        return;
+      }
+      // profiles 컬렉션에서 username 중복 확인
       const profileSnap = await getDocs(
         query(col("profiles"), where("username", "==", uname.trim()))
       );
-      if (!profileSnap.empty && !isDeleted) {
+      if (!profileSnap.empty) {
         setLoading(false);
         return setErrMsg("이미 사용 중인 아이디입니다.");
       }
+      setLoading(false);
+      setStep(2);
     } catch(e) {
+      // Firestore 접근 실패 시 일단 다음 단계로 (가입 시 최종 확인)
       console.warn("중복확인 오류:", e.message);
+      setLoading(false);
+      setStep(2);
     }
-    setLoading(false);
-    setStep(2);
   };
 
   const doRegister = async () => {
@@ -736,7 +876,7 @@ function AdminAuth({ onSuccess, onBack }) {
   );
 }
 
-function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfile, onDeleteAccount }) {
+function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfile, onDeleteAccount, onDeletePost }) {
   const [tab, setTab]       = useState("users");
   const [editId, setEditId] = useState(null);
   const [editForm, setEF]   = useState({});
@@ -847,6 +987,11 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                   <span style={{ ...S.amberBadge, fontSize: 9 }}>{post.tag}</span>
                   <p style={{ fontSize: 10, color: "#64748b", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p>
+                  <button
+                    onClick={() => { if (window.confirm(`"${post.title}" 게시글을 삭제하시겠습니까?`)) onDeletePost(post.id); }}
+                    style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171", fontSize: 10, fontWeight: 700, padding: "4px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif", flexShrink: 0 }}>
+                    삭제
+                  </button>
                 </div>
                 <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{post.title}</p>
                 <p style={{ fontSize: 11, color: "#64748b", margin: 0 }}>작성자: {post.authorName} · 댓글 {post.commentCount || 0} · 공감 {post.likeCount || 0}</p>
