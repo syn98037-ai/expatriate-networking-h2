@@ -424,8 +424,8 @@ export default function App() {
 
         {/* PC 미인증 */}
         {(authStatus === "unauth" || authStatus === "needProfile") && (
-          <div style={{ display: "flex", height: "100dvh", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#020617 0%,#0a1628 100%)" }}>
-            <div style={{ width: 420, height: "90vh", maxHeight: 780, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 28, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 40px 80px rgba(0,0,0,0.6)" }}>
+          <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#020617 0%,#0a1628 100%)" }}>
+            <div style={{ width: 420, height: "90vh", maxHeight: 780, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 28, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 40px 80px rgba(0,0,0,0.6)" }}>
               <AuthView onLogin={handleLogin} onRegister={handleRegister} onAdmin={() => setOverlay({ type: "adminAuth" })} />
             </div>
           </div>
@@ -460,10 +460,10 @@ export default function App() {
               </div>
             </header>
 
-            {/* PC 메인 콘텐츠 - 2컬럼 */}
-            <div style={{ flex: 1, display: "flex", overflow: "hidden", padding: "24px 32px", gap: 24 }}>
+            {/* PC 메인 콘텐츠 - 3컬럼 */}
+            <div style={{ flex: 1, display: "flex", overflow: "hidden", padding: "24px 32px", gap: 24, alignItems: "flex-start", width: "100%" }}>
               {/* 왼쪽 사이드바 - 내 프로필 */}
-              <aside style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16 }}>
+              <aside style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", maxHeight: "100%" }}>
                 <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 20 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
                     <Avatar profile={myProfile} size={52} />
@@ -505,7 +505,7 @@ export default function App() {
               </main>
 
               {/* 오른쪽 사이드바 - 최근 게시글 */}
-              <aside style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto" }}>
+              <aside style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", maxHeight: "100%" }}>
                 <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 20 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                     <p style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b", margin: 0, letterSpacing: "0.08em" }}>최근 게시글</p>
