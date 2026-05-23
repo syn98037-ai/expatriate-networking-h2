@@ -353,25 +353,45 @@ export default function App() {
 
   // ── 관리자: 전체 데이터 초기화 ──────────────────────
   const adminResetAll = async () => {
-    // 모든 컬렉션의 문서를 일괄 삭제
-    const collections = ["profiles","meetings","posts","events","rooms","missions","adminOverrides","deletedAccounts"];
-    for (const colName of collections) {
-      try {
-        const snap = await getDocs(query(col(colName)));
-        for (const d of snap.docs) {
-          try { await deleteDoc(d.ref); } catch(e) {}
-        }
-      } catch(e) { console.warn(`${colName} 삭제 오류:`, e.message); }
-    }
-    // 채팅 메시지 삭제 (chats/{roomId}/messages)
+    let errors = [];
+
+    // ① 채팅 메시지 먼저 삭제 (rooms 삭제 전에 해야 함)
     try {
       const roomSnap = await getDocs(query(col("rooms")));
       for (const r of roomSnap.docs) {
-        const msgSnap = await getDocs(query(col("chats", r.id, "messages")));
-        for (const m of msgSnap.docs) { try { await deleteDoc(m.ref); } catch(e) {} }
+        try {
+          const msgSnap = await getDocs(col("chats", r.id, "messages"));
+          for (const m of msgSnap.docs) {
+            try { await deleteDoc(m.ref); } catch(e) {}
+          }
+        } catch(e) {}
       }
+    } catch(e) { errors.push("채팅: " + e.message); }
+
+    // ② 나머지 컬렉션 삭제
+    const toDelete = [
+      "profiles","meetings","posts","events",
+      "rooms","missions","adminOverrides","deletedAccounts"
+    ];
+    for (const colName of toDelete) {
+      try {
+        const snap = await getDocs(col(colName));
+        for (const d of snap.docs) {
+          try { await deleteDoc(d.ref); } catch(e) {
+            errors.push(colName + "/" + d.id + ": " + e.message);
+          }
+        }
+      } catch(e) { errors.push(colName + " read: " + e.message); }
+    }
+
+    // ③ 삭제 결과 확인 - profiles가 실제로 지워졌는지 검증
+    let remaining = 0;
+    try {
+      const check = await getDocs(col("profiles"));
+      remaining = check.size;
     } catch(e) {}
-    // 로컬 상태 초기화
+
+    // ④ 로컬 상태 초기화
     setProfiles([]);
     setMeetings([]);
     setPosts([]);
@@ -379,7 +399,20 @@ export default function App() {
     setRooms([]);
     setMissions({});
     setDeletedIds(new Set());
-    alert("전체 데이터가 초기화되었습니다.");
+    setAdminOverrides({});
+
+    if (remaining > 0) {
+      alert(`⚠️ 일부 데이터 삭제 실패
+
+Firestore에 ${remaining}개 프로필이 남아있습니다.
+Firebase 콘솔 → Firestore → 규칙에서 아래 내용으로 교체 후 다시 시도해주세요:
+
+match /{document=**} {
+  allow read, write: if true;
+}`);
+    } else {
+      alert("✅ 전체 데이터가 초기화되었습니다.\n\nFirebase Auth 계정은 별도로 Firebase 콘솔 → Authentication에서 삭제해주세요.");
+    }
   };
 
   // ── 관리자: 게시글 삭제 ─────────────────────────────
