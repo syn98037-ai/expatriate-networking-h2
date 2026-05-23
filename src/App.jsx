@@ -945,13 +945,8 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
         {/* 전체 데이터 초기화 */}
         <button
           onClick={() => {
-            if (window.confirm("⚠️ 전체 초기화
-
-모든 사용자, 게시글, 채팅, 미션, 일정 데이터가 영구 삭제됩니다.
-
-정말 실행하시겠습니까?")) {
-              if (window.confirm("마지막 확인입니다.
-전체 데이터를 삭제합니다.")) {
+            if (window.confirm("⚠️ 전체 초기화\n\n모든 사용자, 게시글, 채팅, 미션, 일정 데이터가 영구 삭제됩니다.\n\n정말 실행하시겠습니까?")) {
+              if (window.confirm("마지막 확인입니다.\n전체 데이터를 삭제합니다.")) {
                 onResetAll();
               }
             }
