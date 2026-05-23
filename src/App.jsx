@@ -464,7 +464,6 @@ match /{document=**} {
     { id: "community", label: "커뮤니티" },
     { id: "meetings",  label: "티미팅"  },
     { id: "missions",  label: "미션"    },
-    { id: "calendar",  label: "일정"    },
   ];
 
   const renderMain = () => {
@@ -474,7 +473,7 @@ match /{document=**} {
       case "community":  return <Community posts={posts} profiles={mergedProfiles} rooms={rooms} uid={uid} onOpenPost={p => setOverlay({ type: "post", data: p })} onNewPost={() => setOverlay({ type: "newPost" })} onOpenChat={(id, name) => openChat(id, name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />;
       case "meetings":   return <Meetings meetings={meetings} profiles={mergedProfiles} uid={uid} onUpdate={updateMtg} onChat={m => { const oid = m.fromId === uid ? m.toId : m.fromId; openChat(roomFor(oid), m.fromId === uid ? m.toName : m.fromName); }} />;
       case "missions":   return <MissionView myMissions={myMissions} sentCount={sentCount} uid={uid} onUpdate={updateMission} />;
-      case "calendar":   return <CalView meetings={meetings} events={events} uid={uid} onAdd={addEvent} />;
+
       default: return null;
     }
   };
@@ -507,55 +506,57 @@ match /{document=**} {
         {authStatus === "auth" && (
           <>
             {/* PC 상단 헤더 */}
-            <header style={{ padding: "0 32px", height: 60, display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0, background: "rgba(2,6,23,0.95)", backdropFilter: "blur(12px)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 40 }}>
-                <div>
-                  <span style={{ fontSize: 18, fontWeight: 900, background: "linear-gradient(90deg,#fde68a,#f59e0b,#d97706)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Global Connect</span>
-                  <span style={{ fontSize: 10, color: "rgba(251,191,36,0.4)", letterSpacing: "0.15em", marginLeft: 12 }}>HMG 주재원 네트워크</span>
+            <header style={{ padding: "0 32px", height: 60, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(2,6,23,0.95)", backdropFilter: "blur(12px)" }}>
+              {/* 왼쪽: 로고 + 탭 */}
+              <div style={{ display: "flex", alignItems: "center", gap: 32, minWidth: 0 }}>
+                <div style={{ flexShrink: 0 }}>
+                  <span style={{ fontSize: 17, fontWeight: 900, background: "linear-gradient(90deg,#fde68a,#f59e0b,#d97706)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Global Connect</span>
                 </div>
-                {/* PC 상단 탭 네비 */}
-                <nav style={{ display: "flex", gap: 4 }}>
+                <nav style={{ display: "flex", gap: 2 }}>
                   {NAV.map(n => (
-                    <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 14px", borderRadius: 10, background: view === n.id ? "rgba(245,158,11,0.12)" : "none", border: view === n.id ? "1px solid rgba(245,158,11,0.25)" : "1px solid transparent", color: view === n.id ? "#f59e0b" : "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 13, fontWeight: 600, transition: "all 0.2s" }}>
+                    <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 10, background: view === n.id ? "rgba(245,158,11,0.12)" : "none", border: view === n.id ? "1px solid rgba(245,158,11,0.25)" : "1px solid transparent", color: view === n.id ? "#f59e0b" : "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 13, fontWeight: 600, transition: "all 0.2s", whiteSpace: "nowrap" }}>
                       <NavIcon id={n.id} active={view === n.id} />
                       <span>{n.label}</span>
                     </button>
                   ))}
                 </nav>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div onClick={() => setOverlay({ type: "profile" })} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ textAlign: "right" }}>
+              {/* 오른쪽: 프로필 + 로그아웃 */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                <div onClick={() => setOverlay({ type: "profile" })} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <Avatar profile={myProfile} size={30} />
+                  <div>
                     <p style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{myProfile?.name}</p>
-                    <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>{myProfile?.city} · {myProfile?.country}</p>
+                    <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>프로필 수정</p>
                   </div>
-                  <Avatar profile={myProfile} size={36} />
                 </div>
-                <button onClick={handleLogout} style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171", fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 10, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>로그아웃</button>
+                <button onClick={handleLogout} style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171", fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 10, cursor: "pointer", fontFamily: "Pretendard,sans-serif", whiteSpace: "nowrap" }}>로그아웃</button>
               </div>
             </header>
 
-            {/* PC 메인 콘텐츠 - 3컬럼 */}
-            <div style={{ flex: 1, display: "flex", overflow: "hidden", padding: "24px 32px", gap: 24, width: "100%", height: "calc(100dvh - 60px)", boxSizing: "border-box" }}>
-              {/* 왼쪽 사이드바 - 내 프로필 */}
-              <aside style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", height: "100%" }}>
-                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 20 }}>
-                  <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
-                    <Avatar profile={myProfile} size={52} />
+            {/* PC 본문 - 3컬럼, 헤더 아래 꽉 채움 */}
+            <div style={{ position: "absolute", top: 60, left: 0, right: 0, bottom: 0, display: "flex", gap: 0, overflow: "hidden" }}>
+              {/* 왼쪽 사이드바 */}
+              <aside style={{ width: 280, flexShrink: 0, overflowY: "auto", borderRight: "1px solid rgba(255,255,255,0.06)", padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+                {/* 내 프로필 카드 */}
+                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: 16 }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
+                    <Avatar profile={myProfile} size={48} />
                     <div>
-                      <p style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: 0 }}>{myProfile?.name}</p>
-                      <p style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{myProfile?.org}</p>
+                      <p style={{ fontSize: 14, fontWeight: 800, color: "#fff", margin: 0 }}>{myProfile?.name}</p>
+                      <p style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{myProfile?.org}</p>
                       <p style={{ fontSize: 11, color: "#f59e0b", marginTop: 2, fontWeight: 600 }}>{myProfile?.city} · {myProfile?.country}</p>
                     </div>
                   </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
                     <span style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.22)", color: "#f59e0b", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.concern}</span>
                     {myProfile?.interest && <span style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#94a3b8", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.interest}</span>}
                   </div>
+                  <button onClick={() => setOverlay({ type: "profile" })} style={{ width: "100%", padding: "8px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b", fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>✏️ 프로필 수정</button>
                 </div>
                 {/* 미션 요약 */}
-                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 20 }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b", margin: "0 0 12px", letterSpacing: "0.08em" }}>MISSIONS</p>
+                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: 16 }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b", margin: "0 0 12px", letterSpacing: "0.08em" }}>네트워크 미션</p>
                   {[
                     ["티미팅 발송", Math.min(meetings.filter(m => m.fromId === uid).length, 2), 2],
                     ["티미팅 인증샷", Math.min((missions[uid]?.m2Photos||[]).length, 2), 2],
@@ -567,46 +568,49 @@ match /{document=**} {
                         <span style={{ fontSize: 11, fontWeight: 700, color: cur >= tot ? "#4ade80" : "#f59e0b" }}>{cur}/{tot}</span>
                       </div>
                       <div style={{ height: 4, background: "rgba(255,255,255,0.07)", borderRadius: 2, overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${(cur/tot)*100}%`, background: cur >= tot ? "#4ade80" : "#f59e0b", borderRadius: 2, transition: "width 0.4s" }} />
+                        <div style={{ height: "100%", width: `${Math.min((cur/tot)*100,100)}%`, background: cur >= tot ? "#4ade80" : "#f59e0b", borderRadius: 2, transition: "width 0.4s" }} />
                       </div>
                     </div>
                   ))}
                 </div>
-              </aside>
 
-              {/* 메인 콘텐츠 영역 */}
-              <main style={{ flex: 1, overflowY: "auto", minWidth: 0, height: "100%" }}>
-                {renderMain()}
-              </main>
-
-              {/* 오른쪽 사이드바 - 최근 게시글 */}
-              <aside style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", height: "100%" }}>
-                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 20 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b", margin: 0, letterSpacing: "0.08em" }}>최근 게시글</p>
-                    <button onClick={() => setView("community")} style={{ background: "none", border: "none", color: "#64748b", fontSize: 11, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>더보기</button>
-                  </div>
-                  {posts.slice(0, 5).map(post => (
-                    <div key={post.id} onClick={() => setOverlay({ type: "post", data: post })} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", cursor: "pointer" }}>
-                      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
-                        <span style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 6 }}>{post.tag}</span>
-                        <span style={{ fontSize: 9, color: "#4b5563" }}>{timeAgo(post.createdAt)}</span>
-                      </div>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{post.title}</p>
-                      <p style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>{post.authorName} · 댓글 {post.commentCount||0}</p>
-                    </div>
-                  ))}
-                  {posts.length === 0 && <p style={{ fontSize: 12, color: "#4b5563", fontStyle: "italic" }}>게시글이 없어요.</p>}
-                </div>
                 {/* 수락된 티미팅 */}
-                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 20 }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b", margin: "0 0 12px", letterSpacing: "0.08em" }}>수락된 티미팅</p>
+                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: 16 }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b", margin: "0 0 10px", letterSpacing: "0.08em" }}>수락된 티미팅</p>
                   {meetings.filter(m => (m.fromId===uid||m.toId===uid) && m.status==="수락함").length === 0
                     ? <p style={{ fontSize: 12, color: "#4b5563", fontStyle: "italic" }}>아직 없어요.</p>
                     : meetings.filter(m => (m.fromId===uid||m.toId===uid) && m.status==="수락함").map(m => (
                       <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "8px 10px", background: "rgba(34,197,94,0.06)", borderRadius: 12, border: "1px solid rgba(34,197,94,0.15)" }}>
                         <span style={{ color: "#4ade80", fontSize: 14 }}>✓</span>
                         <div><p style={{ fontSize: 12, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{m.fromId===uid?m.toName:m.fromName}</p><p style={{ fontSize: 10, color: "#64748b" }}>{m.fromId===uid?m.toOrg:m.fromOrg}</p></div>
+                      </div>
+                    ))
+                  }
+                </div>
+              </aside>
+
+              {/* 가운데 메인 콘텐츠 */}
+              <main style={{ flex: 1, overflowY: "auto", minWidth: 0, borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+                {renderMain()}
+              </main>
+
+              {/* 오른쪽 사이드바 - 최근 게시글 */}
+              <aside style={{ width: 260, flexShrink: 0, overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b", margin: 0, letterSpacing: "0.08em" }}>최근 게시글</p>
+                    <button onClick={() => setView("community")} style={{ background: "none", border: "none", color: "#64748b", fontSize: 11, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>더보기</button>
+                  </div>
+                  {posts.length === 0
+                    ? <p style={{ fontSize: 12, color: "#4b5563", fontStyle: "italic" }}>게시글이 없어요.</p>
+                    : posts.slice(0, 6).map(post => (
+                      <div key={post.id} onClick={() => setOverlay({ type: "post", data: post })} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", cursor: "pointer" }}>
+                        <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
+                          <span style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 6 }}>{post.tag}</span>
+                          <span style={{ fontSize: 9, color: "#4b5563" }}>{timeAgo(post.createdAt)}</span>
+                        </div>
+                        <p style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{post.title}</p>
+                        <p style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>{post.authorName} · 댓글 {post.commentCount||0}</p>
                       </div>
                     ))
                   }
