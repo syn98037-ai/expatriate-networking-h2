@@ -68,6 +68,7 @@ export default function App() {
   const [view,       setView]       = useState("dashboard");
   const [overlay,    setOverlay]    = useState(null);
   const [profiles,   setProfiles]   = useState([]);
+  const [deletedIds, setDeletedIds] = useState(new Set()); // 관리자가 삭제한 ID 목록
   const [meetings,   setMeetings]   = useState([]);
   const [posts,      setPosts]      = useState([]);
   const [events,     setEvents]     = useState([]);
@@ -114,7 +115,13 @@ export default function App() {
   useEffect(() => {
     if (authStatus !== "auth" && !isAdmin) return;
     const unsubs = [
-      onSnapshot(query(col("profiles")), s => setProfiles(s.docs.map(d => ({ id: d.id, ...d.data() })))),
+      onSnapshot(query(col("profiles")), s => {
+        setProfiles(prev => {
+          const newProfiles = s.docs.map(d => ({ id: d.id, ...d.data() }));
+          // 삭제 중인 ID는 리스너에서 제외 (deletedIds는 ref로 접근 불가하므로 함수형 업데이트 활용)
+          return newProfiles;
+        });
+      }),
       onSnapshot(query(col("meetings")), s => setMeetings(s.docs.map(d => ({ id: d.id, ...d.data() })))),
       onSnapshot(query(col("posts"), orderBy("createdAt", "desc")), s => setPosts(s.docs.map(d => ({ id: d.id, ...d.data() })))),
       onSnapshot(query(col("events"), orderBy("date")), s => setEvents(s.docs.map(d => ({ id: d.id, ...d.data() })))),
@@ -134,14 +141,15 @@ export default function App() {
     return () => unsubs.forEach(u => u());
   }, [authStatus, isAdmin]);
 
-  // profiles + adminOverrides 합성 → 매칭에 반영
-  const mergedProfiles = profiles.map(p => {
-    const ov = adminOverrides[p.id];
-    if (!ov) return p;
-    // updatedAt 같은 불필요 필드 제외하고 매칭 필드만 덮어쓰기
-    const { updatedAt, ...ovFields } = ov;
-    return { ...p, ...ovFields };
-  });
+  // profiles + adminOverrides 합성 → 매칭에 반영, 삭제된 ID 제외
+  const mergedProfiles = profiles
+    .filter(p => !deletedIds.has(p.id))
+    .map(p => {
+      const ov = adminOverrides[p.id];
+      if (!ov) return p;
+      const { updatedAt, ...ovFields } = ov;
+      return { ...p, ...ovFields };
+    });
 
   // ── 사진 업로드 헬퍼 ─────────────────────────────────
   const uploadPhoto = async (base64, path) => {
@@ -343,6 +351,37 @@ export default function App() {
     setAdminOverrides(prev => ({ ...prev, [id]: { ...(prev[id] || {}), ...matchFields } }));
   };
 
+  // ── 관리자: 전체 데이터 초기화 ──────────────────────
+  const adminResetAll = async () => {
+    // 모든 컬렉션의 문서를 일괄 삭제
+    const collections = ["profiles","meetings","posts","events","rooms","missions","adminOverrides","deletedAccounts"];
+    for (const colName of collections) {
+      try {
+        const snap = await getDocs(query(col(colName)));
+        for (const d of snap.docs) {
+          try { await deleteDoc(d.ref); } catch(e) {}
+        }
+      } catch(e) { console.warn(`${colName} 삭제 오류:`, e.message); }
+    }
+    // 채팅 메시지 삭제 (chats/{roomId}/messages)
+    try {
+      const roomSnap = await getDocs(query(col("rooms")));
+      for (const r of roomSnap.docs) {
+        const msgSnap = await getDocs(query(col("chats", r.id, "messages")));
+        for (const m of msgSnap.docs) { try { await deleteDoc(m.ref); } catch(e) {} }
+      }
+    } catch(e) {}
+    // 로컬 상태 초기화
+    setProfiles([]);
+    setMeetings([]);
+    setPosts([]);
+    setEvents([]);
+    setRooms([]);
+    setMissions({});
+    setDeletedIds(new Set());
+    alert("전체 데이터가 초기화되었습니다.");
+  };
+
   // ── 관리자: 게시글 삭제 ─────────────────────────────
   const adminDeletePost = async (postId) => {
     try { await deleteDoc(docR("posts", postId)); } catch(e) { console.warn(e.message); }
@@ -375,8 +414,8 @@ export default function App() {
     }
     // 미션 삭제
     try { await deleteDoc(docR("missions", targetId)); } catch(e) {}
-    // 로컬 상태 즉시 반영
-    setProfiles(prev => prev.filter(p => p.id !== targetId));
+    // deletedIds에 추가 → mergedProfiles에서 영구 제외 (리스너가 되살려도 필터링됨)
+    setDeletedIds(prev => new Set([...prev, targetId]));
     setMeetings(prev => prev.filter(m => m.fromId !== targetId && m.toId !== targetId));
   };
 
@@ -451,19 +490,22 @@ export default function App() {
                   ))}
                 </nav>
               </div>
-              <div onClick={() => setOverlay({ type: "profile" })} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ textAlign: "right" }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{myProfile?.name}</p>
-                  <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>{myProfile?.city} · {myProfile?.country}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div onClick={() => setOverlay({ type: "profile" })} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ textAlign: "right" }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{myProfile?.name}</p>
+                    <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>{myProfile?.city} · {myProfile?.country}</p>
+                  </div>
+                  <Avatar profile={myProfile} size={36} />
                 </div>
-                <Avatar profile={myProfile} size={36} />
+                <button onClick={handleLogout} style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171", fontSize: 12, fontWeight: 700, padding: "7px 14px", borderRadius: 10, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>로그아웃</button>
               </div>
             </header>
 
             {/* PC 메인 콘텐츠 - 3컬럼 */}
-            <div style={{ flex: 1, display: "flex", overflow: "hidden", padding: "24px 32px", gap: 24, alignItems: "flex-start", width: "100%" }}>
+            <div style={{ flex: 1, display: "flex", overflow: "hidden", padding: "24px 32px", gap: 24, width: "100%", height: "calc(100dvh - 60px)", boxSizing: "border-box" }}>
               {/* 왼쪽 사이드바 - 내 프로필 */}
-              <aside style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", maxHeight: "100%" }}>
+              <aside style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", height: "100%" }}>
                 <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 20 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
                     <Avatar profile={myProfile} size={52} />
@@ -500,12 +542,12 @@ export default function App() {
               </aside>
 
               {/* 메인 콘텐츠 영역 */}
-              <main style={{ flex: 1, overflowY: "auto", minWidth: 0 }}>
+              <main style={{ flex: 1, overflowY: "auto", minWidth: 0, height: "100%" }}>
                 {renderMain()}
               </main>
 
               {/* 오른쪽 사이드바 - 최근 게시글 */}
-              <aside style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", maxHeight: "100%" }}>
+              <aside style={{ width: 260, flexShrink: 0, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", height: "100%" }}>
                 <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 20 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                     <p style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b", margin: 0, letterSpacing: "0.08em" }}>최근 게시글</p>
@@ -544,7 +586,7 @@ export default function App() {
         {/* 오버레이 (PC에서도 동일) */}
         {overlay?.type === "profile"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:480,maxHeight:"90vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} /></div></div>}
         {overlay?.type === "adminAuth"   && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,background:"#020617",borderRadius:24,overflow:"hidden",border:"1px solid rgba(255,255,255,0.1)" }}><AdminAuth onSuccess={() => { setIsAdmin(true); setOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} /></div></div>}
-        {overlay?.type === "admin"       && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:640,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} /></div></div>}
+        {overlay?.type === "admin"       && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:640,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} /></div></div>}
         {overlay?.type === "chat"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:480,height:"75vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div></div>}
         {overlay?.type === "post"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"80vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onLike={() => likePost(overlay.data.id)} onBack={() => setOverlay(null)} db={db} /></div></div>}
         {overlay?.type === "newPost"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div></div>}
@@ -597,7 +639,7 @@ export default function App() {
       {/* 오버레이 */}
       {overlay?.type === "profile"     && <ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} />}
       {overlay?.type === "adminAuth"   && <AdminAuth onSuccess={() => { setIsAdmin(true); setOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} />}
-      {overlay?.type === "admin"       && <AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} />}
+      {overlay?.type === "admin"       && <AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} />}
       {overlay?.type === "chat"        && <ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />}
       {overlay?.type === "post"        && <PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onLike={() => likePost(overlay.data.id)} onBack={() => setOverlay(null)} db={db} />}
       {overlay?.type === "newPost"     && <NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} />}
@@ -876,7 +918,7 @@ function AdminAuth({ onSuccess, onBack }) {
   );
 }
 
-function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfile, onDeleteAccount, onDeletePost }) {
+function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfile, onDeleteAccount, onDeletePost, onResetAll }) {
   const [tab, setTab]       = useState("users");
   const [editId, setEditId] = useState(null);
   const [editForm, setEF]   = useState({});
@@ -895,11 +937,29 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
         </div>
       </div>
       <div style={{ padding: "12px 16px 0", flexShrink: 0 }}>
-        <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.05)", padding: 4, borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)" }}>
+        <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.05)", padding: 4, borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)", marginBottom: 10 }}>
           {[["users","사용자 관리"],["missions","미션 현황"],["posts","게시글 현황"]].map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: "8px 4px", borderRadius: 10, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "Pretendard,sans-serif", background: tab === id ? "#f59e0b" : "none", color: tab === id ? "#020617" : "#64748b", transition: "all 0.2s" }}>{label}</button>
           ))}
         </div>
+        {/* 전체 데이터 초기화 */}
+        <button
+          onClick={() => {
+            if (window.confirm("⚠️ 전체 초기화
+
+모든 사용자, 게시글, 채팅, 미션, 일정 데이터가 영구 삭제됩니다.
+
+정말 실행하시겠습니까?")) {
+              if (window.confirm("마지막 확인입니다.
+전체 데이터를 삭제합니다.")) {
+                onResetAll();
+              }
+            }
+          }}
+          style={{ width: "100%", padding: "10px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171", fontSize: 12, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "Pretendard,sans-serif", marginBottom: 4 }}
+        >
+          ⚠️ 전체 데이터 초기화 (모든 기록 삭제)
+        </button>
       </div>
       <div style={S.overlayBody}>
 
