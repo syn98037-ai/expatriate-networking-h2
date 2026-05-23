@@ -1036,6 +1036,17 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
             <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: "8px 4px", borderRadius: 10, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "Pretendard,sans-serif", background: tab === id ? "#f59e0b" : "none", color: tab === id ? "#020617" : "#64748b", transition: "all 0.2s" }}>{label}</button>
           ))}
         </div>
+        {/* 채팅 기록 초기화 */}
+        <button
+          onClick={() => {
+            if (window.confirm("💬 채팅 기록 초기화\n\n모든 채팅방과 대화 내용이 삭제됩니다.\n계속하시겠습니까?")) {
+              onClearChats();
+            }
+          }}
+          style={{ width: "100%", padding: "10px", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.25)", color: "#38bdf8", fontSize: 12, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "Pretendard,sans-serif", marginBottom: 8 }}
+        >
+          💬 채팅 기록 초기화
+        </button>
         {/* 전체 데이터 초기화 */}
         <button
           onClick={() => {
