@@ -415,6 +415,63 @@ match /{document=**} {
     }
   };
 
+  // ── 관리자: 채팅 기록 초기화 ────────────────────────
+  const adminClearChats = async () => {
+    let deleted = 0;
+
+    // 1) rooms 컬렉션의 각 방 메시지 삭제
+    try {
+      const roomSnap = await getDocs(col("rooms"));
+      for (const r of roomSnap.docs) {
+        try {
+          const msgSnap = await getDocs(col("chats", r.id, "messages"));
+          for (const m of msgSnap.docs) {
+            try { await deleteDoc(m.ref); deleted++; } catch(e) {}
+          }
+        } catch(e) {}
+      }
+    } catch(e) {}
+
+    // 2) 전체 채팅방(global) 메시지 삭제
+    try {
+      const globalSnap = await getDocs(col("chats", "global", "messages"));
+      for (const m of globalSnap.docs) {
+        try { await deleteDoc(m.ref); deleted++; } catch(e) {}
+      }
+    } catch(e) {}
+
+    // 3) 1:1 채팅 메시지 삭제 (chats 컬렉션 하위 모든 문서)
+    // rooms에 없는 채팅방도 처리
+    try {
+      const profileSnap = await getDocs(col("profiles"));
+      const ids = profileSnap.docs.map(d => d.id);
+      for (let i = 0; i < ids.length; i++) {
+        for (let j = i+1; j < ids.length; j++) {
+          const roomId = [ids[i], ids[j]].sort().join("_");
+          try {
+            const msgSnap = await getDocs(col("chats", roomId, "messages"));
+            for (const m of msgSnap.docs) {
+              try { await deleteDoc(m.ref); deleted++; } catch(e) {}
+            }
+          } catch(e) {}
+        }
+      }
+    } catch(e) {}
+
+    // 4) rooms 컬렉션 자체도 삭제 (채팅방 목록 초기화)
+    try {
+      const roomSnap = await getDocs(col("rooms"));
+      for (const r of roomSnap.docs) {
+        try { await deleteDoc(r.ref); } catch(e) {}
+      }
+    } catch(e) {}
+
+    // 로컬 상태 초기화
+    setRooms([]);
+
+    alert(`✅ 채팅 기록이 초기화되었습니다.`);
+  };
+
   // ── 관리자: 게시글 삭제 ─────────────────────────────
   const adminDeletePost = async (postId) => {
     try { await deleteDoc(docR("posts", postId)); } catch(e) { console.warn(e.message); }
@@ -623,7 +680,7 @@ match /{document=**} {
         {/* 오버레이 (PC에서도 동일) */}
         {overlay?.type === "profile"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:480,maxHeight:"90vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} /></div></div>}
         {overlay?.type === "adminAuth"   && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,background:"#020617",borderRadius:24,overflow:"hidden",border:"1px solid rgba(255,255,255,0.1)" }}><AdminAuth onSuccess={() => { setIsAdmin(true); setOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} /></div></div>}
-        {overlay?.type === "admin"       && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:640,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} /></div></div>}
+        {overlay?.type === "admin"       && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:640,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} /></div></div>}
         {overlay?.type === "chat"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:480,height:"75vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div></div>}
         {overlay?.type === "post"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"80vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onLike={() => likePost(overlay.data.id)} onBack={() => setOverlay(null)} db={db} /></div></div>}
         {overlay?.type === "newPost"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div></div>}
@@ -676,7 +733,7 @@ match /{document=**} {
       {/* 오버레이 */}
       {overlay?.type === "profile"     && <ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} />}
       {overlay?.type === "adminAuth"   && <AdminAuth onSuccess={() => { setIsAdmin(true); setOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} />}
-      {overlay?.type === "admin"       && <AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} />}
+      {overlay?.type === "admin"       && <AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} />}
       {overlay?.type === "chat"        && <ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />}
       {overlay?.type === "post"        && <PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onLike={() => likePost(overlay.data.id)} onBack={() => setOverlay(null)} db={db} />}
       {overlay?.type === "newPost"     && <NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} />}
@@ -955,7 +1012,7 @@ function AdminAuth({ onSuccess, onBack }) {
   );
 }
 
-function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfile, onDeleteAccount, onDeletePost, onResetAll }) {
+function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfile, onDeleteAccount, onDeletePost, onResetAll, onClearChats }) {
   const [tab, setTab]       = useState("users");
   const [editId, setEditId] = useState(null);
   const [editForm, setEF]   = useState({});
