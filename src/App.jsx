@@ -1249,7 +1249,7 @@ function Dashboard({ profiles, myProfile, uid, onRequest, onChat }) {
   if (!myProfile) return null;
   const others      = profiles.filter(p => p.id !== uid);
   const sameCity    = others.filter(p => p.city    === myProfile.city);
-  const sameCountry = others.filter(p => p.country === myProfile.country && p.city !== myProfile.city);
+  const sameCountry = others.filter(p => p.country === myProfile.country); // 같은 도시 포함
   const sameConcern = others.filter(p => p.concern === myProfile.concern);
   return (
     <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 28 }}>
@@ -1297,7 +1297,7 @@ function Dashboard({ profiles, myProfile, uid, onRequest, onChat }) {
 
 function Directory({ profiles, uid, onRequest, onChat, onViewProfile }) {
   const [term, setTerm] = useState("");
-  const filtered = profiles.filter(p => p.id !== uid && (!term || p.name?.includes(term) || p.city?.includes(term) || p.country?.includes(term) || p.concern?.includes(term) || p.org?.includes(term)));
+  const filtered = profiles.filter(p => p.id !== uid && (!term || p.name?.includes(term) || p.city?.includes(term) || p.country?.includes(term) || p.concern?.includes(term) || p.org?.includes(term) || p.interest?.includes(term)));
   return (
     <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <input style={S.inp} placeholder="이름, 도시, 국가, 고민, 관심사로 검색..." value={term} onChange={e => setTerm(e.target.value)} />
