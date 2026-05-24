@@ -294,18 +294,17 @@ export default function App() {
       text, senderId: uid, senderName: myProfile?.name || "나",
       createdAt: serverTimestamp(),
     });
-    // 1:1 채팅이면 dmRooms에 등록/업데이트
+    // 1:1 채팅이면 dmRooms에 등록/업데이트 (otherId만 저장, 이름은 표시 시 동적 계산)
     const isDm = roomId !== "global" && !roomId.startsWith("room") && roomId.includes("_");
     if (isDm) {
       const otherId = roomId.split("_").find(id => id !== uid);
-      const other   = profiles.find(p => p.id === otherId);
-      if (other) {
+      if (otherId) {
         setDmRooms(prev => {
           const exists = prev.find(r => r.id === roomId);
           if (exists) {
             return prev.map(r => r.id === roomId ? { ...r, lastMsg: text, updatedAt: new Date().toISOString() } : r);
           }
-          return [...prev, { id: roomId, name: other.name, otherId, lastMsg: text, updatedAt: new Date().toISOString() }];
+          return [...prev, { id: roomId, otherId, lastMsg: text, updatedAt: new Date().toISOString() }];
         });
       }
     }
@@ -1600,12 +1599,14 @@ function Community({ posts, profiles, rooms, dmRooms, uid, onOpenPost, onNewPost
               <>
                 <p style={{ fontSize: 10, fontWeight: 700, color: "#4b5563", letterSpacing: "0.08em", margin: "4px 2px 0" }}>1:1 채팅</p>
                 {dmRooms.sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt)).map(dm => {
-                  const other = profiles.find(p => p.id === dm.otherId);
+                  // 상대방 프로필에서 이름 동적으로 가져오기 → 내 화면에선 상대방 이름, 상대방 화면에선 내 이름
+                  const other     = profiles.find(p => p.id === dm.otherId);
+                  const otherName = other?.name || "알 수 없음";
                   return (
-                    <button key={dm.id} onClick={() => onOpenChat(dm.id, dm.name)} style={{ display: "flex", alignItems: "center", gap: 14, ...S.card, borderRadius: 18, cursor: "pointer", width: "100%", textAlign: "left" }}>
-                      <div style={{ flexShrink: 0 }}><Avatar profile={other || { name: dm.name, id: dm.otherId }} size={44} /></div>
+                    <button key={dm.id} onClick={() => onOpenChat(dm.id, otherName)} style={{ display: "flex", alignItems: "center", gap: 14, ...S.card, borderRadius: 18, cursor: "pointer", width: "100%", textAlign: "left" }}>
+                      <div style={{ flexShrink: 0 }}><Avatar profile={other || { name: otherName, id: dm.otherId }} size={44} /></div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{dm.name}</p>
+                        <p style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{otherName}</p>
                         <p style={{ fontSize: 11, color: "#64748b", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dm.lastMsg || ""}</p>
                       </div>
                       <span style={{ color: "#64748b", flexShrink: 0 }}>→</span>
