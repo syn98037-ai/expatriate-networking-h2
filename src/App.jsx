@@ -304,10 +304,41 @@ export default function App() {
     await updateDoc(docR("posts", postId), { commentCount: (posts.find(p => p.id === postId)?.commentCount || 0) + 1 });
   };
 
-  // ── 게시글 좋아요 ────────────────────────────────────
-  const likePost = async (postId) => {
+  // ── 게시글 좋아요 / 취소 ─────────────────────────────
+  const toggleLike = async (postId) => {
     const post = posts.find(p => p.id === postId);
-    await updateDoc(docR("posts", postId), { likeCount: (post?.likeCount || 0) + 1 });
+    const likedBy = post?.likedBy || [];
+    const alreadyLiked = likedBy.includes(uid);
+    const newLikedBy = alreadyLiked
+      ? likedBy.filter(id => id !== uid)
+      : [...likedBy, uid];
+    await updateDoc(docR("posts", postId), {
+      likedBy: newLikedBy,
+      likeCount: newLikedBy.length,
+    });
+  };
+
+  // ── 게시글 수정 ──────────────────────────────────────
+  const editPost = async (postId, updates) => {
+    let imageUrl = updates.imageUrl;
+    if (imageUrl && imageUrl.startsWith("data:")) {
+      imageUrl = await uploadPhoto(imageUrl, `posts/${uid}_${Date.now()}`);
+    }
+    await updateDoc(docR("posts", postId), { ...updates, imageUrl, updatedAt: new Date().toISOString() });
+  };
+
+  // ── 게시글 삭제 ──────────────────────────────────────
+  const deletePost = async (postId) => {
+    await deleteDoc(docR("posts", postId));
+    setPosts(prev => prev.filter(p => p.id !== postId));
+  };
+
+  // ── 댓글 삭제 ────────────────────────────────────────
+  const deleteComment = async (postId, commentId) => {
+    await deleteDoc(docR("posts", postId, "comments", commentId));
+    await updateDoc(docR("posts", postId), {
+      commentCount: Math.max((posts.find(p => p.id === postId)?.commentCount || 1) - 1, 0)
+    });
   };
 
   // ── 게시글 작성 ──────────────────────────────────────
@@ -727,7 +758,7 @@ match /{document=**} {
         {overlay?.type === "adminAuth"   && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,background:"#020617",borderRadius:24,overflow:"hidden",border:"1px solid rgba(255,255,255,0.1)" }}><AdminAuth onSuccess={() => { setIsAdmin(true); setOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} /></div></div>}
         {overlay?.type === "admin"       && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:640,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} /></div></div>}
         {overlay?.type === "chat"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:480,height:"75vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div></div>}
-        {overlay?.type === "post"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"80vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onLike={() => likePost(overlay.data.id)} onBack={() => setOverlay(null)} db={db} /></div></div>}
+        {overlay?.type === "post"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"80vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div></div>}
         {overlay?.type === "newPost"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div></div>}
         {overlay?.type === "profileView" && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,height:"70vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => { sendReq(overlay.data); setOverlay(null); }} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} /></div></div>}
       </div>
@@ -780,7 +811,7 @@ match /{document=**} {
       {overlay?.type === "adminAuth"   && <AdminAuth onSuccess={() => { setIsAdmin(true); setOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} />}
       {overlay?.type === "admin"       && <AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} />}
       {overlay?.type === "chat"        && <ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />}
-      {overlay?.type === "post"        && <PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onLike={() => likePost(overlay.data.id)} onBack={() => setOverlay(null)} db={db} />}
+      {overlay?.type === "post"        && <PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} />}
       {overlay?.type === "newPost"     && <NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} />}
       {overlay?.type === "profileView" && <ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => { sendReq(overlay.data); setOverlay(null); }} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} />}
     </div>
@@ -1591,19 +1622,27 @@ function Community({ posts, profiles, rooms, uid, onOpenPost, onNewPost, onOpenC
   );
 }
 
-function PostDetail({ post, profiles, uid, myProfile, onAddComment, onLike, onBack, db }) {
-  const [comments, setComments] = useState([]);
-  const [input,    setInput]    = useState("");
-  const [liked,    setLiked]    = useState(false);
+function PostDetail({ post, profiles, uid, myProfile, onAddComment, onToggleLike, onEditPost, onDeletePost, onDeleteComment, onBack, db }) {
+  const [comments,  setComments]  = useState([]);
+  const [input,     setInput]     = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm,  setEditForm]  = useState({ title: post.title, content: post.content });
+
+  const isLiked   = (post.likedBy || []).includes(uid);
+  const isAuthor  = post.authorId === uid;
+  const author    = profiles.find(p => p.id === post.authorId) || { name: post.authorName, id: post.authorId };
 
   useEffect(() => {
     const q = query(collection(db, "posts", post.id, "comments"), orderBy("createdAt"));
     return onSnapshot(q, snap => setComments(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
   }, [post.id]);
 
-  const doLike    = () => { if (!liked) { setLiked(true); onLike(); } };
   const doComment = async () => { if (!input.trim()) return; await onAddComment(input.trim()); setInput(""); };
-  const author    = profiles.find(p => p.id === post.authorId) || { name: post.authorName, id: post.authorId };
+  const doEdit    = async () => {
+    if (!editForm.title.trim() || !editForm.content.trim()) return;
+    await onEditPost(editForm);
+    setIsEditing(false);
+  };
 
   return (
     <div style={S.overlay}>
@@ -1611,40 +1650,84 @@ function PostDetail({ post, profiles, uid, myProfile, onAddComment, onLike, onBa
         <button onClick={onBack} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
         <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{post.title}</p>
         {post.tag && <span style={S.amberBadge}>{post.tag}</span>}
+        {/* 본인 글이면 수정/삭제 버튼 표시 */}
+        {isAuthor && !isEditing && (
+          <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
+            <button onClick={() => { setIsEditing(true); setEditForm({ title: post.title, content: post.content }); }} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>수정</button>
+            <button onClick={() => { if (window.confirm("게시글을 삭제하시겠습니까?")) onDeletePost(); }} style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>삭제</button>
+          </div>
+        )}
       </div>
       <div style={{ ...S.overlayBody, paddingBottom: 40 }}>
-        <p style={{ fontSize: 17, fontWeight: 800, color: "#fff", marginBottom: 4, lineHeight: 1.4 }}>{post.title}</p>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}><Avatar profile={author} size={28} /><p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>{post.authorName}</p><p style={{ fontSize: 10, color: "#4b5563", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p></div>
-        <p style={{ fontSize: 14, color: "#e2e8f0", lineHeight: 1.8, whiteSpace: "pre-wrap", marginBottom: 14 }}>{post.content}</p>
-        {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", borderRadius: 16, maxHeight: 260, objectFit: "cover", marginBottom: 14 }} />}
-        <div style={{ display: "flex", gap: 14, paddingTop: 4, marginBottom: 20 }}>
-          <button onClick={doLike} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 12, border: `1px solid ${liked ? "rgba(239,68,68,0.2)" : "rgba(255,255,255,0.1)"}`, background: liked ? "rgba(239,68,68,0.1)" : "rgba(255,255,255,0.05)", color: liked ? "#f87171" : "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>❤️ 공감 {(post.likeCount || 0) + (liked ? 1 : 0)}</button>
-          <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#4b5563" }}>💬 댓글 {comments.length}개</span>
-        </div>
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-          <p style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", margin: 0 }}>댓글 {comments.length}개</p>
-          {comments.map(c => {
-            const cp = profiles.find(p => p.id === c.authorId) || { name: c.authorName, id: c.authorId };
-            const ts = c.createdAt?.toDate ? c.createdAt.toDate().toISOString() : c.createdAt;
-            return (
-              <div key={c.id} style={{ display: "flex", gap: 10 }}>
-                <Avatar profile={cp} size={30} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", padding: "10px 14px", borderRadius: 16 }}>
-                    <p style={{ fontSize: 10, fontWeight: 700, color: "#64748b", marginBottom: 4 }}>{c.authorName}</p>
-                    <p style={{ fontSize: 13, color: "#f1f5f9", margin: 0 }}>{c.text}</p>
+        {isEditing ? (
+          /* 수정 모드 */
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b", margin: 0 }}>게시글 수정</p>
+            <div><label style={S.lbl}>제목</label><input style={S.inp} value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} /></div>
+            <div><label style={S.lbl}>내용</label><textarea style={{ ...S.inp, minHeight: 200, resize: "none" }} value={editForm.content} onChange={e => setEditForm(f => ({ ...f, content: e.target.value }))} /></div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={doEdit} style={{ ...S.btnAmber, flex: 1, padding: 12 }}>저장</button>
+              <button onClick={() => setIsEditing(false)} style={{ ...S.btnGhost, flex: 1, padding: 12 }}>취소</button>
+            </div>
+          </div>
+        ) : (
+          /* 보기 모드 */
+          <>
+            <p style={{ fontSize: 17, fontWeight: 800, color: "#fff", marginBottom: 4, lineHeight: 1.4 }}>{post.title}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <Avatar profile={author} size={28} />
+              <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>{post.authorName}</p>
+              <p style={{ fontSize: 10, color: "#4b5563", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p>
+            </div>
+            <p style={{ fontSize: 14, color: "#e2e8f0", lineHeight: 1.8, whiteSpace: "pre-wrap", marginBottom: 14 }}>{post.content}</p>
+            {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", borderRadius: 16, maxHeight: 260, objectFit: "cover", marginBottom: 14 }} />}
+            {/* 좋아요 / 댓글 수 */}
+            <div style={{ display: "flex", gap: 14, paddingTop: 4, marginBottom: 20 }}>
+              <button onClick={onToggleLike} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 12, border: `1px solid ${isLiked ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, background: isLiked ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.05)", color: isLiked ? "#f87171" : "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif", transition: "all 0.2s" }}>
+                {isLiked ? "❤️" : "🤍"} 공감 {post.likeCount || 0}
+              </button>
+              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#4b5563" }}>💬 댓글 {comments.length}개</span>
+            </div>
+          </>
+        )}
+
+        {/* 댓글 목록 */}
+        {!isEditing && (
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", margin: 0 }}>댓글 {comments.length}개</p>
+            {comments.map(c => {
+              const cp   = profiles.find(p => p.id === c.authorId) || { name: c.authorName, id: c.authorId };
+              const ts   = c.createdAt?.toDate ? c.createdAt.toDate().toISOString() : c.createdAt;
+              const mine = c.authorId === uid;
+              return (
+                <div key={c.id} style={{ display: "flex", gap: 10 }}>
+                  <Avatar profile={cp} size={30} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", padding: "10px 14px", borderRadius: 16, position: "relative" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: "#64748b", margin: 0 }}>{c.authorName}</p>
+                        {/* 본인 댓글 삭제 */}
+                        {mine && (
+                          <button onClick={() => { if (window.confirm("댓글을 삭제하시겠습니까?")) onDeleteComment(c.id); }} style={{ background: "none", border: "none", color: "#4b5563", fontSize: 11, cursor: "pointer", fontFamily: "Pretendard,sans-serif", padding: 0 }}>삭제</button>
+                        )}
+                      </div>
+                      <p style={{ fontSize: 13, color: "#f1f5f9", margin: 0 }}>{c.text}</p>
+                    </div>
+                    <p style={{ fontSize: 9, color: "#374151", marginTop: 3, marginLeft: 4 }}>{timeAgo(ts)}</p>
                   </div>
-                  <p style={{ fontSize: 9, color: "#374151", marginTop: 3, marginLeft: 4 }}>{timeAgo(ts)}</p>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+        )}
+      </div>
+      {/* 댓글 입력 */}
+      {!isEditing && (
+        <div style={S.overlayFooter}>
+          <input style={{ ...S.inp, flex: 1 }} placeholder="댓글을 남겨보세요..." value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && doComment()} />
+          <button onClick={doComment} style={{ ...S.btnAmber, width: 46, height: 46, borderRadius: 14, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 20 }}>↑</button>
         </div>
-      </div>
-      <div style={S.overlayFooter}>
-        <input style={{ ...S.inp, flex: 1 }} placeholder="댓글을 남겨보세요..." value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && doComment()} />
-        <button onClick={doComment} style={{ ...S.btnAmber, width: 46, height: 46, borderRadius: 14, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 20 }}>↑</button>
-      </div>
+      )}
     </div>
   );
 }
