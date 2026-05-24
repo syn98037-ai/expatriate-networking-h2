@@ -98,6 +98,7 @@ function NavIcon({ id, active }) {
   if (id === "meetings")   return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>;
   if (id === "missions")   return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>;
   if (id === "calendar")   return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
+  if (id === "schedule")   return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>;
   return null;
 }
 
@@ -563,6 +564,7 @@ match /{document=**} {
     { id: "community", label: "커뮤니티" },
     { id: "meetings",  label: "티미팅"  },
     { id: "missions",  label: "미션"    },
+    { id: "schedule",  label: "시간표"  },
   ];
 
   const renderMain = () => {
@@ -573,6 +575,7 @@ match /{document=**} {
       case "meetings":   return <Meetings meetings={meetings} profiles={mergedProfiles} uid={uid} onUpdate={updateMtg} onChat={m => { const oid = m.fromId === uid ? m.toId : m.fromId; openChat(roomFor(oid), m.fromId === uid ? m.toName : m.fromName); }} />;
       case "missions":   return <MissionView myMissions={myMissions} sentCount={sentCount} uid={uid} onUpdate={updateMission} />;
 
+      case "schedule":   return <ScheduleView />;
       default: return null;
     }
   };
@@ -1687,7 +1690,7 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
   const m2Done   = m2Photos.length >= 2;
   const m3Photos = myMissions.m3Photos || [];
   const m3Done   = m3Photos.length >= 1;
-  const allDone  = m1Done && m2Done && m3Done;
+  const allDone  = m1Done && m2Done; // 미션 3 비활성화
 
   const addPhoto = async (key, e) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -1713,7 +1716,7 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="12" y1="7" x2="12" y2="13"/></svg> },
     { id:"m2", num:"02", title:"티미팅 인증샷", desc:"티미팅을 진행한 후 인증샷을 남겨주세요. (2회)", target:2, current:m2Photos.length, done:m2Done, color:"#38bdf8", photos:m2Photos, photoKey:"m2Photos",
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> },
-    { id:"m3", num:"03", title:"조별 식사 인증샷", desc:"조원들과 함께 식사 후 인증샷을 남겨주세요.", target:1, current:m3Photos.length, done:m3Done, color:"#4ade80", photos:m3Photos, photoKey:"m3Photos",
+    { id:"m3", num:"03", title:"조별 식사 인증샷", desc:"조원들과 함께 식사 후 인증샷을 남겨주세요.", target:1, current:m3Photos.length, done:m3Done, color:"#4ade80", photos:m3Photos, photoKey:"m3Photos", disabled:true,
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
   ];
 
@@ -1739,25 +1742,26 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
         )}
       </div>
       {missions.map(m => (
-        <div key={m.id} style={{ ...S.card, borderRadius: 24, border: `1px solid ${m.done ? `${m.color}30` : "rgba(255,255,255,0.07)"}`, background: m.done ? `${m.color}08` : "rgba(255,255,255,0.04)" }}>
+        <div key={m.id} style={{ ...S.card, borderRadius: 24, border: `1px solid ${m.disabled ? "rgba(255,255,255,0.04)" : m.done ? `${m.color}30` : "rgba(255,255,255,0.07)"}`, background: m.disabled ? "rgba(255,255,255,0.02)" : m.done ? `${m.color}08` : "rgba(255,255,255,0.04)", opacity: m.disabled ? 0.45 : 1, position: "relative", overflow: "hidden" }}>
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 14 }}>
-            <div style={{ width: 52, height: 52, borderRadius: 16, background: `${m.color}14`, border: `1px solid ${m.color}30`, display: "flex", alignItems: "center", justifyContent: "center", color: m.color, flexShrink: 0 }}>{m.icon}</div>
+            <div style={{ width: 52, height: 52, borderRadius: 16, background: m.disabled ? "rgba(255,255,255,0.05)" : `${m.color}14`, border: `1px solid ${m.disabled ? "rgba(255,255,255,0.08)" : m.color+"30"}`, display: "flex", alignItems: "center", justifyContent: "center", color: m.disabled ? "#4b5563" : m.color, flexShrink: 0 }}>{m.icon}</div>
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: m.color, letterSpacing: "0.1em" }}>MISSION {m.num}</span>
-                {m.done && <span style={{ background: `${m.color}18`, color: m.color, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>완료</span>}
+                <span style={{ fontSize: 10, fontWeight: 700, color: m.disabled ? "#4b5563" : m.color, letterSpacing: "0.1em" }}>MISSION {m.num}</span>
+                {m.disabled && <span style={{ background: "rgba(255,255,255,0.06)", color: "#4b5563", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>비활성화</span>}
+                {!m.disabled && m.done && <span style={{ background: `${m.color}18`, color: m.color, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>완료</span>}
               </div>
               <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0, marginBottom: 4 }}>{m.title}</p>
               <p style={{ fontSize: 12, color: "#64748b", margin: 0, lineHeight: 1.5 }}>{m.desc}</p>
             </div>
           </div>
-          <div style={{ marginBottom: m.photos ? 12 : 0 }}>
+          {!m.disabled && <div style={{ marginBottom: m.photos ? 12 : 0 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><span style={{ fontSize: 10, color: "#64748b" }}>진행 현황</span><span style={{ fontSize: 12, fontWeight: 700, color: m.done ? m.color : "#94a3b8" }}>{m.current} / {m.target}회</span></div>
             <div style={{ height: 5, background: "rgba(255,255,255,0.07)", borderRadius: 3, overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${Math.min((m.current/m.target)*100, 100)}%`, background: `linear-gradient(90deg,${m.color},${m.color}aa)`, borderRadius: 3, transition: "width 0.5s" }} />
             </div>
-          </div>
-          {m.photos !== undefined && (
+          </div>}
+          {m.photos !== undefined && !m.disabled && (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {m.photos.length > 0 && <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>{m.photos.map((p,i) => <img key={i} src={p.img} alt="" style={{ width: 72, height: 72, borderRadius: 12, objectFit: "cover", flexShrink: 0, border: `1px solid ${m.color}40` }} />)}</div>}
               {!m.done && <><label htmlFor={`photo_${m.id}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px", border: `1.5px dashed ${m.color}40`, borderRadius: 14, cursor: "pointer", color: m.color, fontSize: 12, fontWeight: 700 }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>인증샷 올리기</label><input type="file" id={`photo_${m.id}`} accept="image/*" style={{ display: "none" }} onChange={e => addPhoto(m.photoKey, e)} /></>}
@@ -1765,6 +1769,89 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+
+/* ════════ 시간표 ════════ */
+const SCHEDULE_DATA = [
+  {
+    day: "Day 1",
+    sessions: [
+      { time: "09:30 – 10:30", title: "HR 리더특강",            venue: "1F 대강당",          color: "#f59e0b" },
+      { time: "10:30 – 14:00", title: "주재원 역할 및 행동 이해", venue: "1F 대강당",          color: "#38bdf8" },
+      { time: "14:00 – 15:30", title: "부임 국가의 이해",         venue: "분반 강의장",        color: "#a78bfa" },
+      { time: "15:30 – 16:30", title: "안전 문화 교육",           venue: "1F 대강당",          color: "#4ade80" },
+      { time: "16:30 – 17:30", title: "보안 교육",               venue: "1F 대강당",          color: "#fb923c" },
+    ],
+  },
+  {
+    day: "Day 2",
+    sessions: [
+      { time: "08:00 – 11:00", title: "윤리경영 (Do-Better)",    venue: "1F 대강당",          color: "#f59e0b" },
+      { time: "11:00 – 12:00", title: "준법 교육",               venue: "1F 대강당",          color: "#38bdf8" },
+      { time: "13:00 – 17:00", title: "역할 전환 워크숍",          venue: "분반 강의장",        color: "#a78bfa" },
+    ],
+  },
+  {
+    day: "Day 3",
+    sessions: [
+      { time: "08:00 – 12:00", title: "글로벌 비즈니스 매너",     venue: "1F 대강당 / 비젼홀", color: "#4ade80" },
+      { time: "13:00 – 16:00", title: "선배주재원 간담회",         venue: "분반 강의장",        color: "#fb923c" },
+    ],
+  },
+];
+
+function ScheduleView() {
+  const [activeDay, setActiveDay] = useState(0);
+  const day = SCHEDULE_DATA[activeDay];
+
+  return (
+    <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* 헤더 */}
+      <div style={{ background: "linear-gradient(135deg,rgba(245,158,11,0.14),rgba(56,189,248,0.07))", border: "1px solid rgba(245,158,11,0.22)", borderRadius: 24, padding: "20px 24px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, background: "rgba(245,158,11,0.07)", borderRadius: "50%", pointerEvents: "none" }} />
+        <p style={{ fontSize: 10, fontWeight: 700, color: "#f59e0b", letterSpacing: "0.14em", margin: "0 0 6px" }}>HMG 주재원 부임전 정규교육</p>
+        <h2 style={{ fontSize: 20, fontWeight: 900, color: "#fff", margin: 0 }}>교육 시간표</h2>
+      </div>
+
+      {/* Day 탭 */}
+      {SCHEDULE_DATA.length > 1 && (
+        <div style={{ display: "flex", gap: 6 }}>
+          {SCHEDULE_DATA.map((d, i) => (
+            <button key={i} onClick={() => setActiveDay(i)} style={{ padding: "8px 18px", borderRadius: 12, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "Pretendard,sans-serif", background: activeDay === i ? "#f59e0b" : "rgba(255,255,255,0.06)", color: activeDay === i ? "#020617" : "#64748b", transition: "all 0.2s" }}>{d.day}</button>
+          ))}
+        </div>
+      )}
+
+      {/* 세션 카드들 */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {day.sessions.map((s, i) => (
+          <div key={i} style={{ display: "flex", gap: 0, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 18, overflow: "hidden" }}>
+            {/* 왼쪽 컬러 바 + 순서 */}
+            <div style={{ width: 52, flexShrink: 0, background: `${s.color}18`, borderRight: `1px solid ${s.color}25`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4, padding: "14px 0" }}>
+              <span style={{ fontSize: 18, fontWeight: 900, color: s.color, lineHeight: 1 }}>{String(i + 1).padStart(2, "0")}</span>
+            </div>
+            {/* 내용 */}
+            <div style={{ flex: 1, padding: "14px 16px", minWidth: 0 }}>
+              <p style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: "0 0 6px", lineHeight: 1.3 }}>{s.title}</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {/* 시간 */}
+                <div style={{ display: "flex", alignItems: "center", gap: 5, background: `${s.color}14`, border: `1px solid ${s.color}30`, borderRadius: 8, padding: "3px 10px" }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={s.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: s.color }}>{s.time}</span>
+                </div>
+                {/* 장소 */}
+                <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "3px 10px" }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8" }}>{s.venue}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
