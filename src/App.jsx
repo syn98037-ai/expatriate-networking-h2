@@ -120,6 +120,9 @@ export default function App() {
   const [missions,   setMissions]   = useState({});
   const [rooms,      setRooms]      = useState([]);
   const [dmRooms,    setDmRooms]    = useState([]); // 1:1 채팅방 목록
+  const [notifs,     setNotifs]     = useState([]); // 알림 목록
+  const [showNotifs, setShowNotifs] = useState(false);
+  const prevMeetingsRef = useRef([]); // 이전 meetings 상태 추적용
   const [isAdmin,    setIsAdmin]    = useState(false);
   const [isMobile,   setIsMobile]   = useState(typeof window !== "undefined" ? window.innerWidth < 768 : true);
 
@@ -166,7 +169,25 @@ export default function App() {
           return newProfiles;
         });
       }),
-      onSnapshot(query(col("meetings")), s => setMeetings(s.docs.map(d => ({ id: d.id, ...d.data() })))),
+      onSnapshot(query(col("meetings")), s => {
+        const newMeetings = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        const prev = prevMeetingsRef.current;
+
+        newMeetings.forEach(nm => {
+          const old = prev.find(p => p.id === nm.id);
+          // 새로 생성된 티미팅 신청 → 수신자에게 알림
+          if (!old && nm.toId === uid) {
+            setNotifs(n => [{ id: "n"+Date.now()+Math.random(), type: "received", meeting: nm, read: false, createdAt: new Date().toISOString() }, ...n]);
+          }
+          // 상태가 수락함으로 변경 → 발신자에게 알림
+          if (old && old.status !== "수락함" && nm.status === "수락함" && nm.fromId === uid) {
+            setNotifs(n => [{ id: "n"+Date.now()+Math.random(), type: "accepted", meeting: nm, read: false, createdAt: new Date().toISOString() }, ...n]);
+          }
+        });
+
+        prevMeetingsRef.current = newMeetings;
+        setMeetings(newMeetings);
+      }),
       onSnapshot(query(col("posts"), orderBy("createdAt", "desc")), s => setPosts(s.docs.map(d => ({ id: d.id, ...d.data() })))),
       onSnapshot(query(col("events"), orderBy("date")), s => setEvents(s.docs.map(d => ({ id: d.id, ...d.data() })))),
       onSnapshot(query(col("rooms")), s => setRooms(s.docs.map(d => ({ id: d.id, ...d.data() })))),
@@ -369,12 +390,13 @@ export default function App() {
   };
 
   // ── 티미팅 신청 ──────────────────────────────────────
-  const sendReq = async (target) => {
+  const sendReq = async (target, message = "") => {
     if (meetings.find(m => m.fromId === uid && m.toId === target.id && m.status === "대기중"))
       return alert("이미 신청을 보냈습니다.");
     await addDoc(col("meetings"), {
       fromId: uid, fromName: myProfile.name, fromOrg: myProfile.org || "",
       toId: target.id, toName: target.name, toOrg: target.org || "",
+      message: message.trim(),
       status: "대기중", timestamp: new Date().toISOString(),
     });
     setView("meetings");
@@ -615,8 +637,8 @@ match /{document=**} {
 
   const renderMain = () => {
     switch (view) {
-      case "dashboard":  return <Dashboard profiles={mergedProfiles} myProfile={mergedProfiles.find(p => p.id === uid) || myProfile} uid={uid} onRequest={sendReq} onChat={p => openChat(roomFor(p.id), p.name)} />;
-      case "directory":  return <Directory profiles={mergedProfiles} uid={uid} onRequest={sendReq} onChat={p => openChat(roomFor(p.id), p.name)} onViewProfile={p => setOverlay({ type: "profileView", data: p })} />;
+      case "dashboard":  return <Dashboard profiles={mergedProfiles} myProfile={mergedProfiles.find(p => p.id === uid) || myProfile} uid={uid} onRequest={p => setOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} />;
+      case "directory":  return <Directory profiles={mergedProfiles} uid={uid} onRequest={p => setOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} onViewProfile={p => setOverlay({ type: "profileView", data: p })} />;
       case "community":  return <Community posts={posts} profiles={mergedProfiles} rooms={rooms} dmRooms={dmRooms} uid={uid} onOpenPost={p => setOverlay({ type: "post", data: p })} onNewPost={() => setOverlay({ type: "newPost" })} onOpenChat={(id, name) => openChat(id, name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />;
       case "meetings":   return <Meetings meetings={meetings} profiles={mergedProfiles} uid={uid} onUpdate={updateMtg} onChat={m => { const oid = m.fromId === uid ? m.toId : m.fromId; openChat(roomFor(oid), m.fromId === uid ? m.toName : m.fromName); }} />;
       case "missions":   return <MissionView myMissions={myMissions} sentCount={sentCount} uid={uid} onUpdate={updateMission} />;
@@ -671,6 +693,15 @@ match /{document=**} {
               </div>
               {/* 오른쪽: 프로필 + 로그아웃 */}
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                {/* PC 알림 벨 */}
+                <div onClick={() => setShowNotifs(true)} style={{ position: "relative", cursor: "pointer", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.05)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  {notifs.filter(n => !n.read).length > 0 && (
+                    <div style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, background: "#ef4444", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, color: "#fff", border: "2px solid #020617" }}>
+                      {notifs.filter(n => !n.read).length > 9 ? "9+" : notifs.filter(n => !n.read).length}
+                    </div>
+                  )}
+                </div>
                 <div onClick={() => setOverlay({ type: "profile" })} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <Avatar profile={myProfile} size={30} />
                   <div>
@@ -805,7 +836,18 @@ match /{document=**} {
               <div style={{ fontSize: 17, fontWeight: 900, background: "linear-gradient(90deg,#fde68a,#f59e0b,#d97706)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Global Connect</div>
               <div style={{ fontSize: 9, color: "rgba(251,191,36,0.4)", letterSpacing: "0.18em" }}>HMG 주재원 네트워크</div>
             </div>
-            <div onClick={() => setOverlay({ type: "profile" })} style={{ cursor: "pointer" }}><Avatar profile={myProfile} size={36} /></div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {/* 알림 벨 */}
+              <div onClick={() => setShowNotifs(true)} style={{ position: "relative", cursor: "pointer", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.05)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)" }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                {notifs.filter(n => !n.read).length > 0 && (
+                  <div style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, background: "#ef4444", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, color: "#fff", border: "2px solid #020617" }}>
+                    {notifs.filter(n => !n.read).length > 9 ? "9+" : notifs.filter(n => !n.read).length}
+                  </div>
+                )}
+              </div>
+              <div onClick={() => setOverlay({ type: "profile" })} style={{ cursor: "pointer" }}><Avatar profile={myProfile} size={36} /></div>
+            </div>
           </header>
 
           <div style={S.screen}>{renderMain()}</div>
@@ -828,7 +870,19 @@ match /{document=**} {
       {overlay?.type === "chat"        && <ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />}
       {overlay?.type === "post"        && <PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} />}
       {overlay?.type === "newPost"     && <NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} />}
-      {overlay?.type === "profileView" && <ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => { sendReq(overlay.data); setOverlay(null); }} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} />}
+      {overlay?.type === "profileView" && <ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => setOverlay({ type: "sendReq", data: overlay.data })} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} />}
+      {overlay?.type === "sendReq"     && <SendReqModal target={overlay.data} onSend={(msg) => { sendReq(overlay.data, msg); setOverlay(null); }} onBack={() => setOverlay(null)} />}
+
+      {/* 알림 패널 */}
+      {showNotifs && (
+        <NotifPanel
+          notifs={notifs}
+          onClose={() => setShowNotifs(false)}
+          onRead={(id) => setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))}
+          onReadAll={() => setNotifs(prev => prev.map(n => ({ ...n, read: true })))}
+          onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }}
+        />
+      )}
     </div>
   );
 }
@@ -1539,6 +1593,12 @@ function Meetings({ meetings, profiles, uid, onUpdate, onChat }) {
               </div>
               <span style={stBadge(m.status)}>{m.status}</span>
             </div>
+            {m.message && (
+              <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "10px 14px" }}>
+                <p style={{ fontSize: 11, color: "#f59e0b", margin: "0 0 4px", fontWeight: 700 }}>신청 멘트</p>
+                <p style={{ fontSize: 13, color: "#e2e8f0", margin: 0, lineHeight: 1.5 }}>"{m.message}"</p>
+              </div>
+            )}
             {m.status === "대기중" && <div style={{ display: "flex", gap: 8 }}><button onClick={() => onUpdate(m.id, "수락함")} style={{ ...S.btnAmber, flex: 1, padding: 10 }}>수락</button><button onClick={() => onUpdate(m.id, "거절함")} style={{ ...S.btnGhost, flex: 1, padding: 10 }}>거절</button></div>}
             {m.status === "수락함" && <button onClick={() => onChat(m)} style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#4ade80", fontWeight: 700, borderRadius: 12, padding: 10, cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 12, width: "100%" }}>💬 채팅 시작하기</button>}
           </div>
