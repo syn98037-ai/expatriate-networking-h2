@@ -1622,20 +1622,27 @@ function Community({ posts, profiles, rooms, uid, onOpenPost, onNewPost, onOpenC
   );
 }
 
-function PostDetail({ post, profiles, uid, myProfile, onAddComment, onToggleLike, onEditPost, onDeletePost, onDeleteComment, onBack, db }) {
+function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment, onToggleLike, onEditPost, onDeletePost, onDeleteComment, onBack, db }) {
+  const [livePost,  setLivePost]  = useState(initialPost);
   const [comments,  setComments]  = useState([]);
   const [input,     setInput]     = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm,  setEditForm]  = useState({ title: post.title, content: post.content });
+  const [editForm,  setEditForm]  = useState({ title: initialPost.title, content: initialPost.content });
 
-  const isLiked   = (post.likedBy || []).includes(uid);
-  const isAuthor  = post.authorId === uid;
-  const author    = profiles.find(p => p.id === post.authorId) || { name: post.authorName, id: post.authorId };
-
+  // post 실시간 구독 → 좋아요/수정 즉시 반영
   useEffect(() => {
-    const q = query(collection(db, "posts", post.id, "comments"), orderBy("createdAt"));
-    return onSnapshot(q, snap => setComments(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
-  }, [post.id]);
+    const unsubPost = onSnapshot(doc(db, "posts", initialPost.id), snap => {
+      if (snap.exists()) setLivePost({ id: snap.id, ...snap.data() });
+    });
+    const q = query(collection(db, "posts", initialPost.id, "comments"), orderBy("createdAt"));
+    const unsubComments = onSnapshot(q, snap => setComments(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+    return () => { unsubPost(); unsubComments(); };
+  }, [initialPost.id]);
+
+  const post     = livePost;
+  const isLiked  = (post.likedBy || []).includes(uid);
+  const isAuthor = post.authorId === uid;
+  const author   = profiles.find(p => p.id === post.authorId) || { name: post.authorName, id: post.authorId };
 
   const doComment = async () => { if (!input.trim()) return; await onAddComment(input.trim()); setInput(""); };
   const doEdit    = async () => {
