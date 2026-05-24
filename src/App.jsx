@@ -15,6 +15,34 @@ import {
 import { auth, db, storage } from "./firebase";
 import { CONCERNS, POST_TAGS, gradFor, timeAgo, S, stBadge } from "./constants";
 
+// ─── 국가/도시 목록 ─────────────────────────────────
+const COUNTRIES_LIST = [
+  "독일","말레이시아","멕시코","미국","브라질","슬로바키아",
+  "싱가포르","이집트","인도","인도네시아","일본","중국",
+  "체코","카자흐스탄","튀르키예","프랑스","호주","UAE",
+];
+
+const CITIES_MAP = {
+  "독일":      ["뮌헨","베를린","프랑크푸르트"],
+  "말레이시아": ["쿠알라룸푸르"],
+  "멕시코":    ["멕시코시티","몬테레이"],
+  "미국":      ["LA","몽고메리","보스턴","샌디에고","샴페인","서배너","앤아버(디트로이트)","어바인","웨스트포인트","팜데일","루이지애나"],
+  "브라질":    ["삐라시까바"],
+  "슬로바키아": ["질리나"],
+  "싱가포르":  ["싱가포르"],
+  "이집트":    ["카이로"],
+  "인도":      ["구르가온","뉴델리","뭄바이","뱅갈로르","찬디가르","첸나이","푸네","하이데라바드"],
+  "인도네시아": ["브카시","자카르타"],
+  "일본":      ["요코하마(도쿄)"],
+  "중국":      ["베이징","염성","옌타이","즈양","상하이"],
+  "체코":      ["오스트라바","프라하"],
+  "카자흐스탄": ["알마티"],
+  "튀르키예":  ["부르사","이스탄불","이즈밋"],
+  "프랑스":    ["파리"],
+  "호주":      ["시드니"],
+  "UAE":       ["두바이"],
+};
+
 // ─── HMG 계열사 목록 ─────────────────────────────────
 const HMG_ORGS = [
   "현대자동차",
@@ -914,9 +942,19 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
                 {HMG_ORGS.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div><label style={lbl}>부임 국가 *</label><input style={inp} placeholder="예: 미국" value={prof.country} onChange={e => setProf(f => ({ ...f, country: e.target.value }))} /></div>
-              <div><label style={lbl}>부임 도시 *</label><input style={inp} placeholder="예: 어바인" value={prof.city} onChange={e => setProf(f => ({ ...f, city: e.target.value }))} /></div>
+            <div>
+              <label style={lbl}>부임 국가 *</label>
+              <select style={{ ...inp, cursor: "pointer" }} value={prof.country} onChange={e => setProf(f => ({ ...f, country: e.target.value, city: "" }))}>
+                <option value="">국가를 선택하세요</option>
+                {COUNTRIES_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={lbl}>부임 도시 *</label>
+              <select style={{ ...inp, cursor: "pointer" }} value={prof.city} onChange={e => setProf(f => ({ ...f, city: e.target.value }))} disabled={!prof.country}>
+                <option value="">{prof.country ? "도시를 선택하세요" : "국가를 먼저 선택하세요"}</option>
+                {(CITIES_MAP[prof.country] || []).map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
             <div>
               <label style={lbl}>주요 고민</label>
@@ -990,10 +1028,19 @@ function ProfileForm({ initialData, onSave, onBack, onLogout }) {
               {HMG_ORGS.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {[["country","부임 국가","예: 미국"],["city","부임 도시","예: 어바인"]].map(([k,l,ph]) => (
-              <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} placeholder={ph} value={form[k]||""} onChange={e => setForm(f => ({ ...f, [k]: e.target.value }))} /></div>
-            ))}
+          <div>
+            <label style={S.lbl}>부임 국가</label>
+            <select style={{ ...S.inp, cursor: "pointer" }} value={form.country||""} onChange={e => setForm(f => ({ ...f, country: e.target.value, city: "" }))}>
+              <option value="">국가를 선택하세요</option>
+              {COUNTRIES_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={S.lbl}>부임 도시</label>
+            <select style={{ ...S.inp, cursor: "pointer" }} value={form.city||""} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} disabled={!form.country}>
+              <option value="">{form.country ? "도시를 선택하세요" : "국가를 먼저 선택하세요"}</option>
+              {(CITIES_MAP[form.country] || []).map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
           <div>
             <label style={S.lbl}>주요 고민</label>
