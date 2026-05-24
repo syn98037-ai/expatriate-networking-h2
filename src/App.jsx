@@ -119,6 +119,7 @@ export default function App() {
   const [comments,   setComments]   = useState({});
   const [missions,   setMissions]   = useState({});
   const [rooms,      setRooms]      = useState([]);
+  const [dmRooms,    setDmRooms]    = useState([]); // 1:1 채팅방 목록
   const [isAdmin,    setIsAdmin]    = useState(false);
   const [isMobile,   setIsMobile]   = useState(typeof window !== "undefined" ? window.innerWidth < 768 : true);
 
@@ -293,6 +294,21 @@ export default function App() {
       text, senderId: uid, senderName: myProfile?.name || "나",
       createdAt: serverTimestamp(),
     });
+    // 1:1 채팅이면 dmRooms에 등록/업데이트
+    const isDm = roomId !== "global" && !roomId.startsWith("room") && roomId.includes("_");
+    if (isDm) {
+      const otherId = roomId.split("_").find(id => id !== uid);
+      const other   = profiles.find(p => p.id === otherId);
+      if (other) {
+        setDmRooms(prev => {
+          const exists = prev.find(r => r.id === roomId);
+          if (exists) {
+            return prev.map(r => r.id === roomId ? { ...r, lastMsg: text, updatedAt: new Date().toISOString() } : r);
+          }
+          return [...prev, { id: roomId, name: other.name, otherId, lastMsg: text, updatedAt: new Date().toISOString() }];
+        });
+      }
+    }
   };
 
   // ── 댓글 추가 ────────────────────────────────────────
@@ -602,7 +618,7 @@ match /{document=**} {
     switch (view) {
       case "dashboard":  return <Dashboard profiles={mergedProfiles} myProfile={mergedProfiles.find(p => p.id === uid) || myProfile} uid={uid} onRequest={sendReq} onChat={p => openChat(roomFor(p.id), p.name)} />;
       case "directory":  return <Directory profiles={mergedProfiles} uid={uid} onRequest={sendReq} onChat={p => openChat(roomFor(p.id), p.name)} onViewProfile={p => setOverlay({ type: "profileView", data: p })} />;
-      case "community":  return <Community posts={posts} profiles={mergedProfiles} rooms={rooms} uid={uid} onOpenPost={p => setOverlay({ type: "post", data: p })} onNewPost={() => setOverlay({ type: "newPost" })} onOpenChat={(id, name) => openChat(id, name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />;
+      case "community":  return <Community posts={posts} profiles={mergedProfiles} rooms={rooms} dmRooms={dmRooms} uid={uid} onOpenPost={p => setOverlay({ type: "post", data: p })} onNewPost={() => setOverlay({ type: "newPost" })} onOpenChat={(id, name) => openChat(id, name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />;
       case "meetings":   return <Meetings meetings={meetings} profiles={mergedProfiles} uid={uid} onUpdate={updateMtg} onChat={m => { const oid = m.fromId === uid ? m.toId : m.fromId; openChat(roomFor(oid), m.fromId === uid ? m.toName : m.fromName); }} />;
       case "missions":   return <MissionView myMissions={myMissions} sentCount={sentCount} uid={uid} onUpdate={updateMission} />;
 
@@ -1527,7 +1543,7 @@ function Meetings({ meetings, profiles, uid, onUpdate, onChat }) {
   );
 }
 
-function Community({ posts, profiles, rooms, uid, onOpenPost, onNewPost, onOpenChat, onCreateRoom, onLeaveRoom, onInviteToRoom }) {
+function Community({ posts, profiles, rooms, dmRooms, uid, onOpenPost, onNewPost, onOpenChat, onCreateRoom, onLeaveRoom, onInviteToRoom }) {
   const [tab, setTab]           = useState("board");
   const [showCreate, setCreate] = useState(false);
   const [newRoom, setNewRoom]   = useState({ name: "", invitees: [] });
@@ -1572,24 +1588,53 @@ function Community({ posts, profiles, rooms, uid, onOpenPost, onNewPost, onOpenC
         )}
         {tab === "groups" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {/* 전체 채팅방 */}
             <button onClick={() => onOpenChat("global", "전체 채팅방")} style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,rgba(245,158,11,0.1),transparent)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 18, padding: 16, cursor: "pointer", width: "100%", textAlign: "left" }}>
               <div style={{ width: 44, height: 44, background: "rgba(245,158,11,0.15)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🌐</div>
               <div style={{ flex: 1 }}><p style={{ fontSize: 14, fontWeight: 700, color: "#f59e0b", margin: 0 }}>전체 채팅방</p><p style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>모든 참여자 {profiles.length}명</p></div>
               <span style={{ color: "#f59e0b", opacity: 0.5 }}>→</span>
             </button>
-            {myRooms.length === 0 && (
-              <p style={{ fontSize: 12, color: "#64748b", fontStyle: "italic", textAlign: "center", padding: "20px 0" }}>참여 중인 채팅방이 없어요.<br/>새 채팅방을 만들어보세요!</p>
+
+            {/* 1:1 채팅방 */}
+            {dmRooms.length > 0 && (
+              <>
+                <p style={{ fontSize: 10, fontWeight: 700, color: "#4b5563", letterSpacing: "0.08em", margin: "4px 2px 0" }}>1:1 채팅</p>
+                {dmRooms.sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt)).map(dm => {
+                  const other = profiles.find(p => p.id === dm.otherId);
+                  return (
+                    <button key={dm.id} onClick={() => onOpenChat(dm.id, dm.name)} style={{ display: "flex", alignItems: "center", gap: 14, ...S.card, borderRadius: 18, cursor: "pointer", width: "100%", textAlign: "left" }}>
+                      <div style={{ flexShrink: 0 }}><Avatar profile={other || { name: dm.name, id: dm.otherId }} size={44} /></div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{dm.name}</p>
+                        <p style={{ fontSize: 11, color: "#64748b", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dm.lastMsg || ""}</p>
+                      </div>
+                      <span style={{ color: "#64748b", flexShrink: 0 }}>→</span>
+                    </button>
+                  );
+                })}
+              </>
             )}
-            {myRooms.map(room => (
-              <button key={room.id} onClick={() => onOpenChat(room.id, room.name)} style={{ display: "flex", alignItems: "center", gap: 14, ...S.card, borderRadius: 18, cursor: "pointer", width: "100%", textAlign: "left" }}>
-                <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.05)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>💬</div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{room.name}</p>
-                  <p style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>멤버 {room.members?.length || 0}명</p>
-                </div>
-                <span style={{ color: "#64748b" }}>→</span>
-              </button>
-            ))}
+
+            {/* 그룹 채팅방 */}
+            {myRooms.length > 0 && (
+              <>
+                <p style={{ fontSize: 10, fontWeight: 700, color: "#4b5563", letterSpacing: "0.08em", margin: "4px 2px 0" }}>그룹 채팅</p>
+                {myRooms.map(room => (
+                  <button key={room.id} onClick={() => onOpenChat(room.id, room.name)} style={{ display: "flex", alignItems: "center", gap: 14, ...S.card, borderRadius: 18, cursor: "pointer", width: "100%", textAlign: "left" }}>
+                    <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.05)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>💬</div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{room.name}</p>
+                      <p style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>멤버 {room.members?.length || 0}명</p>
+                    </div>
+                    <span style={{ color: "#64748b" }}>→</span>
+                  </button>
+                ))}
+              </>
+            )}
+
+            {dmRooms.length === 0 && myRooms.length === 0 && (
+              <p style={{ fontSize: 12, color: "#64748b", fontStyle: "italic", textAlign: "center", padding: "20px 0" }}>참여 중인 채팅방이 없어요.<br/>동료에게 채팅을 걸거나 새 채팅방을 만들어보세요!</p>
+            )}
             {!showCreate ? (
               <button onClick={() => setCreate(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 14, border: "2px dashed rgba(255,255,255,0.12)", borderRadius: 18, background: "none", color: "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 13, fontWeight: 700, width: "100%" }}>+ 채팅방 만들기</button>
             ) : (
