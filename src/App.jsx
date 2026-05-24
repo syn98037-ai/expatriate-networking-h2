@@ -1247,13 +1247,32 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                     <div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{p.name}</p><p style={{ fontSize: 10, color: "#64748b" }}>{p.org}</p></div>
                     {allDone && <span style={{ background: "rgba(34,197,94,0.12)", color: "#4ade80", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 8 }}>완료</span>}
                   </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    {[["티미팅 발송 "+sentCnt+"/2", m1done],["티미팅 인증 "+(ms.m2Photos||[]).length+"/2", m2done],["식사 인증 "+(ms.m3Photos||[]).length+"/1", m3done]].map(([label, done]) => (
-                      <div key={label} style={{ flex: 1, background: done ? "rgba(34,197,94,0.08)" : "rgba(255,255,255,0.04)", border: `1px solid ${done ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.07)"}`, borderRadius: 10, padding: "6px 4px", textAlign: "center" }}>
+                  <div style={{ display: "flex", gap: 6, marginBottom: (ms.m2Photos||[]).length > 0 ? 10 : 0 }}>
+                    {[
+                      ["티미팅 발송", sentCnt+"/2", m1done, null],
+                      ["티미팅 인증", (ms.m2Photos||[]).length+"/2", m2done, ms.m2Photos||[]],
+                      ["식사 인증",   (ms.m3Photos||[]).length+"/1", m3done, ms.m3Photos||[]],
+                    ].map(([label, count, done, photos]) => (
+                      <div key={label} style={{ flex: 1, background: done ? "rgba(34,197,94,0.08)" : "rgba(255,255,255,0.04)", border: `1px solid ${done ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.07)"}`, borderRadius: 10, padding: "8px 4px", textAlign: "center" }}>
                         <p style={{ fontSize: 9, color: done ? "#4ade80" : "#64748b", fontWeight: 700, margin: 0 }}>{done ? "✓ " : ""}{label}</p>
+                        <p style={{ fontSize: 10, color: done ? "#4ade80" : "#94a3b8", fontWeight: 700, margin: "2px 0 0" }}>{count}</p>
                       </div>
                     ))}
                   </div>
+                  {/* 티미팅 인증샷 미리보기 */}
+                  {(ms.m2Photos||[]).length > 0 && (
+                    <div>
+                      <p style={{ fontSize: 9, color: "#64748b", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.06em" }}>티미팅 인증샷</p>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {(ms.m2Photos||[]).map((photo, idx) => (
+                          <img key={idx} src={photo.img} alt={`인증샷 ${idx+1}`}
+                            style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover", border: "1px solid rgba(56,189,248,0.3)", cursor: "pointer" }}
+                            onClick={() => window.open(photo.img, "_blank")}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -1899,8 +1918,49 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
           </div>}
           {m.photos !== undefined && !m.disabled && (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {m.photos.length > 0 && <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>{m.photos.map((p,i) => <img key={i} src={p.img} alt="" style={{ width: 72, height: 72, borderRadius: 12, objectFit: "cover", flexShrink: 0, border: `1px solid ${m.color}40` }} />)}</div>}
-              {!m.done && <><label htmlFor={`photo_${m.id}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px", border: `1.5px dashed ${m.color}40`, borderRadius: 14, cursor: "pointer", color: m.color, fontSize: 12, fontWeight: 700 }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>인증샷 올리기</label><input type="file" id={`photo_${m.id}`} accept="image/*" style={{ display: "none" }} onChange={e => addPhoto(m.photoKey, e)} /></>}
+              {/* 올라간 인증샷 목록 - 교체/삭제 버튼 포함 */}
+              {m.photos.length > 0 && (
+                <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
+                  {m.photos.map((p, i) => (
+                    <div key={i} style={{ position: "relative", flexShrink: 0 }}>
+                      <img src={p.img} alt="" style={{ width: 80, height: 80, borderRadius: 12, objectFit: "cover", border: `1px solid ${m.color}40` }} />
+                      {/* 삭제 버튼 */}
+                      <button
+                        onClick={() => {
+                          if (window.confirm("이 인증샷을 삭제하시겠습니까?")) {
+                            const updated = m.photos.filter((_, idx) => idx !== i);
+                            onUpdate(m.photoKey, updated);
+                          }
+                        }}
+                        style={{ position: "absolute", top: -6, right: -6, width: 22, height: 22, borderRadius: "50%", background: "#ef4444", border: "2px solid #020617", color: "#fff", fontSize: 12, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
+                      >×</button>
+                      {/* 교체 버튼 */}
+                      <label htmlFor={`replace_${m.id}_${i}`} style={{ position: "absolute", bottom: -6, right: -6, width: 22, height: 22, borderRadius: "50%", background: m.color, border: "2px solid #020617", color: "#020617", fontSize: 10, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>↺</label>
+                      <input type="file" id={`replace_${m.id}_${i}`} accept="image/*" style={{ display: "none" }} onChange={e => {
+                        const file = e.target.files?.[0]; if (!file) return;
+                        const r = new FileReader();
+                        r.onload = async ev => {
+                          const path = `missions/${uid}/${m.photoKey}_${Date.now()}`;
+                          const url = await uploadPhotoGlobal(ev.target.result, path);
+                          const updated = m.photos.map((ph, idx) => idx === i ? { img: url, date: new Date().toISOString() } : ph);
+                          onUpdate(m.photoKey, updated);
+                        };
+                        r.readAsDataURL(file);
+                      }} />
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* 추가 업로드 버튼 (목표 미달 시) */}
+              {m.photos.length < m.target && (
+                <>
+                  <label htmlFor={`photo_${m.id}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px", border: `1.5px dashed ${m.color}40`, borderRadius: 14, cursor: "pointer", color: m.color, fontSize: 12, fontWeight: 700 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    인증샷 올리기 ({m.photos.length}/{m.target})
+                  </label>
+                  <input type="file" id={`photo_${m.id}`} accept="image/*" style={{ display: "none" }} onChange={e => addPhoto(m.photoKey, e)} />
+                </>
+              )}
             </div>
           )}
         </div>
