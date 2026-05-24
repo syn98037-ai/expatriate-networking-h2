@@ -15,6 +15,20 @@ import {
 import { auth, db, storage } from "./firebase";
 import { CONCERNS, POST_TAGS, gradFor, timeAgo, S, stBadge } from "./constants";
 
+// ─── HMG 계열사 목록 ─────────────────────────────────
+const HMG_ORGS = [
+  "현대자동차",
+  "기아",
+  "현대제철",
+  "현대글로비스",
+  "현대트랜시스",
+  "현대위아",
+  "현대로템",
+  "현대캐피탈",
+  "이노션",
+  "현대케피코",
+];
+
 // ─── Firestore 컬렉션 헬퍼 ──────────────────────────────
 const col  = (...segs) => collection(db, ...segs);
 const docR = (...segs) => doc(db, ...segs);
@@ -893,7 +907,13 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
               <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>프로필 사진 (선택)</p>
             </div>
             <div><label style={lbl}>이름 *</label><input style={inp} placeholder="성함을 입력하세요" value={prof.name} onChange={e => setProf(f => ({ ...f, name: e.target.value }))} /></div>
-            <div><label style={lbl}>소속</label><input style={inp} placeholder="예: 경영지원팀, 미주법인" value={prof.org} onChange={e => setProf(f => ({ ...f, org: e.target.value }))} /></div>
+            <div>
+              <label style={lbl}>소속 (계열사)</label>
+              <select style={{ ...inp, cursor: "pointer" }} value={prof.org} onChange={e => setProf(f => ({ ...f, org: e.target.value }))}>
+                <option value="">계열사를 선택하세요</option>
+                {HMG_ORGS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <div><label style={lbl}>부임 국가 *</label><input style={inp} placeholder="예: 미국" value={prof.country} onChange={e => setProf(f => ({ ...f, country: e.target.value }))} /></div>
               <div><label style={lbl}>부임 도시 *</label><input style={inp} placeholder="예: 어바인" value={prof.city} onChange={e => setProf(f => ({ ...f, city: e.target.value }))} /></div>
@@ -962,9 +982,14 @@ function ProfileForm({ initialData, onSave, onBack, onLogout }) {
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {[["name","이름","성함을 입력하세요"],["org","소속","예: 경영지원팀, 미주법인"]].map(([k,l,ph]) => (
-            <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} placeholder={ph} value={form[k]||""} onChange={e => setForm(f => ({ ...f, [k]: e.target.value }))} /></div>
-          ))}
+          <div><label style={S.lbl}>이름</label><input style={S.inp} placeholder="성함을 입력하세요" value={form.name||""} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+          <div>
+            <label style={S.lbl}>소속 (계열사)</label>
+            <select style={{ ...S.inp, cursor: "pointer" }} value={form.org||""} onChange={e => setForm(f => ({ ...f, org: e.target.value }))}>
+              <option value="">계열사를 선택하세요</option>
+              {HMG_ORGS.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {[["country","부임 국가","예: 미국"],["city","부임 도시","예: 어바인"]].map(([k,l,ph]) => (
               <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} placeholder={ph} value={form[k]||""} onChange={e => setForm(f => ({ ...f, [k]: e.target.value }))} /></div>
