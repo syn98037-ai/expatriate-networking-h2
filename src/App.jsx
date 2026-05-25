@@ -132,6 +132,30 @@ export default function App() {
     return () => window.removeEventListener("resize", handler);
   }, []);
 
+  // ── 핸드폰 뒤로가기 버튼 처리 ────────────────────────
+  useEffect(() => {
+    const handlePopState = () => {
+      if (showNotifs) { setShowNotifs(false); return; }
+      if (overlay) {
+        if (overlay.type === "admin") setIsAdmin(false);
+        setOverlay(null);
+        return;
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [overlay, showNotifs]);
+
+  // overlay 열기 래퍼 (history 스택에 push)
+  const openOverlay = (data) => {
+    window.history.pushState({ type: "overlay" }, "");
+    setOverlay(data);
+  };
+  const openNotifs = () => {
+    window.history.pushState({ type: "notifs" }, "");
+    openNotifs();
+  };
+
   const uid = myProfile?.id;
 
   // ── Firebase Auth 상태 감지 ──────────────────────────
@@ -621,7 +645,7 @@ match /{document=**} {
   };
 
   const roomFor   = (otherId) => [uid, otherId].sort().join("_");
-  const openChat  = (roomId, name) => setOverlay({ type: "chat", data: { roomId, name } });
+  const openChat  = (roomId, name) => openOverlay({ type: "chat", data: { roomId, name } });
 
   const myMissions = missions[uid] || {};
   const sentCount  = meetings.filter(m => m.fromId === uid).length;
@@ -637,9 +661,9 @@ match /{document=**} {
 
   const renderMain = () => {
     switch (view) {
-      case "dashboard":  return <Dashboard profiles={mergedProfiles} myProfile={mergedProfiles.find(p => p.id === uid) || myProfile} uid={uid} onRequest={p => setOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} />;
-      case "directory":  return <Directory profiles={mergedProfiles} uid={uid} onRequest={p => setOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} onViewProfile={p => setOverlay({ type: "profileView", data: p })} />;
-      case "community":  return <Community posts={posts} profiles={mergedProfiles} rooms={rooms} dmRooms={dmRooms} uid={uid} onOpenPost={p => setOverlay({ type: "post", data: p })} onNewPost={() => setOverlay({ type: "newPost" })} onOpenChat={(id, name) => openChat(id, name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />;
+      case "dashboard":  return <Dashboard profiles={mergedProfiles} myProfile={mergedProfiles.find(p => p.id === uid) || myProfile} uid={uid} onRequest={p => openOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} />;
+      case "directory":  return <Directory profiles={mergedProfiles} uid={uid} onRequest={p => openOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} onViewProfile={p => openOverlay({ type: "profileView", data: p })} />;
+      case "community":  return <Community posts={posts} profiles={mergedProfiles} rooms={rooms} dmRooms={dmRooms} uid={uid} onOpenPost={p => openOverlay({ type: "post", data: p })} onNewPost={() => openOverlay({ type: "newPost" })} onOpenChat={(id, name) => openChat(id, name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />;
       case "meetings":   return <Meetings meetings={meetings} profiles={mergedProfiles} uid={uid} onUpdate={updateMtg} onChat={m => { const oid = m.fromId === uid ? m.toId : m.fromId; openChat(roomFor(oid), m.fromId === uid ? m.toName : m.fromName); }} />;
       case "missions":   return <MissionView myMissions={myMissions} sentCount={sentCount} uid={uid} onUpdate={updateMission} />;
 
@@ -667,7 +691,7 @@ match /{document=**} {
         {(authStatus === "unauth" || authStatus === "needProfile") && (
           <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#020617 0%,#0a1628 100%)" }}>
             <div style={{ width: 420, height: "90vh", maxHeight: 780, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 28, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 40px 80px rgba(0,0,0,0.6)" }}>
-              <AuthView onLogin={handleLogin} onRegister={handleRegister} onAdmin={() => setOverlay({ type: "adminAuth" })} />
+              <AuthView onLogin={handleLogin} onRegister={handleRegister} onAdmin={() => openOverlay({ type: "adminAuth" })} />
             </div>
           </div>
         )}
@@ -678,14 +702,14 @@ match /{document=**} {
             {/* PC 상단 헤더 */}
             <header style={{ padding: "0 32px", height: 60, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(2,6,23,0.95)", backdropFilter: "blur(12px)" }}>
               {/* 왼쪽: 로고 + 탭 */}
-              {/* 왼쪽: 로고 + 탭 */}
-              <div style={{ display: "flex", alignItems: "center", gap: 20, minWidth: 0, overflow: "hidden" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 32, flexShrink: 1, minWidth: 0 }}>
                 <div style={{ flexShrink: 0 }}>
-                  <span style={{ fontSize: 16, fontWeight: 900, background: "linear-gradient(90deg,#fde68a,#f59e0b,#d97706)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Global Connect</span>
+                  <span style={{ fontSize: 17, fontWeight: 900, background: "linear-gradient(90deg,#fde68a,#f59e0b,#d97706)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Global Connect</span>
                 </div>
-                <nav style={{ display: "flex", gap: 1, overflow: "hidden" }}>
+                <nav style={{ display: "flex", gap: 2, flexWrap: "nowrap" }}>
                   {NAV.map(n => (
-                    <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 10, background: view === n.id ? "rgba(245,158,11,0.12)" : "none", border: view === n.id ? "1px solid rgba(245,158,11,0.25)" : "1px solid transparent", color: view === n.id ? "#f59e0b" : "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 12, fontWeight: 600, transition: "all 0.2s", whiteSpace: "nowrap", flexShrink: 0 }}>
+                    <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 10, background: view === n.id ? "rgba(245,158,11,0.12)" : "none", border: view === n.id ? "1px solid rgba(245,158,11,0.25)" : "1px solid transparent", color: view === n.id ? "#f59e0b" : "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 13, fontWeight: 600, transition: "all 0.2s", whiteSpace: "nowrap" }}>
+                      <NavIcon id={n.id} active={view === n.id} />
                       <span>{n.label}</span>
                     </button>
                   ))}
@@ -694,7 +718,7 @@ match /{document=**} {
               {/* 오른쪽: 프로필 + 로그아웃 */}
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
                 {/* PC 알림 벨 */}
-                <div onClick={() => setShowNotifs(true)} style={{ position: "relative", cursor: "pointer", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.05)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)" }}>
+                <div onClick={() => openNotifs()} style={{ position: "relative", cursor: "pointer", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.05)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)" }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                   {notifs.filter(n => !n.read).length > 0 && (
                     <div style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, background: "#ef4444", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, color: "#fff", border: "2px solid #020617" }}>
@@ -702,7 +726,7 @@ match /{document=**} {
                     </div>
                   )}
                 </div>
-                <div onClick={() => setOverlay({ type: "profile" })} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <div onClick={() => openOverlay({ type: "profile" })} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10, padding: "6px 10px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <Avatar profile={myProfile} size={30} />
                   <div>
                     <p style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{myProfile?.name}</p>
@@ -731,7 +755,7 @@ match /{document=**} {
                     <span style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.22)", color: "#f59e0b", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.concern}</span>
                     {myProfile?.interest && <span style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#94a3b8", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.interest}</span>}
                   </div>
-                  <button onClick={() => setOverlay({ type: "profile" })} style={{ width: "100%", padding: "8px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b", fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>✏️ 프로필 수정</button>
+                  <button onClick={() => openOverlay({ type: "profile" })} style={{ width: "100%", padding: "8px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", color: "#f59e0b", fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>✏️ 프로필 수정</button>
                 </div>
                 {/* 미션 요약 */}
                 <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: 16 }}>
@@ -783,7 +807,7 @@ match /{document=**} {
                   {posts.length === 0
                     ? <p style={{ fontSize: 12, color: "#4b5563", fontStyle: "italic" }}>게시글이 없어요.</p>
                     : posts.slice(0, 6).map(post => (
-                      <div key={post.id} onClick={() => setOverlay({ type: "post", data: post })} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", cursor: "pointer" }}>
+                      <div key={post.id} onClick={() => openOverlay({ type: "post", data: post })} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", cursor: "pointer" }}>
                         <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
                           <span style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 6 }}>{post.tag}</span>
                           <span style={{ fontSize: 9, color: "#4b5563" }}>{timeAgo(post.createdAt)}</span>
@@ -801,12 +825,12 @@ match /{document=**} {
 
         {/* 오버레이 (PC에서도 동일) */}
         {overlay?.type === "profile"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:480,maxHeight:"90vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} /></div></div>}
-        {overlay?.type === "adminAuth"   && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,background:"#020617",borderRadius:24,overflow:"hidden",border:"1px solid rgba(255,255,255,0.1)" }}><AdminAuth onSuccess={() => { setIsAdmin(true); setOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} /></div></div>}
+        {overlay?.type === "adminAuth"   && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,background:"#020617",borderRadius:24,overflow:"hidden",border:"1px solid rgba(255,255,255,0.1)" }}><AdminAuth onSuccess={() => { setIsAdmin(true); openOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} /></div></div>}
         {overlay?.type === "admin"       && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:640,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} /></div></div>}
         {overlay?.type === "chat"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:480,height:"75vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div></div>}
         {overlay?.type === "post"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"80vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div></div>}
         {overlay?.type === "newPost"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div></div>}
-        {overlay?.type === "profileView" && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,height:"70vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => setOverlay({ type:"sendReq", data:overlay.data })} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} /></div></div>}
+        {overlay?.type === "profileView" && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,height:"70vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid rgba(255,255,255,0.1)" }}><ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type:"sendReq", data:overlay.data })} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} /></div></div>}
         {overlay?.type === "sendReq"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:150 }}><SendReqModal target={overlay.data} onSend={(msg) => { sendReq(overlay.data, msg); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
 
         {/* PC 알림 패널 - 오른쪽 슬라이드 */}
@@ -831,7 +855,7 @@ match /{document=**} {
         <AuthView
           onLogin={handleLogin}
           onRegister={handleRegister}
-          onAdmin={() => setOverlay({ type: "adminAuth" })}
+          onAdmin={() => openOverlay({ type: "adminAuth" })}
           needProfile={authStatus === "needProfile"}
           onSaveProfile={saveProfile}
           myProfile={myProfile}
@@ -848,7 +872,7 @@ match /{document=**} {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               {/* 알림 벨 */}
-              <div onClick={() => setShowNotifs(true)} style={{ position: "relative", cursor: "pointer", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.05)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div onClick={() => openNotifs()} style={{ position: "relative", cursor: "pointer", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.05)", borderRadius: 12, border: "1px solid rgba(255,255,255,0.08)" }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                 {notifs.filter(n => !n.read).length > 0 && (
                   <div style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, background: "#ef4444", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, color: "#fff", border: "2px solid #020617" }}>
@@ -856,7 +880,7 @@ match /{document=**} {
                   </div>
                 )}
               </div>
-              <div onClick={() => setOverlay({ type: "profile" })} style={{ cursor: "pointer" }}><Avatar profile={myProfile} size={36} /></div>
+              <div onClick={() => openOverlay({ type: "profile" })} style={{ cursor: "pointer" }}><Avatar profile={myProfile} size={36} /></div>
             </div>
           </header>
 
@@ -875,12 +899,12 @@ match /{document=**} {
 
       {/* 오버레이 */}
       {overlay?.type === "profile"     && <ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} />}
-      {overlay?.type === "adminAuth"   && <AdminAuth onSuccess={() => { setIsAdmin(true); setOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} />}
+      {overlay?.type === "adminAuth"   && <AdminAuth onSuccess={() => { setIsAdmin(true); openOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} />}
       {overlay?.type === "admin"       && <AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} />}
       {overlay?.type === "chat"        && <ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />}
       {overlay?.type === "post"        && <PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} />}
       {overlay?.type === "newPost"     && <NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} />}
-      {overlay?.type === "profileView" && <ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => setOverlay({ type: "sendReq", data: overlay.data })} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} />}
+      {overlay?.type === "profileView" && <ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type: "sendReq", data: overlay.data })} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} />}
       {overlay?.type === "sendReq"     && <SendReqModal target={overlay.data} onSend={(msg) => { sendReq(overlay.data, msg); setOverlay(null); }} onBack={() => setOverlay(null)} />}
 
       {/* 알림 패널 */}
@@ -893,6 +917,91 @@ match /{document=**} {
           onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }}
         />
       )}
+    </div>
+  );
+}
+
+/* ════════ 티미팅 신청 모달 ════════ */
+function SendReqModal({ target, onSend, onBack }) {
+  const [msg, setMsg] = useState("");
+  return (
+    <div style={{ width: "88%", maxWidth: 360, background: "#0f172a", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 24, padding: 28, display: "flex", flexDirection: "column", gap: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <Avatar profile={target} size={52} />
+        <div>
+          <p style={{ fontSize: 16, fontWeight: 800, color: "#fff", margin: 0 }}>{target.name}</p>
+          <p style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{target.org} · {target.city}</p>
+        </div>
+      </div>
+      <div>
+        <label style={S.lbl}>신청 멘트 (선택)</label>
+        <textarea
+          style={{ ...S.inp, minHeight: 100, resize: "none" }}
+          placeholder="예: 안녕하세요! 같은 고민을 갖고 계신 것 같아서 연락드려요 :)"
+          value={msg}
+          onChange={e => setMsg(e.target.value)}
+        />
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button onClick={onBack} style={{ ...S.btnGhost, flex: 1, padding: 12 }}>취소</button>
+        <button onClick={() => onSend(msg)} style={{ ...S.btnAmber, flex: 2, padding: 12 }}>티미팅 신청하기</button>
+      </div>
+    </div>
+  );
+}
+
+/* ════════ 알림 패널 ════════ */
+function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings }) {
+  const unreadCount = notifs.filter(n => !n.read).length;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#020617" }}>
+      <div style={S.overlayHeader}>
+        <button onClick={onClose} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>알림</p>
+          {unreadCount > 0 && <p style={{ fontSize: 10, color: "#f59e0b", margin: 0 }}>읽지 않은 알림 {unreadCount}개</p>}
+        </div>
+        {unreadCount > 0 && (
+          <button onClick={onReadAll} style={{ background: "none", border: "none", color: "#f59e0b", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>모두 읽음</button>
+        )}
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+        {notifs.length === 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 200, gap: 12 }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <p style={{ fontSize: 13, color: "#4b5563", fontStyle: "italic" }}>알림이 없습니다.</p>
+          </div>
+        ) : notifs.map(n => (
+          <div
+            key={n.id}
+            onClick={() => { onRead(n.id); onGoMeetings(); }}
+            style={{ background: n.read ? "rgba(255,255,255,0.03)" : "rgba(245,158,11,0.07)", border: `1px solid ${n.read ? "rgba(255,255,255,0.06)" : "rgba(245,158,11,0.2)"}`, borderRadius: 16, padding: 14, cursor: "pointer", position: "relative" }}
+          >
+            {!n.read && <div style={{ position: "absolute", top: 14, right: 14, width: 8, height: 8, background: "#f59e0b", borderRadius: "50%" }} />}
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <div style={{ width: 36, height: 36, borderRadius: 12, background: n.type === "accepted" ? "rgba(34,197,94,0.15)" : "rgba(245,158,11,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                {n.type === "accepted" ? "🎉" : "💬"}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>
+                  {n.type === "accepted"
+                    ? `${n.meeting.toName} 님이 티미팅을 수락했습니다!`
+                    : `${n.meeting.fromName} 님이 티미팅을 신청했습니다.`}
+                </p>
+                {n.meeting.message && (
+                  <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "8px 12px", marginBottom: 6 }}>
+                    <p style={{ fontSize: 12, color: "#e2e8f0", margin: 0, lineHeight: 1.5 }}>"{n.meeting.message}"</p>
+                  </div>
+                )}
+                <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>
+                  {n.type === "accepted" ? n.meeting.toOrg : n.meeting.fromOrg} · {timeAgo(n.createdAt)}
+                </p>
+                <p style={{ fontSize: 11, color: "#f59e0b", fontWeight: 600, marginTop: 6 }}>→ 티미팅 탭에서 확인하기</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
