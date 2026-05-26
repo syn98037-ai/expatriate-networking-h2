@@ -197,17 +197,19 @@ export default function App() {
         const newMeetings = s.docs.map(d => ({ id: d.id, ...d.data() }));
         const prev = prevMeetingsRef.current;
 
-        newMeetings.forEach(nm => {
-          const old = prev.find(p => p.id === nm.id);
-          // 새로 생성된 티미팅 신청 → 수신자에게 알림
-          if (!old && nm.toId === uid) {
-            setNotifs(n => [{ id: "n"+Date.now()+Math.random(), type: "received", meeting: nm, read: false, createdAt: new Date().toISOString() }, ...n]);
-          }
-          // 상태가 수락함으로 변경 → 발신자에게 알림
-          if (old && old.status !== "수락함" && nm.status === "수락함" && nm.fromId === uid) {
-            setNotifs(n => [{ id: "n"+Date.now()+Math.random(), type: "accepted", meeting: nm, read: false, createdAt: new Date().toISOString() }, ...n]);
-          }
-        });
+        if (uid) { // uid가 있을 때만 알림 처리
+          newMeetings.forEach(nm => {
+            const old = prev.find(p => p.id === nm.id);
+            // 새로 생성된 티미팅 신청 → 수신자에게 알림
+            if (!old && nm.toId === uid) {
+              setNotifs(n => [{ id: "n"+Date.now()+Math.random(), type: "received", meeting: nm, read: false, createdAt: new Date().toISOString() }, ...n]);
+            }
+            // 상태가 수락함으로 변경 → 발신자에게 알림
+            if (old && old.status !== "수락함" && nm.status === "수락함" && nm.fromId === uid) {
+              setNotifs(n => [{ id: "n"+Date.now()+Math.random(), type: "accepted", meeting: nm, read: false, createdAt: new Date().toISOString() }, ...n]);
+            }
+          });
+        }
 
         prevMeetingsRef.current = newMeetings;
         setMeetings(newMeetings);
@@ -225,6 +227,13 @@ export default function App() {
         const obj = {};
         s.docs.forEach(d => { obj[d.id] = d.data(); });
         setAdminOverrides(obj);
+      }),
+      // 1:1 채팅방 목록 실시간 로드
+      onSnapshot(query(col("dmRooms")), s => {
+        setDmRooms(s.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter(d => Array.isArray(d.members) && d.members.includes(uid))
+          .sort((a,b) => new Date(b.updatedAt||0) - new Date(a.updatedAt||0)));
       }),
     ];
     return () => unsubs.forEach(u => u());
@@ -339,18 +348,20 @@ export default function App() {
       text, senderId: uid, senderName: myProfile?.name || "나",
       createdAt: serverTimestamp(),
     });
-    // 1:1 채팅이면 dmRooms에 등록/업데이트 (otherId만 저장, 이름은 표시 시 동적 계산)
+    // 1:1 채팅이면 dmRooms Firestore에 저장/업데이트
     const isDm = roomId !== "global" && !roomId.startsWith("room") && roomId.includes("_");
     if (isDm) {
       const otherId = roomId.split("_").find(id => id !== uid);
       if (otherId) {
-        setDmRooms(prev => {
-          const exists = prev.find(r => r.id === roomId);
-          if (exists) {
-            return prev.map(r => r.id === roomId ? { ...r, lastMsg: text, updatedAt: new Date().toISOString() } : r);
-          }
-          return [...prev, { id: roomId, otherId, lastMsg: text, updatedAt: new Date().toISOString() }];
-        });
+        try {
+          await setDoc(docR("dmRooms", roomId), {
+            id: roomId,
+            otherId,
+            members: [uid, otherId],
+            lastMsg: text,
+            updatedAt: new Date().toISOString(),
+          }, { merge: true });
+        } catch(e) { console.warn("dmRooms write err:", e); }
       }
     }
   };
@@ -702,9 +713,9 @@ match /{document=**} {
             {/* PC 상단 헤더 */}
             <header style={{ padding: "0 20px 0 28px", height: 60, flexShrink: 0, display: "flex", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(2,6,23,0.95)", backdropFilter: "blur(12px)" }}>
               {/* 왼쪽: 로고 + 탭 */}
-              <div style={{ display: "flex", alignItems: "center", gap: 20, flex: 1, minWidth: 0, overflow: "hidden" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 20, flex: 1, minWidth: 0 }}>
                 <span style={{ fontSize: 16, fontWeight: 900, background: "linear-gradient(90deg,#fde68a,#f59e0b,#d97706)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", flexShrink: 0 }}>Global Connect</span>
-                <nav style={{ display: "flex", gap: 1 }}>
+                <nav style={{ display: "flex", gap: 1, overflow: "hidden", minWidth: 0 }}>
                   {NAV.map(n => (
                     <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 9px", borderRadius: 9, background: view === n.id ? "rgba(245,158,11,0.12)" : "none", border: view === n.id ? "1px solid rgba(245,158,11,0.25)" : "1px solid transparent", color: view === n.id ? "#f59e0b" : "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 12, fontWeight: 600, transition: "all 0.2s", whiteSpace: "nowrap" }}>
                       <NavIcon id={n.id} active={view === n.id} />
@@ -901,15 +912,17 @@ match /{document=**} {
       {overlay?.type === "profileView" && <ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type: "sendReq", data: overlay.data })} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} />}
       {overlay?.type === "sendReq"     && <SendReqModal target={overlay.data} onSend={(msg) => { sendReq(overlay.data, msg); setOverlay(null); }} onBack={() => setOverlay(null)} />}
 
-      {/* 알림 패널 */}
+      {/* 알림 패널 - 모바일: 절대 위치 오버레이 */}
       {showNotifs && (
-        <NotifPanel
-          notifs={notifs}
-          onClose={() => setShowNotifs(false)}
-          onRead={(id) => setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))}
-          onReadAll={() => setNotifs(prev => prev.map(n => ({ ...n, read: true })))}
-          onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }}
-        />
+        <div style={{ position: "absolute", inset: 0, zIndex: 60 }}>
+          <NotifPanel
+            notifs={notifs}
+            onClose={() => setShowNotifs(false)}
+            onRead={(id) => setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))}
+            onReadAll={() => setNotifs(prev => prev.map(n => ({ ...n, read: true })))}
+            onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }}
+          />
+        </div>
       )}
     </div>
   );
