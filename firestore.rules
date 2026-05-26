@@ -70,5 +70,12 @@ service cloud.firestore {
       allow read: if isLoggedIn();
       allow write: if isLoggedIn();
     }
+
+    match /notifications/{notifId} {
+      allow read: if isLoggedIn();
+      allow create: if isLoggedIn();
+      allow update: if isLoggedIn();
+      allow delete: if isLoggedIn();
+    }
   }
 }

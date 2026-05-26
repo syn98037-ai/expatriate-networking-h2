@@ -228,14 +228,30 @@ export default function App() {
         s.docs.forEach(d => { obj[d.id] = d.data(); });
         setAdminOverrides(obj);
       }),
-      // 1:1 채팅방 목록 실시간 로드
-      onSnapshot(query(col("dmRooms")), s => {
-        const currentUid = auth.currentUser?.uid;
-        if (!currentUid) return;
+      // 1:1 채팅방 목록 실시간 로드 (내 ownerId 기준으로만)
+      onSnapshot(query(col("dmRooms"), where("ownerId", "==", uid)), s => {
         setDmRooms(s.docs
-          .map(d => ({ id: d.id, ...d.data() }))
-          .filter(d => Array.isArray(d.members) && d.members.includes(currentUid))
+          .map(d => d.data())
           .sort((a,b) => new Date(b.updatedAt||0) - new Date(a.updatedAt||0)));
+      }),
+      // 채팅/기타 알림 실시간 수신 (read 조건 없이 전체 구독)
+      onSnapshot(query(col("notifications"), where("toId", "==", uid), orderBy("createdAt", "desc")), s => {
+        const newNotifs = s.docs.map(d => ({
+          id: "n_" + d.id,
+          firestoreId: d.id,
+          type: d.data().type,
+          fromName: d.data().fromName,
+          roomId: d.data().roomId,
+          preview: d.data().preview,
+          read: d.data().read || false,
+          createdAt: d.data().createdAt,
+        }));
+        setNotifs(prev => {
+          // 티미팅 알림(메모리)은 유지하고 채팅 알림(Firestore)만 교체
+          const meetingNotifs = prev.filter(n => n.type === "received" || n.type === "accepted");
+          const merged = [...newNotifs, ...meetingNotifs];
+          return merged.sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+        });
       }),
     ];
     return () => unsubs.forEach(u => u());
@@ -350,21 +366,38 @@ export default function App() {
       text, senderId: uid, senderName: myProfile?.name || "나",
       createdAt: serverTimestamp(),
     });
-    // 1:1 채팅이면 dmRooms Firestore에 저장/업데이트
+
     const isDm = roomId !== "global" && !roomId.startsWith("room") && roomId.includes("_");
     if (isDm && uid) {
       const parts   = roomId.split("_");
       const otherId = parts.find(id => id !== uid);
       if (otherId && otherId !== uid) {
+        const now = new Date().toISOString();
         try {
-          await setDoc(docR("dmRooms", roomId), {
-            id: roomId,
-            otherId,
-            members: [uid, otherId],
-            lastMsg: text,
-            updatedAt: new Date().toISOString(),
+          // 내 관점: otherId가 상대방
+          await setDoc(docR("dmRooms", `${uid}_${roomId}`), {
+            roomId, ownerId: uid, otherId,
+            lastMsg: text, updatedAt: now,
+          }, { merge: true });
+          // 상대방 관점: otherId가 나(uid)
+          await setDoc(docR("dmRooms", `${otherId}_${roomId}`), {
+            roomId, ownerId: otherId, otherId: uid,
+            lastMsg: text, updatedAt: now,
           }, { merge: true });
         } catch(e) { console.warn("dmRooms write err:", e); }
+
+        // 상대방에게 채팅 알림 전송
+        try {
+          await addDoc(col("notifications"), {
+            toId: otherId,
+            type: "chat",
+            fromName: myProfile?.name || "알 수 없음",
+            roomId,
+            preview: text.length > 30 ? text.slice(0, 30) + "..." : text,
+            read: false,
+            createdAt: now,
+          });
+        } catch(e) {}
       }
     }
   };
@@ -845,7 +878,7 @@ match /{document=**} {
         {showNotifs && (
           <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"stretch",justifyContent:"flex-end",zIndex:200 }} onClick={(e) => { if(e.target===e.currentTarget) setShowNotifs(false); }}>
             <div style={{ width:400,background:"#020617",borderLeft:"1px solid rgba(255,255,255,0.1)",display:"flex",flexDirection:"column" }}>
-              <NotifPanel notifs={notifs} onClose={() => setShowNotifs(false)} onRead={(id) => setNotifs(prev => prev.map(n => n.id===id?{...n,read:true}:n))} onReadAll={() => setNotifs(prev => prev.map(n => ({...n,read:true})))} onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }} />
+              <NotifPanel notifs={notifs} onClose={() => setShowNotifs(false)} onRead={(id) => setNotifs(prev => prev.map(n => n.id===id?{...n,read:true}:n))} onReadAll={() => setNotifs(prev => prev.map(n => ({...n,read:true})))} onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }} onGoChat={(roomId, name) => { setShowNotifs(false); openChat(roomId, name); }} />
             </div>
           </div>
         )}
@@ -921,9 +954,19 @@ match /{document=**} {
           <NotifPanel
             notifs={notifs}
             onClose={() => setShowNotifs(false)}
-            onRead={(id) => setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))}
-            onReadAll={() => setNotifs(prev => prev.map(n => ({ ...n, read: true })))}
+            onRead={async (id) => {
+              setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+              const n = notifs.find(x => x.id === id);
+              if (n?.firestoreId) { try { await updateDoc(docR("notifications", n.firestoreId), { read: true }); } catch(e) {} }
+            }}
+            onReadAll={async () => {
+              setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+              for (const n of notifs) {
+                if (n.firestoreId) { try { await updateDoc(docR("notifications", n.firestoreId), { read: true }); } catch(e) {} }
+              }
+            }}
             onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }}
+            onGoChat={(roomId, name) => { setShowNotifs(false); openChat(roomId, name); }}
           />
         </div>
       )}
@@ -961,7 +1004,7 @@ function SendReqModal({ target, onSend, onBack }) {
 }
 
 /* ════════ 알림 패널 ════════ */
-function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings }) {
+function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings, onGoChat }) {
   const unreadCount = notifs.filter(n => !n.read).length;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#020617" }}>
@@ -981,36 +1024,45 @@ function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings }) {
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             <p style={{ fontSize: 13, color: "#4b5563", fontStyle: "italic" }}>알림이 없습니다.</p>
           </div>
-        ) : notifs.map(n => (
-          <div
-            key={n.id}
-            onClick={() => { onRead(n.id); onGoMeetings(); }}
-            style={{ background: n.read ? "rgba(255,255,255,0.03)" : "rgba(245,158,11,0.07)", border: `1px solid ${n.read ? "rgba(255,255,255,0.06)" : "rgba(245,158,11,0.2)"}`, borderRadius: 16, padding: 14, cursor: "pointer", position: "relative" }}
-          >
-            {!n.read && <div style={{ position: "absolute", top: 14, right: 14, width: 8, height: 8, background: "#f59e0b", borderRadius: "50%" }} />}
-            <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-              <div style={{ width: 36, height: 36, borderRadius: 12, background: n.type === "accepted" ? "rgba(34,197,94,0.15)" : "rgba(245,158,11,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
-                {n.type === "accepted" ? "🎉" : "💬"}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>
-                  {n.type === "accepted"
-                    ? `${n.meeting.toName} 님이 티미팅을 수락했습니다!`
-                    : `${n.meeting.fromName} 님이 티미팅을 신청했습니다.`}
-                </p>
-                {n.meeting.message && (
-                  <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "8px 12px", marginBottom: 6 }}>
-                    <p style={{ fontSize: 12, color: "#e2e8f0", margin: 0, lineHeight: 1.5 }}>"{n.meeting.message}"</p>
-                  </div>
-                )}
-                <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>
-                  {n.type === "accepted" ? n.meeting.toOrg : n.meeting.fromOrg} · {timeAgo(n.createdAt)}
-                </p>
-                <p style={{ fontSize: 11, color: "#f59e0b", fontWeight: 600, marginTop: 6 }}>→ 티미팅 탭에서 확인하기</p>
+        ) : notifs.map(n => {
+          const isChatNotif = n.type === "chat";
+          const accent = isChatNotif ? "#38bdf8" : n.type === "accepted" ? "#4ade80" : "#f59e0b";
+          const icon   = isChatNotif ? "💬" : n.type === "accepted" ? "🎉" : "☕";
+          const title  = isChatNotif
+            ? `${n.fromName} 님이 메시지를 보냈습니다`
+            : n.type === "accepted"
+              ? `${n.meeting?.toName} 님이 티미팅을 수락했습니다!`
+              : `${n.meeting?.fromName} 님이 티미팅을 신청했습니다.`;
+          const handleClick = () => {
+            onRead(n.id);
+            if (isChatNotif && onGoChat) onGoChat(n.roomId, n.fromName);
+            else onGoMeetings();
+          };
+          return (
+            <div key={n.id} onClick={handleClick}
+              style={{ background: n.read ? "rgba(255,255,255,0.03)" : `${accent}11`, border: `1px solid ${n.read ? "rgba(255,255,255,0.06)" : accent+"33"}`, borderRadius: 16, padding: 14, cursor: "pointer", position: "relative" }}>
+              {!n.read && <div style={{ position: "absolute", top: 14, right: 14, width: 8, height: 8, background: accent, borderRadius: "50%" }} />}
+              <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <div style={{ width: 36, height: 36, borderRadius: 12, background: `${accent}22`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{icon}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>{title}</p>
+                  {isChatNotif && n.preview && (
+                    <p style={{ fontSize: 12, color: "#94a3b8", margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{n.preview}"</p>
+                  )}
+                  {!isChatNotif && n.meeting?.message && (
+                    <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "6px 10px", marginBottom: 4 }}>
+                      <p style={{ fontSize: 12, color: "#e2e8f0", margin: 0 }}>"{n.meeting.message}"</p>
+                    </div>
+                  )}
+                  <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>{timeAgo(n.createdAt)}</p>
+                  <p style={{ fontSize: 11, color: accent, fontWeight: 600, marginTop: 4 }}>
+                    {isChatNotif ? "→ 채팅방 열기" : "→ 티미팅 탭에서 확인"}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
