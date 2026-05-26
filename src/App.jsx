@@ -230,32 +230,27 @@ export default function App() {
         setAdminOverrides(obj);
       }),
       // 1:1 채팅방 목록 실시간 로드 (내 ownerId 기준으로만)
-      onSnapshot(query(col("dmRooms"), where("ownerId", "==", uid)), s => {
-        setDmRooms(s.docs
-          .map(d => d.data())
-          .sort((a,b) => new Date(b.updatedAt||0) - new Date(a.updatedAt||0)));
-      }),
-      // 채팅/기타 알림 실시간 수신 (read 조건 없이 전체 구독)
-      onSnapshot(query(col("notifications"), where("toId", "==", uid), orderBy("createdAt", "desc")), s => {
-        const newNotifs = s.docs.map(d => ({
-          id: "n_" + d.id,
-          firestoreId: d.id,
-          type: d.data().type,
-          fromName: d.data().fromName,
-          roomId: d.data().roomId,
-          preview: d.data().preview,
-          read: d.data().read || false,
-          createdAt: d.data().createdAt,
-        }));
-        setNotifs(prev => {
-          // 티미팅 알림(메모리)은 유지하고 채팅 알림(Firestore)만 교체
-          const meetingNotifs = prev.filter(n => n.type === "received" || n.type === "accepted");
-          const merged = [...newNotifs, ...meetingNotifs];
-          return merged.sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
-        });
-      }),
+      // 1:1 채팅방 목록 (uid 있을 때만)
+      ...(uid ? [
+        onSnapshot(query(col("dmRooms"), where("ownerId", "==", uid)), s => {
+          setDmRooms(s.docs
+            .map(d => d.data())
+            .sort((a,b) => new Date(b.updatedAt||0) - new Date(a.updatedAt||0)));
+        }),
+        onSnapshot(query(col("notifications"), where("toId", "==", uid), orderBy("createdAt", "desc")), s => {
+          const newNotifs = s.docs.map(d => ({
+            id: "n_" + d.id, firestoreId: d.id, type: d.data().type,
+            fromName: d.data().fromName, roomId: d.data().roomId,
+            preview: d.data().preview, read: d.data().read || false,
+            createdAt: d.data().createdAt,
+          }));
+          setNotifs(prev => {
+            const meetingNotifs = prev.filter(n => n.type === "received" || n.type === "accepted");
+            return [...newNotifs, ...meetingNotifs].sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+          });
+        }),
+      ] : []),
     ];
-    return () => unsubs.forEach(u => u());
   }, [authStatus, isAdmin]);
 
   // profiles + adminOverrides 합성 → 매칭에 반영, 삭제된 ID 제외
