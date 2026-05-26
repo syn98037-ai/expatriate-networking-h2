@@ -940,14 +940,14 @@ match /{document=**} {
       )}
 
       {/* 오버레이 */}
-      {overlay?.type === "profile"     && <ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} />}
-      {overlay?.type === "adminAuth"   && <AdminAuth onSuccess={() => { setIsAdmin(true); openOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} />}
-      {overlay?.type === "admin"       && <AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} />}
-      {overlay?.type === "chat"        && <ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />}
-      {overlay?.type === "post"        && <PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} />}
-      {overlay?.type === "newPost"     && <NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} />}
-      {overlay?.type === "profileView" && <ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type: "sendReq", data: overlay.data })} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} />}
-      {overlay?.type === "sendReq"     && <SendReqModal target={overlay.data} onSend={(msg) => { sendReq(overlay.data, msg); setOverlay(null); }} onBack={() => setOverlay(null)} />}
+      {overlay?.type === "profile"     && <div style={S.overlay}><ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} /></div>}
+      {overlay?.type === "adminAuth"   && <div style={S.overlay}><AdminAuth onSuccess={() => { setIsAdmin(true); openOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} /></div>}
+      {overlay?.type === "admin"       && <div style={S.overlay}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} /></div>}
+      {overlay?.type === "chat"        && <div style={S.overlay}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div>}
+      {overlay?.type === "post"        && <div style={S.overlay}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div>}
+      {overlay?.type === "newPost"     && <div style={S.overlay}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
+      {overlay?.type === "profileView" && <div style={S.overlay}><ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type: "sendReq", data: overlay.data })} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} /></div>}
+      {overlay?.type === "sendReq"     && <div style={S.overlay}><SendReqModal target={overlay.data} onSend={(msg) => { sendReq(overlay.data, msg); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
 
       {/* 알림 패널 - 모바일: 절대 위치 오버레이 */}
       {showNotifs && (
@@ -1622,7 +1622,7 @@ function Directory({ profiles, uid, onRequest, onChat, onViewProfile }) {
 
 function ProfileView({ profile, onBack, onRequest, onChat }) {
   return (
-    <div style={S.overlay}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#020617", overflow: "hidden" }}>
       <div style={S.overlayHeader}>
         <button onClick={onBack} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
         <span style={{ fontWeight: 700, fontSize: 15, color: "#f1f5f9" }}>프로필</span>
@@ -2027,7 +2027,7 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
   };
 
   return (
-    <div style={S.overlay}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#020617", overflow: "hidden" }}>
       <div style={S.overlayHeader}>
         <button onClick={onBack} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
         <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{post.title}</p>
@@ -2125,7 +2125,7 @@ function NewPost({ onSubmit, onBack }) {
     setLoading(true); await onSubmit(form); setLoading(false);
   };
   return (
-    <div style={S.overlay}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#020617", overflow: "hidden" }}>
       <div style={S.overlayHeader}>
         <button onClick={onBack} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: 20, padding: 4 }}>✕</button>
         <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", flex: 1, margin: 0 }}>글쓰기</p>
