@@ -153,7 +153,7 @@ export default function App() {
   };
   const openNotifs = () => {
     window.history.pushState({ type: "notifs" }, "");
-    openNotifs();
+    setShowNotifs(true);
   };
 
   const uid = myProfile?.id;
@@ -230,9 +230,11 @@ export default function App() {
       }),
       // 1:1 채팅방 목록 실시간 로드
       onSnapshot(query(col("dmRooms")), s => {
+        const currentUid = auth.currentUser?.uid;
+        if (!currentUid) return;
         setDmRooms(s.docs
           .map(d => ({ id: d.id, ...d.data() }))
-          .filter(d => Array.isArray(d.members) && d.members.includes(uid))
+          .filter(d => Array.isArray(d.members) && d.members.includes(currentUid))
           .sort((a,b) => new Date(b.updatedAt||0) - new Date(a.updatedAt||0)));
       }),
     ];
@@ -350,9 +352,10 @@ export default function App() {
     });
     // 1:1 채팅이면 dmRooms Firestore에 저장/업데이트
     const isDm = roomId !== "global" && !roomId.startsWith("room") && roomId.includes("_");
-    if (isDm) {
-      const otherId = roomId.split("_").find(id => id !== uid);
-      if (otherId) {
+    if (isDm && uid) {
+      const parts   = roomId.split("_");
+      const otherId = parts.find(id => id !== uid);
+      if (otherId && otherId !== uid) {
         try {
           await setDoc(docR("dmRooms", roomId), {
             id: roomId,
