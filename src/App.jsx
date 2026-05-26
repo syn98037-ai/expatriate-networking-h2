@@ -95,6 +95,7 @@ function NavIcon({ id, active }) {
   if (id === "dashboard")  return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/><path d="M4.93 4.93l2.12 2.12m9.9 9.9 2.12 2.12M4.93 19.07l2.12-2.12m9.9-9.9 2.12-2.12" strokeOpacity="0.5"/></svg>;
   if (id === "directory")  return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="10" r="7"/><path d="M21 21l-4.35-4.35"/></svg>;
   if (id === "community")  return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+  if (id === "board")      return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>;
   if (id === "meetings")   return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>;
   if (id === "missions")   return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>;
   if (id === "calendar")   return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
@@ -700,7 +701,7 @@ match /{document=**} {
   const NAV = [
     { id: "dashboard", label: "추천"    },
     { id: "directory", label: "검색"    },
-    { id: "community", label: "커뮤니티" },
+    { id: "board",     label: "게시판"  },
     { id: "meetings",  label: "티미팅"  },
     { id: "missions",  label: "미션"    },
     { id: "schedule",  label: "시간표"  },
@@ -710,8 +711,8 @@ match /{document=**} {
     switch (view) {
       case "dashboard":  return <Dashboard profiles={mergedProfiles} myProfile={mergedProfiles.find(p => p.id === uid) || myProfile} uid={uid} onRequest={p => openOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} />;
       case "directory":  return <Directory profiles={mergedProfiles} uid={uid} onRequest={p => openOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} onViewProfile={p => openOverlay({ type: "profileView", data: p })} />;
-      case "community":  return <Community posts={posts} profiles={mergedProfiles} rooms={rooms} dmRooms={dmRooms} uid={uid} onOpenPost={p => openOverlay({ type: "post", data: p })} onNewPost={() => openOverlay({ type: "newPost" })} onOpenChat={(id, name) => openChat(id, name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />;
-      case "meetings":   return <Meetings meetings={meetings} profiles={mergedProfiles} uid={uid} onUpdate={updateMtg} onChat={m => { const oid = m.fromId === uid ? m.toId : m.fromId; openChat(roomFor(oid), m.fromId === uid ? m.toName : m.fromName); }} />;
+      case "board":      return <BoardView posts={posts} profiles={mergedProfiles} uid={uid} onOpenPost={p => openOverlay({ type: "post", data: p })} onNewPost={() => openOverlay({ type: "newPost" })} />;
+      case "meetings":   return <Meetings meetings={meetings} profiles={mergedProfiles} rooms={rooms} dmRooms={dmRooms} uid={uid} onUpdate={updateMtg} onChat={m => { const oid = m.fromId === uid ? m.toId : m.fromId; openChat(roomFor(oid), m.fromId === uid ? m.toName : m.fromName); }} onOpenChat={(id,name) => openChat(id,name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />;
       case "missions":   return <MissionView myMissions={myMissions} sentCount={sentCount} uid={uid} onUpdate={updateMission} />;
 
       case "schedule":   return <ScheduleView />;
@@ -804,7 +805,7 @@ match /{document=**} {
                   {[
                     ["티미팅 발송", Math.min(meetings.filter(m => m.fromId === uid).length, 2), 2],
                     ["티미팅 인증샷", Math.min((missions[uid]?.m2Photos||[]).length, 2), 2],
-                    ["조별 식사 인증", Math.min((missions[uid]?.m3Photos||[]).length, 1), 1],
+
                   ].map(([label, cur, tot]) => (
                     <div key={label} style={{ marginBottom: 10 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
@@ -1287,7 +1288,7 @@ function ProfileForm({ initialData, onSave, onBack, onLogout }) {
   };
 
   return (
-    <div style={S.overlay}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#020617", overflow: "hidden" }}>
       <div style={S.overlayHeader}>
         <button onClick={onBack} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
         <span style={{ fontWeight: 700, fontSize: 15, color: "#f1f5f9", flex: 1 }}>내 프로필</span>
@@ -1378,7 +1379,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
   const saveEdit  = async () => { setSaving(true); await onUpdateProfile(editId, editForm); setEditId(null); setSaving(false); };
 
   return (
-    <div style={S.overlay}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#020617" }}>
       <div style={S.overlayHeader}>
         <button onClick={onBack} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: 20 }}>←</button>
         <div style={{ flex: 1 }}>
@@ -1473,8 +1474,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
               const sentCnt = (meetings || []).filter(m => m.fromId === p.id).length;
               const m1done = sentCnt >= 2;
               const m2done = (ms.m2Photos || []).length >= 2;
-              const m3done = (ms.m3Photos || []).length >= 1;
-              const allDone = m1done && m2done && m3done;
+              const allDone = m1done && m2done;
               return (
                 <div key={p.id} style={{ ...S.card, borderRadius: 18 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
@@ -1486,7 +1486,6 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                     {[
                       ["티미팅 발송", sentCnt+"/2", m1done, null],
                       ["티미팅 인증", (ms.m2Photos||[]).length+"/2", m2done, ms.m2Photos||[]],
-                      ["식사 인증",   (ms.m3Photos||[]).length+"/1", m3done, ms.m3Photos||[]],
                     ].map(([label, count, done, photos]) => (
                       <div key={label} style={{ flex: 1, background: done ? "rgba(34,197,94,0.08)" : "rgba(255,255,255,0.04)", border: `1px solid ${done ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.07)"}`, borderRadius: 10, padding: "8px 4px", textAlign: "center" }}>
                         <p style={{ fontSize: 9, color: done ? "#4ade80" : "#64748b", fontWeight: 700, margin: 0 }}>{done ? "✓ " : ""}{label}</p>
@@ -1752,17 +1751,21 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
   );
 }
 
-function Meetings({ meetings, profiles, uid, onUpdate, onChat }) {
+function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, onOpenChat, onCreateRoom, onLeaveRoom, onInviteToRoom }) {
   const [tab, setTab] = useState("received");
   const received = meetings.filter(m => m.toId   === uid);
   const sent     = meetings.filter(m => m.fromId === uid);
+  const myRooms  = (rooms || []).filter(r => (r.members || []).includes(uid));
   return (
-    <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <div style={{ padding: "16px 20px 0" }}>
       <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.05)", padding: 4, borderRadius: 16, border: "1px solid rgba(255,255,255,0.08)" }}>
-        {[["received","받은 신청"],["sent","보낸 신청"]].map(([id, label]) => (
+        {[["received","받은 신청"],["sent","보낸 신청"],["chat","채팅"]].map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: 10, borderRadius: 12, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "Pretendard,sans-serif", background: tab === id ? "#f59e0b" : "none", color: tab === id ? "#020617" : "#64748b", transition: "all 0.2s" }}>{label}</button>
         ))}
       </div>
+    </div>
+    <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
       {tab === "received" && (received.length === 0 ? <div style={{ padding: 36, border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 20, textAlign: "center", color: "#4b5563", fontSize: 12, fontStyle: "italic" }}>아직 받은 신청이 없어요.</div> : received.map(m => {
         const sender = profiles.find(p => p.id === m.fromId) || { name: m.fromName, id: m.fromId };
         return (
@@ -1798,6 +1801,72 @@ function Meetings({ meetings, profiles, uid, onUpdate, onChat }) {
           </div>
         );
       }))}
+
+      {/* ── 채팅 탭 ── */}
+      {tab === "chat" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* 1:1 채팅 */}
+          {(dmRooms||[]).length > 0 && <>
+            <p style={{ fontSize: 10, fontWeight: 700, color: "#4b5563", letterSpacing: "0.08em", margin: "4px 2px 0" }}>1:1 채팅</p>
+            {(dmRooms||[]).map(dm => {
+              const other = profiles.find(p => p.id === dm.otherId);
+              const otherName = other?.name || "알 수 없음";
+              return (
+                <button key={dm.roomId||dm.id} onClick={() => onOpenChat(dm.roomId||dm.id, otherName)} style={{ display: "flex", alignItems: "center", gap: 14, ...S.card, borderRadius: 18, cursor: "pointer", width: "100%", textAlign: "left" }}>
+                  <Avatar profile={other||{name:otherName,id:dm.otherId}} size={44} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{otherName}</p>
+                    <p style={{ fontSize: 11, color: "#64748b", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dm.lastMsg||""}</p>
+                  </div>
+                  <span style={{ color: "#64748b" }}>→</span>
+                </button>
+              );
+            })}
+          </>}
+          {/* 그룹 채팅 */}
+          {myRooms.length > 0 && <>
+            <p style={{ fontSize: 10, fontWeight: 700, color: "#4b5563", letterSpacing: "0.08em", margin: "8px 2px 0" }}>그룹 채팅</p>
+            {myRooms.map(room => (
+              <button key={room.id} onClick={() => onOpenChat(room.id, room.name)} style={{ display: "flex", alignItems: "center", gap: 14, ...S.card, borderRadius: 18, cursor: "pointer", width: "100%", textAlign: "left" }}>
+                <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.05)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>💬</div>
+                <div style={{ flex: 1 }}><p style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", margin: 0 }}>{room.name}</p><p style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>멤버 {room.members?.length||0}명</p></div>
+                <span style={{ color: "#64748b" }}>→</span>
+              </button>
+            ))}
+          </>}
+          {(dmRooms||[]).length === 0 && myRooms.length === 0 && (
+            <p style={{ textAlign: "center", padding: 32, color: "#4b5563", fontSize: 12, fontStyle: "italic" }}>아직 참여 중인 채팅방이 없어요.<br/>티미팅을 수락하면 1:1 채팅이 시작됩니다!</p>
+          )}
+        </div>
+      )}
+    </div>
+    </div>
+  );
+}
+
+function BoardView({ posts, profiles, uid, onOpenPost, onNewPost }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}><strong style={{ color: "#fff" }}>{posts.length}개</strong>의 게시글</p>
+          <button onClick={onNewPost} style={{ ...S.btnAmber, padding: "8px 14px", fontSize: 12, borderRadius: 12 }}>+ 글쓰기</button>
+        </div>
+        {posts.map(post => {
+          const author = profiles.find(p => p.id === post.authorId) || { name: post.authorName, id: post.authorId };
+          return (
+            <div key={post.id} onClick={() => onOpenPost(post)} style={{ ...S.card, borderRadius: 22, cursor: "pointer", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>{post.tag && <span style={S.amberBadge}>{post.tag}</span>}<p style={{ fontSize: 10, color: "#64748b", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p></div>
+              <div><p style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: 0, marginBottom: 6, lineHeight: 1.4 }}>{post.title}</p><p style={{ fontSize: 13, color: "#94a3b8", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.6 }}>{post.content}</p></div>
+              {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 14 }} />}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8 }}>
+                <Avatar profile={author} size={20} /><p style={{ fontSize: 11, color: "#64748b", margin: 0 }}>{post.authorName}</p>
+                <span style={{ marginLeft: "auto", fontSize: 10, color: "#64748b" }}>💬 {post.commentCount||0}  ❤️ {post.likeCount||0}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -2084,9 +2153,8 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
   const m1Done   = m1Count >= 2;
   const m2Photos = myMissions.m2Photos || [];
   const m2Done   = m2Photos.length >= 2;
-  const m3Photos = myMissions.m3Photos || [];
-  const m3Done   = m3Photos.length >= 1;
-  const allDone  = m1Done && m2Done; // 미션 3 비활성화
+
+  const allDone  = m1Done && m2Done;
 
   const addPhoto = async (key, e) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -2112,8 +2180,7 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="12" y1="7" x2="12" y2="13"/></svg> },
     { id:"m2", num:"02", title:"티미팅 인증샷", desc:"티미팅을 진행한 후 인증샷을 남겨주세요. (2회)", target:2, current:m2Photos.length, done:m2Done, color:"#38bdf8", photos:m2Photos, photoKey:"m2Photos",
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> },
-    { id:"m3", num:"03", title:"조별 식사 인증샷", desc:"조원들과 함께 식사 후 인증샷을 남겨주세요.", target:1, current:m3Photos.length, done:m3Done, color:"#4ade80", photos:m3Photos, photoKey:"m3Photos", disabled:true,
-      icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+
   ];
 
   return (
@@ -2130,9 +2197,9 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
             <p style={{ fontSize: 12, color: "#64748b", marginTop: 6 }}>미션을 완료하고 연결을 넓혀보세요</p>
             <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 3, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${([m1Done,m2Done,m3Done].filter(Boolean).length / 3) * 100}%`, background: "linear-gradient(90deg,#f59e0b,#fde68a)", borderRadius: 3, transition: "width 0.6s ease" }} />
+                <div style={{ height: "100%", width: `${([m1Done,m2Done].filter(Boolean).length / 2) * 100}%`, background: "linear-gradient(90deg,#f59e0b,#fde68a)", borderRadius: 3, transition: "width 0.6s ease" }} />
               </div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b" }}>{[m1Done,m2Done,m3Done].filter(Boolean).length}/3</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b" }}>{[m1Done,m2Done].filter(Boolean).length}/2</span>
             </div>
           </>
         )}
