@@ -822,15 +822,15 @@ match /{document=**} {
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh", background: "#ffffff", flexDirection: "column", gap: 16 }}>
       <div style={{ width: 48, height: 48, border: "3px solid #f59e0b", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.9s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <p style={{ color: "#002c5f", fontSize: 12, fontWeight: 700, letterSpacing: "0.18em" }}>GLOBAL CONNECT</p>
+      <p style={{ color: "#374151", fontSize: 12, fontWeight: 700, letterSpacing: "0.18em" }}>GLOBAL CONNECT</p>
     </div>
   );
 
   // PC 레이아웃
   if (!isMobile) {
     return (
-      <div style={{ width: "100vw", height: "100dvh", background: "#ffffff", color: "#002c5f", fontFamily: "Pretendard,sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <style>{`@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css'); ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(124,58,237,0.28);border-radius:3px} *{box-sizing:border-box;} select option{background:#020617;}`}</style>
+      <div style={{ width: "100vw", height: "100dvh", background: "#f5f6f8", color: "#111827", fontFamily: "'Noto Sans KR', Inter, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <style>{`::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-track{background:#f5f6f8} ::-webkit-scrollbar-thumb{background:rgba(0,44,95,0.2);border-radius:3px} *{box-sizing:border-box;} select option{background:#fff;color:#111827;}`}</style>
 
         {/* PC 미인증 */}
         {(authStatus === "unauth" || authStatus === "needProfile") && (
@@ -846,10 +846,10 @@ match /{document=**} {
           <>
             {/* PC 알림 허용 배너 */}
             {showNotisBanner && (
-              <div style={{ background: "linear-gradient(135deg,rgba(124,58,237,0.1),rgba(245,158,11,0.06))", borderBottom: "1px solid rgba(124,58,237,0.18)", padding: "8px 24px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+              <div style={{ background: "#f3f4f6", borderBottom: "1px solid #d1d5db", padding: "8px 24px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
                 <span style={{ fontSize: 16 }}>🔔</span>
-                <p style={{ fontSize: 12, color: "#c5d5e8", margin: 0, flex: 1 }}>티미팅·채팅 알림을 받으시겠습니까?</p>
-                <button onClick={requestNotifPermission} style={{ background: "#002c5f", border: "none", color: "#111827", fontSize: 11, fontWeight: 700, padding: "6px 14px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>허용</button>
+                <p style={{ fontSize: 12, color: "#374151", margin: 0, flex: 1 }}>티미팅·채팅 알림을 받으시겠습니까?</p>
+                <button onClick={requestNotifPermission} style={{ background: "#374151", border: "none", color: "#ffffff", fontSize: 11, fontWeight: 700, padding: "6px 14px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>허용</button>
                 <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#6b7280", fontSize: 16, cursor: "pointer" }}>✕</button>
               </div>
             )}
@@ -860,7 +860,7 @@ match /{document=**} {
                 <span style={{ fontSize: 16, fontWeight: 900, color: "#ffffff", flexShrink: 0, letterSpacing: "-0.3px" }}>Global Connect</span>
                 <nav style={{ display: "flex", gap: 1 }}>
                   {NAV.map(n => (
-                    <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 9px", borderRadius: 9, background: view === n.id ? "#e8f0f8" : "none", border: view === n.id ? "1px solid rgba(124,58,237,0.25)" : "1px solid transparent", color: view === n.id ? "#002c5f" : "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 12, fontWeight: 600, transition: "all 0.2s", whiteSpace: "nowrap" }}>
+                    <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 9px", borderRadius: 9, background: view === n.id ? "#e8f0f8" : "none", border: view === n.id ? "1px solid rgba(0,44,95,0.25)" : "1px solid transparent", color: view === n.id ? "#002c5f" : "#6b7280", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", fontSize: 12, fontWeight: 600, transition: "all 0.2s", whiteSpace: "nowrap" }}>
                       <NavIcon id={n.id} active={view === n.id} />
                       <span>{n.label}</span>
                     </button>
@@ -877,11 +877,11 @@ match /{document=**} {
                     </div>
                   )}
                 </div>
-                <div onClick={() => openOverlay({ type: "profile" })} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 7, padding: "5px 9px", borderRadius: 10, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", flexShrink: 0 }}>
+                <div onClick={() => openOverlay({ type: "profile" })} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 7, padding: "4px 10px", borderRadius: 10, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", flexShrink: 0 }}>
                   <Avatar profile={myProfile} size={26} />
                   <p style={{ fontSize: 12, fontWeight: 700, color: "#002c5f", margin: 0, whiteSpace: "nowrap" }}>{myProfile?.name}</p>
                 </div>
-                <button onClick={handleLogout} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", color: "#ffffff", fontSize: 11, fontWeight: 700, padding: "6px 11px", borderRadius: 9, cursor: "pointer", fontFamily: "Pretendard,sans-serif", whiteSpace: "nowrap", flexShrink: 0 }}>로그아웃</button>
+                <button onClick={handleLogout} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", color: "#ffffff", fontSize: 11, fontWeight: 700, padding: "6px 11px", borderRadius: 9, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", whiteSpace: "nowrap", flexShrink: 0 }}>로그아웃</button>
               </div>
             </header>
 
@@ -903,11 +903,11 @@ match /{document=**} {
                     <span style={{ background: "#e8f0f8", border: "1px solid rgba(124,58,237,0.2)", color: "#002c5f", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.concern}</span>
                     {myProfile?.interest && <span style={{ background: "rgba(255,255,255,0.8)", border: "1px solid #e0e3e8", color: "#6b7280", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.interest}</span>}
                   </div>
-                  <button onClick={() => openOverlay({ type: "profile" })} style={{ width: "100%", padding: "8px", background: "#f5f6f8", border: "1px solid rgba(124,58,237,0.18)", color: "#002c5f", fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>✏️ 프로필 수정</button>
+                  <button onClick={() => openOverlay({ type: "profile" })} style={{ width: "100%", padding: "8px", background: "#f5f6f8", border: "1px solid #d1d8e0", color: "#002c5f", fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>✏️ 프로필 수정</button>
                 </div>
                 {/* 미션 요약 */}
                 <div style={{ background: "#ffffff", border: "1px solid #e0e3e8", borderRadius: 18, padding: 16 }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "#002c5f", margin: "0 0 12px", letterSpacing: "0.08em" }}>네트워크 미션</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#002c5f", margin: "0 0 12px", letterSpacing: "0.08em" }}>네트워킹 미션</p>
                   {[
                     ["티미팅 발송", Math.min(meetings.filter(m => m.fromId === uid).length, 2), 2],
                     ["티미팅 인증샷", Math.min((missions[uid]?.m2Photos||[]).length, 2), 2],
@@ -932,7 +932,7 @@ match /{document=**} {
                     ? <p style={{ fontSize: 12, color: "#6b7280", fontStyle: "italic" }}>아직 없어요.</p>
                     : meetings.filter(m => (m.fromId===uid||m.toId===uid) && m.status==="수락함").map(m => (
                       <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "8px 10px", background: "rgba(16,185,129,0.06)", borderRadius: 12, border: "1px solid rgba(16,185,129,0.12)" }}>
-                        <span style={{ color: "#0a6640", fontSize: 14 }}>✓</span>
+                        <span style={{ color: "#002c5f", fontSize: 14 }}>✓</span>
                         <div><p style={{ fontSize: 12, fontWeight: 700, color: "#002c5f", margin: 0 }}>{m.fromId===uid?m.toName:m.fromName}</p><p style={{ fontSize: 10, color: "#6b7280" }}>{m.fromId===uid?m.toOrg:m.fromOrg}</p></div>
                       </div>
                     ))
@@ -950,7 +950,7 @@ match /{document=**} {
                 <div style={{ background: "#ffffff", border: "1px solid #e0e3e8", borderRadius: 18, padding: 16 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                     <p style={{ fontSize: 11, fontWeight: 700, color: "#002c5f", margin: 0, letterSpacing: "0.08em" }}>최근 게시글</p>
-                    <button onClick={() => setView("community")} style={{ background: "none", border: "none", color: "#6b7280", fontSize: 11, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>더보기</button>
+                    <button onClick={() => setView("community")} style={{ background: "none", border: "none", color: "#6b7280", fontSize: 11, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>더보기</button>
                   </div>
                   {posts.length === 0
                     ? <p style={{ fontSize: 12, color: "#6b7280", fontStyle: "italic" }}>게시글이 없어요.</p>
@@ -1003,7 +1003,7 @@ match /{document=**} {
 
   // ── 모바일 레이아웃 ──────────────────────────────────
   return (
-    <div style={{ width: "100%", maxWidth: 420, margin: "0 auto", height: "100dvh", display: "flex", flexDirection: "column", background: "#f5f6f8", color: "#002c5f", fontFamily: "Pretendard,sans-serif", position: "relative", overflow: "hidden" }}>
+    <div style={{ width: "100%", maxWidth: 420, margin: "0 auto", height: "100dvh", display: "flex", flexDirection: "column", background: "#f5f6f8", color: "#002c5f", fontFamily: "'Noto Sans KR', Inter, sans-serif", position: "relative", overflow: "hidden" }}>
       <style>{`@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css'); ::-webkit-scrollbar{display:none;} *{box-sizing:border-box;} select option{background:#020617;} html,body,#root{height:100%;height:100dvh;overflow:hidden;}`}</style>
 
       {/* 미인증 → 로그인/회원가입 */}
@@ -1023,10 +1023,10 @@ match /{document=**} {
         <>
           {/* 알림 허용 배너 */}
           {showNotisBanner && (
-            <div style={{ background: "linear-gradient(135deg,rgba(124,58,237,0.12),rgba(124,58,237,0.07))", borderBottom: "1px solid rgba(124,58,237,0.18)", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            <div style={{ background: "#f3f4f6", borderBottom: "1px solid #d1d5db", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
               <span style={{ fontSize: 18 }}>🔔</span>
               <p style={{ fontSize: 12, color: "#c5d5e8", margin: 0, flex: 1, lineHeight: 1.4 }}>티미팅·채팅 알림을 받으시겠습니까?</p>
-              <button onClick={requestNotifPermission} style={{ background: "#002c5f", border: "none", color: "#111827", fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif", whiteSpace: "nowrap" }}>허용</button>
+              <p style={{ fontSize: 12, color: "#374151", margin: 0, flex: 1, lineHeight: 1.4 }}>티미팅·채팅 알림을 받으시겠습니까?</p>
               <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#6b7280", fontSize: 16, cursor: "pointer", padding: "0 4px" }}>✕</button>
             </div>
           )}
@@ -1044,7 +1044,7 @@ match /{document=**} {
                   </div>
                 )}
               </div>
-              <div onClick={() => openOverlay({ type: "profile" })} style={{ cursor: "pointer", border: "2px solid rgba(255,255,255,0.4)", borderRadius: "50%" }}><Avatar profile={myProfile} size={32} /></div>
+              <div onClick={() => openOverlay({ type: "profile" })} style={{ cursor: "pointer" }}><Avatar profile={myProfile} size={32} /></div>
             </div>
           </header>
 
@@ -1052,7 +1052,7 @@ match /{document=**} {
 
           <nav style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#ffffff", borderTop: "1px solid #e0e3e8", display: "flex", justifyContent: "space-around", padding: "8px 2px 12px", backdropFilter: "blur(12px)" }}>
             {NAV.map(n => (
-              <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", fontFamily: "Pretendard,sans-serif", padding: "0 4px" }}>
+              <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", padding: "0 4px" }}>
                 <div style={{ width: 32, height: 32, borderRadius: 10, background: view === n.id ? "#002c5f" : "#e8f0f8", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: view === n.id ? "0 3px 10px rgba(0,44,95,0.25)" : "none", transition: "all 0.2s", transform: view === n.id ? "scale(1.08)" : "scale(1)" }}>
                   <NavIcon id={n.id} active={view === n.id} />
                 </div>
@@ -1145,7 +1145,7 @@ function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings, onGoChat
           {unreadCount > 0 && <p style={{ fontSize: 10, color: "#002c5f", margin: 0 }}>읽지 않은 알림 {unreadCount}개</p>}
         </div>
         {unreadCount > 0 && (
-          <button onClick={onReadAll} style={{ background: "none", border: "none", color: "#002c5f", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>모두 읽음</button>
+          <button onClick={onReadAll} style={{ background: "none", border: "none", color: "#002c5f", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>모두 읽음</button>
         )}
       </div>
       <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1279,38 +1279,30 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "#f5f6f8", position: "relative", overflow: "hidden" }}>
       {/* 상단 네이비 헤더 배너 */}
-      <div style={{ background: "#002c5f", padding: "44px 32px 32px", position: "relative", overflow: "hidden" }}>
-        {/* 장식용 원 */}
-        <div style={{ position: "absolute", top: -40, right: -40, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.05)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: 20, right: 20, width: 80, height: 80, borderRadius: "50%", background: "rgba(0,170,210,0.15)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", bottom: -20, left: -20, width: 100, height: 100, borderRadius: "50%", background: "rgba(255,255,255,0.04)", pointerEvents: "none" }} />
-        {/* HMG 로고 영역 */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, position: "relative" }}>
-          <div style={{ width: 44, height: 44, background: "#00aad2", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,170,210,0.4)" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      <div style={{ background: "#002c5f", padding: "36px 32px 24px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.04)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: -10, left: -10, width: 80, height: 80, borderRadius: "50%", background: "rgba(0,170,210,0.1)", pointerEvents: "none" }} />
+        <div style={{ position: "relative" }}>
+          <div style={{ fontSize: 22, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.5px", marginBottom: 6 }}>Global Connect</div>
+          <div style={{ fontSize: 9, color: "rgba(255,255,255,0.5)", letterSpacing: "0.14em", marginBottom: 12 }}>HMG 주재원 부임전 정규교육</div>
+          <div style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: 400 }}>
+            현대자동차그룹 주재원 여러분을 환영합니다.
           </div>
-          <div>
-            <div style={{ fontSize: 20, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.5px" }}>Global Connect</div>
-            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.55)", letterSpacing: "0.14em", marginTop: 2 }}>HMG 주재원 부임전 정규교육</div>
-          </div>
-        </div>
-        <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 12, lineHeight: 1.6, position: "relative" }}>
-          현대자동차그룹 주재원 여러분을<br/>
-          <span style={{ color: "#ffffff", fontWeight: 700 }}>Global Connect</span>에서 환영합니다.
         </div>
       </div>
+      <div style={{ height: 20 }} />
 
       {/* 탭 */}
       <div style={{ padding: "0 24px", position: "relative" }}>
         <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.8)", padding: 4, borderRadius: 16, border: "1px solid #e0e3e8" }}>
           {[["login","로그인"],["register","회원가입"]].map(([id, label]) => (
-            <button key={id} onClick={() => { setMode(id); setStep(1); setErrMsg(""); }} style={{ flex: 1, padding: 10, borderRadius: 12, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "Pretendard,sans-serif", background: mode === id ? "#002c5f" : "transparent", color: mode === id ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{label}</button>
+            <button key={id} onClick={() => { setMode(id); setStep(1); setErrMsg(""); }} style={{ flex: 1, padding: 10, borderRadius: 12, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: mode === id ? "#002c5f" : "transparent", color: mode === id ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{label}</button>
           ))}
         </div>
       </div>
 
       {/* 폼 */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px 40px", position: "relative", display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "28px 24px 40px", position: "relative", display: "flex", flexDirection: "column", gap: 14 }}>
 
         {mode === "login" && (
           <>
@@ -1320,7 +1312,7 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
             <button onClick={doLogin} disabled={loading} style={{ ...S.btnAmber, width: "100%", padding: 16, fontSize: 15, borderRadius: 18, opacity: loading ? 0.6 : 1 }}>
               {loading ? "로그인 중..." : "로그인"}
             </button>
-            <p style={{ textAlign: "center", fontSize: 12, color: "#6b7280", margin: 0 }}>아직 계정이 없으신가요? <button onClick={() => { setMode("register"); setErrMsg(""); }} style={{ background: "none", border: "none", color: "#002c5f", fontWeight: 700, cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 12 }}>회원가입</button></p>
+            <p style={{ textAlign: "center", fontSize: 12, color: "#6b7280", margin: 0 }}>아직 계정이 없으신가요? <button onClick={() => { setMode("register"); setErrMsg(""); }} style={{ background: "none", border: "none", color: "#002c5f", fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", fontSize: 12 }}>회원가입</button></p>
           </>
         )}
 
@@ -1388,10 +1380,18 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
           </>
         )}
 
-        <div style={{ borderTop: "1px solid #e0e3e8", paddingTop: 14, textAlign: "center" }}>
-          <button onClick={onAdmin} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.2)", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 11, letterSpacing: "0.08em" }}>관리자 로그인</button>
+        <div style={{ borderTop: "1px solid #e0e3e8", paddingTop: 16, textAlign: "center" }}>
+          <button onClick={onAdmin} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 11, letterSpacing: "0.08em" }}>관리자 로그인</button>
         </div>
-        <p style={{ textAlign: "center", color: "rgba(255,255,255,0.12)", fontSize: 9, fontWeight: 600, letterSpacing: "0.18em", margin: 0 }}>HYUNDAI MOTOR GROUP</p>
+        <div style={{ textAlign: "center", paddingBottom: 12, paddingTop: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 20, height: 14, border: "1.5px solid #c4c9d0", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, color: "#c4c9d0" }}>H</div>
+              <span style={{ fontSize: 8, fontWeight: 700, color: "#c4c9d0", letterSpacing: "0.1em" }}>HYUNDAI MOTOR GROUP</span>
+            </div>
+            <span style={{ fontSize: 8, color: "#c4c9d0", letterSpacing: "0.05em" }}>현대자동차그룹</span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1425,7 +1425,7 @@ function ProfileForm({ initialData, onSave, onBack, onLogout }) {
       <div style={S.overlayHeader}>
         <button onClick={onBack} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
         <span style={{ fontWeight: 700, fontSize: 15, color: "#002c5f", flex: 1 }}>내 프로필</span>
-        <button onClick={onLogout} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 10, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>로그아웃</button>
+        <button onClick={onLogout} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 10, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>로그아웃</button>
       </div>
       <div style={{ ...S.overlayBody, paddingBottom: 40 }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 28 }}>
@@ -1489,7 +1489,7 @@ function AdminAuth({ onSuccess, onBack }) {
   return (
     <div style={{ ...S.overlay, alignItems: "center", justifyContent: "center" }}>
       <div style={{ padding: 40, textAlign: "center", width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: 24, alignItems: "center" }}>
-        <div style={{ width: 80, height: 80, background: "rgba(245,158,11,0.1)", borderRadius: 24, border: "1px solid rgba(124,58,237,0.18)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>🛡️</div>
+        <div style={{ width: 80, height: 80, background: "rgba(245,158,11,0.1)", borderRadius: 24, border: "1px solid #d1d8e0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>🛡️</div>
         <div><h2 style={{ fontSize: 22, fontWeight: 700, color: "#002c5f", margin: 0 }}>관리자 로그인</h2><p style={{ fontSize: 13, color: "#6b7280", marginTop: 6 }}>기획자 전용 비밀번호를 입력해주세요.</p></div>
         <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
           <input type="password" style={{ ...S.inp, textAlign: "center", fontSize: 24, letterSpacing: "0.5em" }} maxLength={8} placeholder="••••••••" value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === "Enter" && go()} />
@@ -1523,7 +1523,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
       <div style={{ padding: "12px 16px 0", flexShrink: 0 }}>
         <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.8)", padding: 4, borderRadius: 14, border: "1px solid #e0e3e8", marginBottom: 10 }}>
           {[["users","사용자 관리"],["missions","미션 현황"],["posts","게시글 현황"]].map(([id, label]) => (
-            <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: "8px 4px", borderRadius: 10, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "Pretendard,sans-serif", background: tab === id ? "#002c5f" : "transparent", color: tab === id ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{label}</button>
+            <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: "8px 4px", borderRadius: 10, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: tab === id ? "#002c5f" : "transparent", color: tab === id ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{label}</button>
           ))}
         </div>
         {/* 채팅 기록 초기화 */}
@@ -1533,7 +1533,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
               onClearChats();
             }
           }}
-          style={{ width: "100%", padding: "10px", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.25)", color: "#00aad2", fontSize: 12, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "Pretendard,sans-serif", marginBottom: 8 }}
+          style={{ width: "100%", padding: "10px", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.25)", color: "#00aad2", fontSize: 12, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", marginBottom: 8 }}
         >
           💬 채팅 기록 초기화
         </button>
@@ -1546,7 +1546,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
               }
             }
           }}
-          style={{ width: "100%", padding: "10px", background: "rgba(220,38,38,0.07)", border: "1px solid rgba(239,68,68,0.25)", color: "#c0392b", fontSize: 12, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "Pretendard,sans-serif", marginBottom: 4 }}
+          style={{ width: "100%", padding: "10px", background: "rgba(220,38,38,0.07)", border: "1px solid rgba(239,68,68,0.25)", color: "#c0392b", fontSize: 12, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", marginBottom: 4 }}
         >
           ⚠️ 전체 데이터 초기화 (모든 기록 삭제)
         </button>
@@ -1555,7 +1555,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
 
         {tab === "users" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <div style={{ background: "#f5f6f8", border: "1px solid rgba(124,58,237,0.18)", borderRadius: 14, padding: "12px 14px" }}>
+            <div style={{ background: "#f5f6f8", border: "1px solid #d1d8e0", borderRadius: 14, padding: "12px 14px" }}>
               <p style={{ fontSize: 11, color: "#c5d5e8", lineHeight: 1.6, fontStyle: "italic", margin: 0 }}>🔧 도시·국가·고민 수정 시 추천 매칭에 반영됩니다.</p>
             </div>
             <p style={{ fontSize: 12, color: "#6b7280" }}>가입 사용자 <strong style={{ color: "#002c5f" }}>{profiles.length}명</strong></p>
@@ -1585,11 +1585,11 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                       <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0 }}>{p.name} <span style={{ fontSize: 10, color: "#6b7280", fontWeight: 400 }}>({p.org})</span></p>
                       <p style={{ fontSize: 10, color: "#6b7280", marginTop: 2 }}>{p.city} · {p.country}</p>
                       <p style={{ fontSize: 10, color: "#6b7280" }}>{p.concern}</p>
-                      {p.username && <p style={{ fontSize: 9, color: "#0a6640", marginTop: 2, fontWeight: 700 }}>● {p.username}</p>}
+                      {p.username && <p style={{ fontSize: 9, color: "#002c5f", marginTop: 2, fontWeight: 700 }}>● {p.username}</p>}
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 5, flexShrink: 0 }}>
-                      <button onClick={() => startEdit(p)} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(124,58,237,0.18)", color: "#002c5f", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>수정</button>
-                      <button onClick={() => { if (window.confirm(`${p.name} (${p.username||"샘플"}) 계정을 삭제하시겠습니까?\n삭제 시 재가입이 필요합니다.`)) onDeleteAccount(p.id); }} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>삭제</button>
+                      <button onClick={() => startEdit(p)} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid #d1d8e0", color: "#002c5f", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>수정</button>
+                      <button onClick={() => { if (window.confirm(`${p.name} (${p.username||"샘플"}) 계정을 삭제하시겠습니까?\n삭제 시 재가입이 필요합니다.`)) onDeleteAccount(p.id); }} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>삭제</button>
                     </div>
                   </div>
                 )}
@@ -1613,7 +1613,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
                     <Avatar profile={p} size={36} />
                     <div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0 }}>{p.name}</p><p style={{ fontSize: 10, color: "#6b7280" }}>{p.org}</p></div>
-                    {allDone && <span style={{ background: "rgba(16,185,129,0.1)", color: "#0a6640", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 8 }}>완료</span>}
+                    {allDone && <span style={{ background: "rgba(16,185,129,0.1)", color: "#002c5f", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 8 }}>완료</span>}
                   </div>
                   <div style={{ display: "flex", gap: 6, marginBottom: (ms.m2Photos||[]).length > 0 ? 10 : 0 }}>
                     {[
@@ -1656,7 +1656,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                   <p style={{ fontSize: 10, color: "#6b7280", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p>
                   <button
                     onClick={() => { if (window.confirm(`"${post.title}" 게시글을 삭제하시겠습니까?`)) onDeletePost(post.id); }}
-                    style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 10, fontWeight: 700, padding: "4px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif", flexShrink: 0 }}>
+                    style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 10, fontWeight: 700, padding: "4px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", flexShrink: 0 }}>
                     삭제
                   </button>
                 </div>
@@ -1806,16 +1806,16 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
     <div style={S.overlay}>
       <div style={S.overlayHeader}>
         <button onClick={onBack} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
-        <div style={{ width: 36, height: 36, background: "rgba(245,158,11,0.1)", borderRadius: 12, border: "1px solid rgba(124,58,237,0.18)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{isGroup ? "👥" : "💬"}</div>
+        <div style={{ width: 36, height: 36, background: "rgba(245,158,11,0.1)", borderRadius: 12, border: "1px solid #d1d8e0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{isGroup ? "👥" : "💬"}</div>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: 14, fontWeight: 700, color: "#111827", margin: 0 }}>{name}</p>
           <p style={{ fontSize: 10, color: "#6b7280", margin: 0 }}>{isGroup ? `그룹 채팅 · ${memberProfiles.length}명` : "1:1 채팅"}</p>
         </div>
         {currentRoom && (
           <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={() => setShowPanel(showPanel === "members" ? null : "members")} style={{ background: "rgba(255,255,255,0.8)", border: "1px solid #e0e3e8", color: "#6b7280", fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>멤버</button>
-            <button onClick={() => setShowPanel(showPanel === "invite" ? null : "invite")} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(124,58,237,0.18)", color: "#002c5f", fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>초대</button>
-            <button onClick={() => { if(window.confirm("채팅방을 나가시겠습니까?")) { onLeaveRoom(roomId); onBack(); } }} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>나가기</button>
+            <button onClick={() => setShowPanel(showPanel === "members" ? null : "members")} style={{ background: "rgba(255,255,255,0.8)", border: "1px solid #e0e3e8", color: "#6b7280", fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>멤버</button>
+            <button onClick={() => setShowPanel(showPanel === "invite" ? null : "invite")} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid #d1d8e0", color: "#002c5f", fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>초대</button>
+            <button onClick={() => { if(window.confirm("채팅방을 나가시겠습니까?")) { onLeaveRoom(roomId); onBack(); } }} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>나가기</button>
           </div>
         )}
       </div>
@@ -1894,7 +1894,7 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
     <div style={{ padding: "16px 20px 0" }}>
       <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.8)", padding: 4, borderRadius: 16, border: "1px solid #e0e3e8" }}>
         {[["received","받은 신청"],["sent","보낸 신청"],["chat","채팅"]].map(([id, label]) => (
-          <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: 10, borderRadius: 12, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "Pretendard,sans-serif", background: tab === id ? "#002c5f" : "transparent", color: tab === id ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{label}</button>
+          <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: 10, borderRadius: 12, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: tab === id ? "#002c5f" : "transparent", color: tab === id ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{label}</button>
         ))}
       </div>
     </div>
@@ -1917,7 +1917,7 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
               </div>
             )}
             {m.status === "대기중" && <div style={{ display: "flex", gap: 8 }}><button onClick={() => onUpdate(m.id, "수락함")} style={{ ...S.btnAmber, flex: 1, padding: 10 }}>수락</button><button onClick={() => onUpdate(m.id, "거절함")} style={{ ...S.btnGhost, flex: 1, padding: 10 }}>거절</button></div>}
-            {m.status === "수락함" && <button onClick={() => onChat(m)} style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#0a6640", fontWeight: 700, borderRadius: 12, padding: 10, cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 12, width: "100%" }}>💬 채팅 시작하기</button>}
+            {m.status === "수락함" && <button onClick={() => onChat(m)} style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#002c5f", fontWeight: 700, borderRadius: 12, padding: 10, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", fontSize: 12, width: "100%" }}>💬 채팅 시작하기</button>}
           </div>
         );
       }))}
@@ -2023,7 +2023,7 @@ function Community({ posts, profiles, rooms, dmRooms, uid, onOpenPost, onNewPost
       <div style={{ padding: "16px 20px 0" }}>
         <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.8)", padding: 4, borderRadius: 16, border: "1px solid #e0e3e8" }}>
           {[["board","📋 게시판"],["groups","💬 채팅"]].map(([id, label]) => (
-            <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: 10, borderRadius: 12, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "Pretendard,sans-serif", background: tab === id ? "#002c5f" : "transparent", color: tab === id ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{label}</button>
+            <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: 10, borderRadius: 12, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: tab === id ? "#002c5f" : "transparent", color: tab === id ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{label}</button>
           ))}
         </div>
       </div>
@@ -2050,7 +2050,7 @@ function Community({ posts, profiles, rooms, dmRooms, uid, onOpenPost, onNewPost
         {tab === "groups" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {/* 전체 채팅방 */}
-            <button onClick={() => onOpenChat("global", "전체 채팅방")} style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,rgba(245,158,11,0.1),transparent)", border: "1px solid rgba(124,58,237,0.18)", borderRadius: 18, padding: 16, cursor: "pointer", width: "100%", textAlign: "left" }}>
+            <button onClick={() => onOpenChat("global", "전체 채팅방")} style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,rgba(245,158,11,0.1),transparent)", border: "1px solid #d1d8e0", borderRadius: 18, padding: 16, cursor: "pointer", width: "100%", textAlign: "left" }}>
               <div style={{ width: 44, height: 44, background: "#e8f0f8", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🌐</div>
               <div style={{ flex: 1 }}><p style={{ fontSize: 14, fontWeight: 700, color: "#111827", margin: 0 }}>전체 채팅방</p><p style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>모든 참여자 {profiles.length}명</p></div>
               <span style={{ color: "#002c5f", opacity: 0.5 }}>→</span>
@@ -2099,9 +2099,9 @@ function Community({ posts, profiles, rooms, dmRooms, uid, onOpenPost, onNewPost
               <p style={{ fontSize: 12, color: "#6b7280", fontStyle: "italic", textAlign: "center", padding: "20px 0" }}>참여 중인 채팅방이 없어요.<br/>동료에게 채팅을 걸거나 새 채팅방을 만들어보세요!</p>
             )}
             {!showCreate ? (
-              <button onClick={() => setCreate(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 14, border: "2px dashed rgba(255,255,255,0.12)", borderRadius: 18, background: "none", color: "#6b7280", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 13, fontWeight: 700, width: "100%" }}>+ 채팅방 만들기</button>
+              <button onClick={() => setCreate(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 14, border: "2px dashed rgba(255,255,255,0.12)", borderRadius: 18, background: "none", color: "#6b7280", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", fontSize: 13, fontWeight: 700, width: "100%" }}>+ 채팅방 만들기</button>
             ) : (
-              <div style={{ ...S.card, borderRadius: 18, display: "flex", flexDirection: "column", gap: 12, border: "1px solid rgba(124,58,237,0.25)" }}>
+              <div style={{ ...S.card, borderRadius: 18, display: "flex", flexDirection: "column", gap: 12, border: "1px solid rgba(0,44,95,0.25)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: "#111827", margin: 0 }}>새 채팅방</p>
                   <button onClick={() => setCreate(false)} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 18 }}>✕</button>
@@ -2168,8 +2168,8 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
         {/* 본인 글이면 수정/삭제 버튼 표시 */}
         {isAuthor && !isEditing && (
           <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
-            <button onClick={() => { setIsEditing(true); setEditForm({ title: post.title, content: post.content }); }} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(124,58,237,0.18)", color: "#002c5f", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>수정</button>
-            <button onClick={() => { if (window.confirm("게시글을 삭제하시겠습니까?")) onDeletePost(); }} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>삭제</button>
+            <button onClick={() => { setIsEditing(true); setEditForm({ title: post.title, content: post.content }); }} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid #d1d8e0", color: "#002c5f", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>수정</button>
+            <button onClick={() => { if (window.confirm("게시글을 삭제하시겠습니까?")) onDeletePost(); }} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>삭제</button>
           </div>
         )}
       </div>
@@ -2198,7 +2198,7 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
             {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", borderRadius: 16, maxHeight: 260, objectFit: "cover", marginBottom: 14 }} />}
             {/* 좋아요 / 댓글 수 */}
             <div style={{ display: "flex", gap: 14, paddingTop: 4, marginBottom: 20 }}>
-              <button onClick={onToggleLike} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 12, border: `1px solid ${isLiked ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, background: isLiked ? "rgba(220,38,38,0.1)" : "rgba(255,255,255,0.8)", color: isLiked ? "#f87171" : "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif", transition: "all 0.2s" }}>
+              <button onClick={onToggleLike} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 12, border: `1px solid ${isLiked ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, background: isLiked ? "rgba(220,38,38,0.1)" : "rgba(255,255,255,0.8)", color: isLiked ? "#f87171" : "#64748b", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", transition: "all 0.2s" }}>
                 {isLiked ? "❤️" : "🤍"} 공감 {post.likeCount || 0}
               </button>
               <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#6b7280" }}>💬 댓글 {comments.length}개</span>
@@ -2223,7 +2223,7 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
                         <p style={{ fontSize: 10, fontWeight: 700, color: "#6b7280", margin: 0 }}>{c.authorName}</p>
                         {/* 본인 댓글 삭제 */}
                         {mine && (
-                          <button onClick={() => { if (window.confirm("댓글을 삭제하시겠습니까?")) onDeleteComment(c.id); }} style={{ background: "none", border: "none", color: "#6b7280", fontSize: 11, cursor: "pointer", fontFamily: "Pretendard,sans-serif", padding: 0 }}>삭제</button>
+                          <button onClick={() => { if (window.confirm("댓글을 삭제하시겠습니까?")) onDeleteComment(c.id); }} style={{ background: "none", border: "none", color: "#6b7280", fontSize: 11, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", padding: 0 }}>삭제</button>
                         )}
                       </div>
                       <p style={{ fontSize: 13, color: "#002c5f", margin: 0 }}>{c.text}</p>
@@ -2266,7 +2266,7 @@ function NewPost({ onSubmit, onBack }) {
       </div>
       <div style={{ ...S.overlayBody, paddingBottom: 40 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div><label style={S.lbl}>태그</label><div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>{POST_TAGS.map(t => <button key={t} onClick={() => setForm(f => ({ ...f, tag: t }))} style={{ padding: "6px 12px", borderRadius: 10, fontSize: 12, fontWeight: 700, border: form.tag === t ? "1px solid #002c5f" : "1px solid #e0e3e8", background: form.tag === t ? "#002c5f" : "#ffffff", color: form.tag === t ? "#ffffff" : "#9ca3af", cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>{t}</button>)}</div></div>
+          <div><label style={S.lbl}>태그</label><div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>{POST_TAGS.map(t => <button key={t} onClick={() => setForm(f => ({ ...f, tag: t }))} style={{ padding: "6px 12px", borderRadius: 10, fontSize: 12, fontWeight: 700, border: form.tag === t ? "1px solid #002c5f" : "1px solid #e0e3e8", background: form.tag === t ? "#002c5f" : "#ffffff", color: form.tag === t ? "#ffffff" : "#9ca3af", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>{t}</button>)}</div></div>
           <div><label style={S.lbl}>제목</label><input style={S.inp} placeholder="제목을 입력하세요" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} /></div>
           <div><label style={S.lbl}>내용</label><textarea style={{ ...S.inp, minHeight: 160, resize: "none" }} placeholder="내용을 자유롭게 작성하세요..." value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} /></div>
           <div>
@@ -2318,15 +2318,15 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
 
   return (
     <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ ...S.cardLg, background: "linear-gradient(135deg,rgba(124,58,237,0.1),rgba(56,189,248,0.06))", border: "1px solid rgba(124,58,237,0.18)", textAlign: "center" }}>
+      <div style={{ ...S.cardLg, background: "linear-gradient(135deg,rgba(124,58,237,0.1),rgba(56,189,248,0.06))", border: "1px solid #d1d8e0", textAlign: "center" }}>
         {allDone ? (
-          <><div style={{ fontSize: 48, marginBottom: 8 }}>🎉</div><h2 style={{ fontSize: 20, fontWeight: 800, color: "#111827", margin: 0 }}>네트워크 미션 완료!</h2><p style={{ fontSize: 13, color: "#6b7280", marginTop: 8 }}>모든 미션을 완료하셨습니다. 수고하셨어요!</p></>
+          <><div style={{ fontSize: 48, marginBottom: 8 }}>🎉</div><h2 style={{ fontSize: 20, fontWeight: 800, color: "#111827", margin: 0 }}>네트워킹 미션 완료!</h2><p style={{ fontSize: 13, color: "#6b7280", marginTop: 8 }}>모든 미션을 완료하셨습니다. 수고하셨어요!</p></>
         ) : (
           <>
             <div style={{ width: 56, height: 56, background: "#e8f0f8", border: "1px solid rgba(124,58,237,0.28)", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: "#002c5f" }}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
             </div>
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#111827", margin: 0 }}>네트워크 미션</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#111827", margin: 0 }}>네트워킹 미션</h2>
             <p style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>미션을 완료하고 연결을 넓혀보세요</p>
             <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 3, overflow: "hidden" }}>
@@ -2419,8 +2419,8 @@ const SCHEDULE_DATA = [
       { time: "09:30 – 10:30", title: "HR 리더특강",            venue: "1F 대강당",          color: "#002c5f" },
       { time: "10:30 – 14:00", title: "주재원 역할 및 행동 이해", venue: "1F 대강당",          color: "#00aad2" },
       { time: "14:00 – 15:30", title: "부임 국가의 이해",         venue: "분반 강의장",        color: "#002c5f" },
-      { time: "15:30 – 16:30", title: "안전 문화 교육",           venue: "1F 대강당",          color: "#0a6640" },
-      { time: "16:30 – 17:30", title: "보안 교육",               venue: "1F 대강당",          color: "#00648c" },
+      { time: "15:30 – 16:30", title: "안전 문화 교육",           venue: "1F 대강당",          color: "#002c5f" },
+      { time: "16:30 – 17:30", title: "보안 교육",               venue: "1F 대강당",          color: "#00aad2" },
     ],
   },
   {
@@ -2434,8 +2434,8 @@ const SCHEDULE_DATA = [
   {
     day: "Day 3",
     sessions: [
-      { time: "08:00 – 12:00", title: "글로벌 비즈니스 매너",     venue: "1F 대강당 / 비젼홀", color: "#0a6640" },
-      { time: "13:00 – 16:00", title: "선배주재원 간담회",         venue: "분반 강의장",        color: "#00648c" },
+      { time: "08:00 – 12:00", title: "글로벌 비즈니스 매너",     venue: "1F 대강당 / 비젼홀", color: "#002c5f" },
+      { time: "13:00 – 16:00", title: "선배주재원 간담회",         venue: "분반 강의장",        color: "#00aad2" },
     ],
   },
 ];
@@ -2447,17 +2447,17 @@ function ScheduleView() {
   return (
     <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
       {/* 헤더 */}
-      <div style={{ background: "linear-gradient(135deg,rgba(124,58,237,0.12),rgba(56,189,248,0.07))", border: "1px solid rgba(124,58,237,0.2)", borderRadius: 24, padding: "20px 24px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, background: "rgba(245,158,11,0.07)", borderRadius: "50%", pointerEvents: "none" }} />
-        <p style={{ fontSize: 10, fontWeight: 700, color: "#002c5f", letterSpacing: "0.14em", margin: "0 0 6px" }}>HMG 주재원 부임전 정규교육</p>
-        <h2 style={{ fontSize: 20, fontWeight: 900, color: "#111827", margin: 0 }}>교육 시간표</h2>
+      <div style={{ background: "linear-gradient(135deg,#002c5f,#003d7a)", border: "none", borderRadius: 16, padding: "20px 24px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, background: "rgba(255,255,255,0.05)", borderRadius: "50%", pointerEvents: "none" }} />
+        <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.7)", letterSpacing: "0.14em", margin: "0 0 6px" }}>HMG 주재원 부임전 정규교육</p>
+        <h2 style={{ fontSize: 20, fontWeight: 900, color: "#ffffff", margin: 0 }}>교육 시간표</h2>
       </div>
 
       {/* Day 탭 */}
       {SCHEDULE_DATA.length > 1 && (
         <div style={{ display: "flex", gap: 6 }}>
           {SCHEDULE_DATA.map((d, i) => (
-            <button key={i} onClick={() => setActiveDay(i)} style={{ padding: "8px 18px", borderRadius: 12, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "Pretendard,sans-serif", background: activeDay === i ? "#002c5f" : "#ffffff", color: activeDay === i ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{d.day}</button>
+            <button key={i} onClick={() => setActiveDay(i)} style={{ padding: "8px 18px", borderRadius: 12, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: activeDay === i ? "#002c5f" : "#ffffff", color: activeDay === i ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{d.day}</button>
           ))}
         </div>
       )}
@@ -2553,7 +2553,7 @@ function CalView({ meetings, events, uid, onAdd }) {
       </div>
 
       {showForm && (
-        <div style={{ ...S.card, borderRadius: 22, border: "1px solid rgba(124,58,237,0.25)", display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ ...S.card, borderRadius: 22, border: "1px solid rgba(0,44,95,0.25)", display: "flex", flexDirection: "column", gap: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ fontSize: 14, fontWeight: 700, color: "#111827", margin: 0 }}>새 일정</p><button onClick={() => setShowForm(false)} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 18 }}>✕</button></div>
           <input style={S.inp} placeholder="일정 제목" value={newEv.title} onChange={e => setNewEv(f => ({ ...f, title: e.target.value }))} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -2567,10 +2567,10 @@ function CalView({ meetings, events, uid, onAdd }) {
 
       {accepted.length > 0 && (
         <div>
-          <h4 style={{ fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 10 }}>☕ 수락된 티미팅 <span style={{ color: "#0a6640" }}>{accepted.length}건</span></h4>
+          <h4 style={{ fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 10 }}>☕ 수락된 티미팅 <span style={{ color: "#002c5f" }}>{accepted.length}건</span></h4>
           {accepted.map(m => (
             <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(34,197,94,0.05)", border: "1px solid rgba(16,185,129,0.1)", borderRadius: 16, padding: "12px 14px", marginBottom: 8 }}>
-              <span style={{ color: "#0a6640", fontSize: 16 }}>✓</span>
+              <span style={{ color: "#002c5f", fontSize: 16 }}>✓</span>
               <div><p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0 }}>티미팅 · {m.fromId === uid ? m.toName : m.fromName}</p><p style={{ fontSize: 10, color: "#6b7280" }}>{m.fromId === uid ? m.toOrg : m.fromOrg}</p></div>
             </div>
           ))}
@@ -2594,7 +2594,7 @@ function CalView({ meetings, events, uid, onAdd }) {
             <div style={{ textAlign: "center", width: 42, flexShrink: 0 }}><p style={{ fontSize: 9, color: "#6b7280", margin: 0 }}>{e.date?.slice(5,7)}월</p><p style={{ fontSize: 20, fontWeight: 900, color: "#111827", lineHeight: 1, margin: 0 }}>{e.date?.slice(8,10)}</p></div>
             <div style={{ width: 1, height: 32, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</p>{e.time && <p style={{ fontSize: 10, color: "#6b7280" }}>{e.time}</p>}{e.note && <p style={{ fontSize: 10, color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.note}</p>}</div>
-            <span style={{ fontSize: 10, fontWeight: 700, color: "#0a6640", flexShrink: 0 }}>{e.type || "티미팅"}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: "#002c5f", flexShrink: 0 }}>{e.type || "티미팅"}</span>
           </div>
         ))}
       </div>
