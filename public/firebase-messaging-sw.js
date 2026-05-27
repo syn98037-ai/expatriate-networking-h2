@@ -14,23 +14,21 @@ firebase.initializeApp(FIREBASE_CONFIG);
 
 const messaging = firebase.messaging();
 
+// onBackgroundMessage를 비워두면 FCM이 notification 필드로 자동 표시
+// showNotification 직접 호출하면 중복되므로 제거
 messaging.onBackgroundMessage(payload => {
-  const { title, body } = payload.notification || {};
-  self.registration.showNotification(title || "Global Connect", {
-    body:  body || "새 알림이 도착했습니다.",
-    icon:  "/logo192.png",
-    data:  { url: payload.fcm_options?.link || "/" },
-    vibrate: [200, 100, 200],
-  });
+  // FCM이 notification 필드를 자동으로 표시하므로 여기선 아무것도 안 함
+  console.log("백그라운드 메시지 수신:", payload);
 });
 
+// 알림 클릭 시 앱 열기
 self.addEventListener("notificationclick", event => {
   event.notification.close();
-  const url = event.notification.data?.url || "/";
+  const url = "https://expatriate-networking-app.vercel.app";
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then(clientList => {
       for (const client of clientList) {
-        if (client.url === url && "focus" in client) return client.focus();
+        if ("focus" in client) return client.focus();
       }
       if (clients.openWindow) return clients.openWindow(url);
     })
