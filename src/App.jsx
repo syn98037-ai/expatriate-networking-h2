@@ -180,16 +180,18 @@ export default function App() {
 
   // ── 알림 권한 요청 (사용자 클릭 후) ─────────────────
   const requestNotifPermission = async () => {
+    setShowNotisBanner(false);
     try {
+      if (typeof Notification === "undefined") {
+        alert("이 브라우저는 알림을 지원하지 않습니다.\n크롬 브라우저를 사용해주세요.");
+        return;
+      }
       const permission = await Notification.requestPermission();
       if (permission === "granted" && uid) {
         await saveFcmToken(uid);
-      } else {
-        setShowNotisBanner(false);
       }
     } catch(e) {
       console.warn("알림 권한 요청 실패:", e.message);
-      setShowNotisBanner(false);
     }
   };
 
@@ -201,10 +203,19 @@ export default function App() {
         if (snap.exists()) {
           setMyProfile({ id: user.uid, ...snap.data() });
           setAuthStatus("auth");
-          // 알림 권한 확인 - 이미 허용됐으면 토큰 저장, 아니면 배너 표시
-          if (Notification.permission === "granted") {
-            saveFcmToken(user.uid);
-          } else if (Notification.permission !== "denied") {
+          // 알림 권한 확인 - Notification API 지원 체크 후 배너 표시
+          try {
+            if (typeof Notification !== "undefined") {
+              if (Notification.permission === "granted") {
+                saveFcmToken(user.uid);
+              } else if (Notification.permission !== "denied") {
+                setShowNotisBanner(true);
+              }
+            } else {
+              // Notification 미지원 브라우저도 배너는 표시 (클릭 시 처리)
+              setShowNotisBanner(true);
+            }
+          } catch(e) {
             setShowNotisBanner(true);
           }
         } else {
