@@ -164,13 +164,20 @@ export default function App() {
   const saveFcmToken = async (userId) => {
     try {
       const token = await getToken(messaging, { vapidKey: VAPID_KEY });
-      if (!token) return;
+      if (!token) {
+        console.warn("FCM 토큰 발급 실패: 토큰 없음");
+        return;
+      }
+      console.log("FCM 토큰 발급 성공:", token.slice(0, 20) + "...");
       const snap = await getDoc(docR("profiles", userId));
       const existing = snap.data()?.fcmTokens || [];
       if (!existing.includes(token)) {
         await updateDoc(docR("profiles", userId), {
           fcmTokens: [...existing, token],
         });
+        console.log("FCM 토큰 저장 완료");
+      } else {
+        console.log("FCM 토큰 이미 저장됨");
       }
       setShowNotisBanner(false);
     } catch(e) {
@@ -270,15 +277,36 @@ export default function App() {
         const prev = prevMeetingsRef.current;
 
         if (uid) { // uid가 있을 때만 알림 처리
-          newMeetings.forEach(nm => {
+          newMeetings.forEach(async nm => {
             const old = prev.find(p => p.id === nm.id);
-            // 새로 생성된 티미팅 신청 → 수신자에게 알림
+            // 새로 생성된 티미팅 신청 → Firestore notifications에 저장 (FCM 트리거)
             if (!old && nm.toId === uid) {
-              setNotifs(n => [{ id: "n"+Date.now()+Math.random(), type: "received", meeting: nm, read: false, createdAt: new Date().toISOString() }, ...n]);
+              try {
+                await addDoc(col("notifications"), {
+                  toId: nm.toId,
+                  type: "received",
+                  fromName: nm.fromName,
+                  fromOrg: nm.fromOrg || "",
+                  message: nm.message || "",
+                  meetingId: nm.id,
+                  read: false,
+                  createdAt: new Date().toISOString(),
+                });
+              } catch(e) {}
             }
             // 상태가 수락함으로 변경 → 발신자에게 알림
             if (old && old.status !== "수락함" && nm.status === "수락함" && nm.fromId === uid) {
-              setNotifs(n => [{ id: "n"+Date.now()+Math.random(), type: "accepted", meeting: nm, read: false, createdAt: new Date().toISOString() }, ...n]);
+              try {
+                await addDoc(col("notifications"), {
+                  toId: nm.fromId,
+                  type: "accepted",
+                  fromName: nm.toName,
+                  fromOrg: nm.toOrg || "",
+                  meetingId: nm.id,
+                  read: false,
+                  createdAt: new Date().toISOString(),
+                });
+              } catch(e) {}
             }
           });
         }
@@ -308,21 +336,24 @@ export default function App() {
             .map(d => d.data())
             .sort((a,b) => new Date(b.updatedAt||0) - new Date(a.updatedAt||0)));
         }),
-        onSnapshot(query(col("notifications"), where("toId", "==", uid), orderBy("createdAt", "desc")), s => {
+        onSnapshot(query(col("notifications"), where("toId", "==", uid)), s => {
           const newNotifs = s.docs.map(d => ({
-            id: "n_" + d.id, firestoreId: d.id, type: d.data().type,
-            fromName: d.data().fromName, roomId: d.data().roomId,
-            preview: d.data().preview, read: d.data().read || false,
-            createdAt: d.data().createdAt,
-          }));
-          setNotifs(prev => {
-            const meetingNotifs = prev.filter(n => n.type === "received" || n.type === "accepted");
-            return [...newNotifs, ...meetingNotifs].sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
-          });
+            id: "n_" + d.id, firestoreId: d.id,
+            type: d.data().type,
+            fromName: d.data().fromName || "",
+            fromOrg: d.data().fromOrg || "",
+            message: d.data().message || "",
+            roomId: d.data().roomId || "",
+            preview: d.data().preview || "",
+            meetingId: d.data().meetingId || "",
+            read: d.data().read || false,
+            createdAt: d.data().createdAt || new Date().toISOString(),
+          })).sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+          setNotifs(newNotifs);
         }),
       ] : []),
     ];
-  }, [authStatus, isAdmin]);
+  }, [authStatus, isAdmin, uid]);
 
   // profiles + adminOverrides 합성 → 매칭에 반영, 삭제된 ID 제외
   const mergedProfiles = profiles
@@ -954,7 +985,15 @@ match /{document=**} {
         {showNotifs && (
           <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"stretch",justifyContent:"flex-end",zIndex:200 }} onClick={(e) => { if(e.target===e.currentTarget) setShowNotifs(false); }}>
             <div style={{ width:400,background:"#020617",borderLeft:"1px solid rgba(255,255,255,0.1)",display:"flex",flexDirection:"column" }}>
-              <NotifPanel notifs={notifs} onClose={() => setShowNotifs(false)} onRead={(id) => setNotifs(prev => prev.map(n => n.id===id?{...n,read:true}:n))} onReadAll={() => setNotifs(prev => prev.map(n => ({...n,read:true})))} onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }} onGoChat={(roomId, name) => { setShowNotifs(false); openChat(roomId, name); }} />
+              <NotifPanel notifs={notifs} onClose={() => setShowNotifs(false)} onRead={async (id) => {
+              const n = notifs.find(x => x.id === id);
+              if (n?.firestoreId) { try { await updateDoc(docR("notifications", n.firestoreId), { read: true }); } catch(e) {} }
+              setNotifs(prev => prev.map(x => x.id === id ? { ...x, read: true } : x));
+            }} onReadAll={async () => {
+              const promises = notifs.filter(n => !n.read && n.firestoreId).map(n => updateDoc(docR("notifications", n.firestoreId), { read: true }).catch(()=>{}));
+              await Promise.all(promises);
+              setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+            }} onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }} onGoChat={(roomId, name) => { setShowNotifs(false); openChat(roomId, name); }} />
             </div>
           </div>
         )}
@@ -1040,15 +1079,20 @@ match /{document=**} {
             notifs={notifs}
             onClose={() => setShowNotifs(false)}
             onRead={async (id) => {
-              setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
               const n = notifs.find(x => x.id === id);
-              if (n?.firestoreId) { try { await updateDoc(docR("notifications", n.firestoreId), { read: true }); } catch(e) {} }
+              if (n?.firestoreId) {
+                try { await updateDoc(docR("notifications", n.firestoreId), { read: true }); } catch(e) {}
+              }
+              // 로컬에도 즉시 반영
+              setNotifs(prev => prev.map(x => x.id === id ? { ...x, read: true } : x));
             }}
             onReadAll={async () => {
+              // 모든 알림 Firestore에서 읽음 처리
+              const promises = notifs
+                .filter(n => !n.read && n.firestoreId)
+                .map(n => updateDoc(docR("notifications", n.firestoreId), { read: true }).catch(()=>{}));
+              await Promise.all(promises);
               setNotifs(prev => prev.map(n => ({ ...n, read: true })));
-              for (const n of notifs) {
-                if (n.firestoreId) { try { await updateDoc(docR("notifications", n.firestoreId), { read: true }); } catch(e) {} }
-              }
             }}
             onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }}
             onGoChat={(roomId, name) => { setShowNotifs(false); openChat(roomId, name); }}
@@ -1116,8 +1160,8 @@ function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings, onGoChat
           const title  = isChatNotif
             ? `${n.fromName} 님이 메시지를 보냈습니다`
             : n.type === "accepted"
-              ? `${n.meeting?.toName} 님이 티미팅을 수락했습니다!`
-              : `${n.meeting?.fromName} 님이 티미팅을 신청했습니다.`;
+              ? `${n.fromName} 님이 티미팅을 수락했습니다!`
+              : `${n.fromName} 님이 티미팅을 신청했습니다.`;
           const handleClick = () => {
             onRead(n.id);
             if (isChatNotif && onGoChat) onGoChat(n.roomId, n.fromName);
@@ -1134,9 +1178,9 @@ function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings, onGoChat
                   {isChatNotif && n.preview && (
                     <p style={{ fontSize: 12, color: "#94a3b8", margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{n.preview}"</p>
                   )}
-                  {!isChatNotif && n.meeting?.message && (
+                  {!isChatNotif && n.message && (
                     <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "6px 10px", marginBottom: 4 }}>
-                      <p style={{ fontSize: 12, color: "#e2e8f0", margin: 0 }}>"{n.meeting.message}"</p>
+                      <p style={{ fontSize: 12, color: "#e2e8f0", margin: 0 }}>"{n.message}"</p>
                     </div>
                   )}
                   <p style={{ fontSize: 10, color: "#64748b", margin: 0 }}>{timeAgo(n.createdAt)}</p>
