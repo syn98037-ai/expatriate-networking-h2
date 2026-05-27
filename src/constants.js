@@ -5,21 +5,17 @@ export const CONCERNS = [
 ];
 export const POST_TAGS = ["일상","정보공유","질문","모임","현지팁","고민상담"];
 
-// ─── 아바타 그라데이션 ────────────────────────────────
+// ─── 아바타 색상 ─────────────────────────────────────────
 const GRADS = [
-  "#4f1c9f,#7c3aed,#c084fc",
-  "#0ea5e9,#06b6d4,#0891b2",
-  "#ec4899,#f472b6,#e879f9",
-  "#10b981,#34d399,#059669",
-  "#f59e0b,#f97316,#ea580c",
-  "#8b5cf6,#6366f1,#4f46e5",
+  "#002c5f,#1a5fa0","#00aad2,#0088a8","#1a6daa,#0e4f7a",
+  "#003d7a,#0066cc","#00748c,#005a6e","#1a4f8a,#002c5f",
 ];
 export const gradFor = (id = "") => {
   const g = GRADS[id.charCodeAt(0) % GRADS.length].split(",");
-  return `${g[0]},${g[1]},${g[2]}`;
+  return `${g[0]},${g[1]}`;
 };
 
-// ─── 시간 표시 ───────────────────────────────────────
+// ─── 시간 표시 ───────────────────────────────────────────
 export const timeAgo = (iso) => {
   if (!iso) return "";
   const m = Math.floor((Date.now() - new Date(iso)) / 60000);
@@ -30,119 +26,116 @@ export const timeAgo = (iso) => {
   return `${Math.floor(h / 24)}일 전`;
 };
 
-// ─── Canva 스타일 공통 스타일 ────────────────────────
-// 규칙: 어두운 배경 → 흰 글씨 / 밝은 배경 → 어두운 글씨
-// 모든 요소에 그라데이션 적용
+// ─── HMG 디자인 시스템 ───────────────────────────────────
+// 현대자동차 앱 스타일
+// 규칙: 네이비(#002c5f) 배경 → 흰 글씨 / 흰/회색 배경 → 네이비/진회색 글씨
 
 export const S = {
-  screen:  { flex: 1, overflowY: "auto", paddingBottom: 80 },
+  screen: { flex: 1, overflowY: "auto", paddingBottom: 80 },
 
-  // 카드: 밝은 배경 → 어두운 글씨
-  card:    {
-    background: "linear-gradient(135deg,#ffffff 0%,#f5f0ff 100%)",
-    border: "1.5px solid #c4b5fd",
-    borderRadius: 20,
+  // 카드: 순백 + 연한 테두리 + 미세 그림자
+  card: {
+    background: "#ffffff",
+    border: "1px solid #e0e3e8",
+    borderRadius: 16,
     padding: 16,
-    boxShadow: "0 4px 16px rgba(124,58,237,0.1)",
+    boxShadow: "0 2px 8px rgba(0,44,95,0.07)",
   },
-  cardLg:  {
-    background: "linear-gradient(135deg,#ffffff 0%,#f0ebff 100%)",
-    border: "1.5px solid #c4b5fd",
-    borderRadius: 28,
+  cardLg: {
+    background: "#ffffff",
+    border: "1px solid #e0e3e8",
+    borderRadius: 20,
     padding: 24,
     position: "relative",
     overflow: "hidden",
-    boxShadow: "0 6px 24px rgba(124,58,237,0.12)",
+    boxShadow: "0 4px 16px rgba(0,44,95,0.09)",
   },
 
-  // 입력창: 밝은 배경 → 어두운 글씨
+  // 입력창
   inp: {
     width: "100%",
     padding: "13px 16px",
-    background: "linear-gradient(135deg,#faf8ff,#f3efff)",
-    border: "1.5px solid #c4b5fd",
-    borderRadius: 16,
-    color: "#1e1b4b",
+    background: "#f5f6f8",
+    border: "1.5px solid #d1d5db",
+    borderRadius: 12,
+    color: "#002c5f",
     fontFamily: "Pretendard,sans-serif",
     fontSize: 14,
     outline: "none",
     boxSizing: "border-box",
   },
 
-  // 라벨: 보라 그라데이션 텍스트
+  // 라벨
   lbl: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: 700,
-    background: "linear-gradient(90deg,#7c3aed,#a855f7)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    letterSpacing: "0.08em",
+    color: "#002c5f",
+    letterSpacing: "0.06em",
     display: "block",
     marginBottom: 6,
     marginLeft: 2,
   },
 
-  // 주 버튼: 어두운 보라 그라데이션 → 흰 글씨
+  // 주 버튼: 네이비 → 흰 글씨
   btnAmber: {
-    background: "linear-gradient(135deg,#4f1c9f,#7c3aed,#a855f7)",
+    background: "#002c5f",
     color: "#ffffff",
     fontWeight: 700,
     border: "none",
-    borderRadius: 14,
+    borderRadius: 10,
     padding: "11px 18px",
     cursor: "pointer",
     fontFamily: "Pretendard,sans-serif",
     fontSize: 13,
-    boxShadow: "0 4px 14px rgba(124,58,237,0.4)",
+    boxShadow: "0 3px 10px rgba(0,44,95,0.25)",
   },
 
-  // 보조 버튼: 밝은 연보라 → 어두운 보라 글씨
+  // 보조 버튼: 흰색 + 네이비 테두리 → 네이비 글씨
   btnGhost: {
-    background: "linear-gradient(135deg,#ede9fe,#ddd6fe)",
-    border: "1.5px solid #c4b5fd",
-    color: "#4c1d95",
+    background: "#ffffff",
+    border: "1.5px solid #c5d5e8",
+    color: "#002c5f",
     fontWeight: 700,
-    borderRadius: 12,
+    borderRadius: 10,
     padding: "9px 14px",
     cursor: "pointer",
     fontFamily: "Pretendard,sans-serif",
     fontSize: 12,
   },
 
-  // 뱃지: 밝은 배경 → 어두운 글씨
+  // 뱃지
   amberBadge: {
-    background: "linear-gradient(135deg,#ede9fe,#ddd6fe)",
-    border: "1px solid #c4b5fd",
-    color: "#4c1d95",
+    background: "#e8f0f8",
+    border: "1px solid #c5d5e8",
+    color: "#002c5f",
     fontSize: 10,
     fontWeight: 700,
     padding: "4px 10px",
-    borderRadius: 10,
+    borderRadius: 8,
     display: "inline-block",
   },
 
-  // 오버레이: 밝은 배경
-  overlay:       { position: "absolute", inset: 0, background: "linear-gradient(160deg,#f3f0ff,#faf5ff)", zIndex: 50, display: "flex", flexDirection: "column" },
-  overlayHeader: { padding: "14px 20px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1.5px solid #ddd6fe", flexShrink: 0, background: "linear-gradient(135deg,#fff,#faf5ff)" },
-  overlayBody:   { flex: 1, overflowY: "auto", padding: 20, background: "linear-gradient(160deg,#f3f0ff,#faf5ff)" },
-  overlayFooter: { padding: "12px 16px", borderTop: "1.5px solid #ddd6fe", display: "flex", gap: 8, flexShrink: 0, background: "linear-gradient(135deg,#fff,#faf5ff)" },
+  // 오버레이
+  overlay:       { position: "absolute", inset: 0, background: "#f5f6f8", zIndex: 50, display: "flex", flexDirection: "column" },
+  overlayHeader: { padding: "14px 20px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid #e0e3e8", flexShrink: 0, background: "#ffffff" },
+  overlayBody:   { flex: 1, overflowY: "auto", padding: 20, background: "#f5f6f8" },
+  overlayFooter: { padding: "12px 16px", borderTop: "1px solid #e0e3e8", display: "flex", gap: 8, flexShrink: 0, background: "#ffffff" },
 };
 
 // 상태 뱃지
 export const stBadge = (s) => ({
   background:
-    s === "대기중" ? "linear-gradient(135deg,#fef9c3,#fef08a)" :
-    s === "수락함" ? "linear-gradient(135deg,#d1fae5,#a7f3d0)" :
-                    "linear-gradient(135deg,#fee2e2,#fecaca)",
+    s === "대기중" ? "#fff8e6" :
+    s === "수락함" ? "#e6f7ee" : "#fde8e8",
   color:
-    s === "대기중" ? "#854d0e" :
-    s === "수락함" ? "#065f46" : "#991b1b",
+    s === "대기중" ? "#9a6700" :
+    s === "수락함" ? "#0a6640" : "#c0392b",
   fontSize: 10,
   fontWeight: 700,
   padding: "3px 8px",
   borderRadius: 8,
-  border: `1.5px solid ${
-    s === "대기중" ? "#fde68a" :
-    s === "수락함" ? "#6ee7b7" : "#fca5a5"
+  border: `1px solid ${
+    s === "대기중" ? "#f0d080" :
+    s === "수락함" ? "#85d4a8" : "#f5a5a5"
   }`,
 });
