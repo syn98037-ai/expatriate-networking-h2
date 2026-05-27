@@ -25,6 +25,6 @@ export const storage   = getStorage(app);
 export const messaging = getMessaging(app);
 
 // VAPID 키 - Firebase 콘솔 → 프로젝트 설정 → 클라우드 메시징 → 웹 푸시 인증서 → 키 쌍
-export const VAPID_KEY = "BM-6Hw2tzNZwJ5cS6Gy4UuRzxSTz8d4ErLfQMfRqw75TKcihVWAK_ZnTjdqIAvN7ZPiKhEOnjs4BkyQhrkxn_sg"
+export const VAPID_KEY = "BM-6Hw2tzNZwJ5cS6Gy4UuRzxSTz8d4ErLfQMfRqw75TKcihVWAK_ZnTjdqIAvN7ZPiKhEOnjs4BkyQhrkxn_sg";
 
 export { getToken, onMessage };

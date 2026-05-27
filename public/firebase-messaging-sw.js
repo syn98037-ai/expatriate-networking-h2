@@ -8,6 +8,7 @@ const FIREBASE_CONFIG = {
   appId: "1:661643710726:web:02c86e75e96e90b62f4e87",
   measurementId: "G-VKBNMXHRKT"
 };
+
 importScripts("https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js");
 
