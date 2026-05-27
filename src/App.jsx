@@ -856,9 +856,9 @@ match /{document=**} {
             {/* PC 상단 헤더 */}
             <header style={{ padding: "0 20px 0 28px", height: 60, flexShrink: 0, display: "flex", alignItems: "center", background: "linear-gradient(135deg,#4f1c9f 0%,#7c3aed 40%,#a855f7 70%,#c084fc 100%)" }}>
               {/* 왼쪽: 로고 + 탭 */}
-              <div style={{ display: "flex", alignItems: "center", gap: 20, flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, flex: "0 0 auto" }}>
                 <span style={{ fontSize: 16, fontWeight: 900, background: "linear-gradient(90deg,#fff,#e9d5ff,#c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", flexShrink: 0, letterSpacing: "-0.3px" }}>Global Connect</span>
-                <nav style={{ display: "flex", gap: 1, overflow: "hidden", minWidth: 0 }}>
+                <nav style={{ display: "flex", gap: 1 }}>
                   {NAV.map(n => (
                     <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 9px", borderRadius: 9, background: view === n.id ? "rgba(124,58,237,0.1)" : "none", border: view === n.id ? "1px solid rgba(124,58,237,0.25)" : "1px solid transparent", color: view === n.id ? "#7c3aed" : "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 12, fontWeight: 600, transition: "all 0.2s", whiteSpace: "nowrap" }}>
                       <NavIcon id={n.id} active={view === n.id} />
@@ -868,18 +868,18 @@ match /{document=**} {
                 </nav>
               </div>
               {/* 오른쪽: 알림 벨 + 프로필 + 로그아웃 */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginLeft: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginLeft: "auto" }}>
                 <div onClick={() => openNotifs()} style={{ position: "relative", cursor: "pointer", width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.18)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.3)", flexShrink: 0 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                   {notifs.filter(n => !n.read).length > 0 && (
-                    <div style={{ position: "absolute", top: -3, right: -3, width: 15, height: 15, background: "#f87171", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 900, color: "#fff", border: "2px solid #9333ea" }}>
+                    <div style={{ position: "absolute", top: -3, right: -3, width: 15, height: 15, background: "#f87171", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 900, color: "#1e1b4b", border: "2px solid #9333ea" }}>
                       {notifs.filter(n => !n.read).length > 9 ? "9+" : notifs.filter(n => !n.read).length}
                     </div>
                   )}
                 </div>
                 <div onClick={() => openOverlay({ type: "profile" })} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 7, padding: "5px 9px", borderRadius: 10, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.3)", flexShrink: 0 }}>
                   <Avatar profile={myProfile} size={26} />
-                  <p style={{ fontSize: 12, fontWeight: 700, color: "#fff", margin: 0, whiteSpace: "nowrap" }}>{myProfile?.name}</p>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: "#1e1b4b", margin: 0, whiteSpace: "nowrap" }}>{myProfile?.name}</p>
                 </div>
                 <button onClick={handleLogout} style={{ background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)", color: "#fff", fontSize: 11, fontWeight: 700, padding: "6px 11px", borderRadius: 9, cursor: "pointer", fontFamily: "Pretendard,sans-serif", whiteSpace: "nowrap", flexShrink: 0 }}>로그아웃</button>
               </div>
@@ -1039,7 +1039,7 @@ match /{document=**} {
               <div onClick={() => openNotifs()} style={{ position: "relative", cursor: "pointer", width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.18)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.25)" }}>
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                 {notifs.filter(n => !n.read).length > 0 && (
-                  <div style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, background: "#f87171", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, color: "#fff", border: "2px solid #9333ea" }}>
+                  <div style={{ position: "absolute", top: -4, right: -4, width: 16, height: 16, background: "#f87171", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, color: "#1e1b4b", border: "2px solid #9333ea" }}>
                     {notifs.filter(n => !n.read).length > 9 ? "9+" : notifs.filter(n => !n.read).length}
                   </div>
                 )}
@@ -1112,7 +1112,7 @@ function SendReqModal({ target, onSend, onBack }) {
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
         <Avatar profile={target} size={52} />
         <div>
-          <p style={{ fontSize: 16, fontWeight: 800, color: "#fff", margin: 0 }}>{target.name}</p>
+          <p style={{ fontSize: 16, fontWeight: 800, color: "#1e1b4b", margin: 0 }}>{target.name}</p>
           <p style={{ fontSize: 11, color: "#7c6aad", marginTop: 3 }}>{target.org} · {target.city}</p>
         </div>
       </div>
@@ -1141,7 +1141,7 @@ function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings, onGoChat
       <div style={S.overlayHeader}>
         <button onClick={onClose} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>알림</p>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>알림</p>
           {unreadCount > 0 && <p style={{ fontSize: 10, color: "#6d28d9", margin: 0 }}>읽지 않은 알림 {unreadCount}개</p>}
         </div>
         {unreadCount > 0 && (
@@ -1175,7 +1175,7 @@ function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings, onGoChat
               <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                 <div style={{ width: 36, height: 36, borderRadius: 12, background: `${accent}22`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{icon}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>{title}</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", margin: "0 0 4px" }}>{title}</p>
                   {isChatNotif && n.preview && (
                     <p style={{ fontSize: 12, color: "#7c6aad", margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{n.preview}"</p>
                   )}
@@ -1486,7 +1486,7 @@ function AdminAuth({ onSuccess, onBack }) {
     <div style={{ ...S.overlay, alignItems: "center", justifyContent: "center" }}>
       <div style={{ padding: 40, textAlign: "center", width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: 24, alignItems: "center" }}>
         <div style={{ width: 80, height: 80, background: "rgba(245,158,11,0.1)", borderRadius: 24, border: "1px solid rgba(124,58,237,0.18)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>🛡️</div>
-        <div><h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: 0 }}>관리자 로그인</h2><p style={{ fontSize: 13, color: "#7c6aad", marginTop: 6 }}>기획자 전용 비밀번호를 입력해주세요.</p></div>
+        <div><h2 style={{ fontSize: 22, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>관리자 로그인</h2><p style={{ fontSize: 13, color: "#7c6aad", marginTop: 6 }}>기획자 전용 비밀번호를 입력해주세요.</p></div>
         <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
           <input type="password" style={{ ...S.inp, textAlign: "center", fontSize: 24, letterSpacing: "0.5em" }} maxLength={8} placeholder="••••••••" value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === "Enter" && go()} />
           {err && <p style={{ color: "#dc2626", fontSize: 12, fontWeight: 700, margin: 0 }}>비밀번호가 일치하지 않습니다.</p>}
@@ -1512,7 +1512,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
       <div style={S.overlayHeader}>
         <button onClick={onBack} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 20 }}>←</button>
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 700, color: "#fff", fontSize: 15 }}>관리자 대시보드</div>
+          <div style={{ fontWeight: 700, color: "#1e1b4b", fontSize: 15 }}>관리자 대시보드</div>
           <div style={{ fontSize: 9, color: "#6d28d9", letterSpacing: "0.1em" }}>ADMIN PANEL</div>
         </div>
       </div>
@@ -1559,7 +1559,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
               <div key={p.id} style={{ ...S.card, borderRadius: 18 }}>
                 {editId === p.id ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>{p.name} — 매칭 정보 수정</p>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{p.name} — 매칭 정보 수정</p>
                     {[["city","도시"],["country","국가"]].map(([k, l]) => (
                       <div key={k}><label style={S.lbl}>{l}</label><input style={S.inp} value={editForm[k]||""} onChange={e => setEF(f => ({ ...f, [k]: e.target.value }))} /></div>
                     ))}
@@ -1656,7 +1656,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                     삭제
                   </button>
                 </div>
-                <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{post.title}</p>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", marginBottom: 4 }}>{post.title}</p>
                 <p style={{ fontSize: 11, color: "#7c6aad", margin: 0 }}>작성자: {post.authorName} · 댓글 {post.commentCount || 0} · 공감 {post.likeCount || 0}</p>
               </div>
             ))}
@@ -1687,7 +1687,7 @@ function Dashboard({ profiles, myProfile, uid, onRequest, onChat }) {
           <Avatar profile={myProfile} size={56} />
           <div>
             <p style={{ fontSize: 10, color: "#6d28d9", fontWeight: 700, letterSpacing: "0.12em", marginBottom: 4 }}>HMG 주재원</p>
-            <h3 style={{ fontSize: 20, fontWeight: 700, color: "#fff", margin: 0 }}>안녕하세요, {myProfile.name} 님!</h3>
+            <h3 style={{ fontSize: 20, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>안녕하세요, {myProfile.name} 님!</h3>
             <p style={{ fontSize: 12, color: "#7c6aad", marginTop: 2 }}>{myProfile.city} · {myProfile.country}</p>
           </div>
         </div>
@@ -1695,19 +1695,19 @@ function Dashboard({ profiles, myProfile, uid, onRequest, onChat }) {
           <span style={S.amberBadge}>{myProfile.concern}</span>
           {myProfile.interest && <span style={{ ...S.amberBadge, background: "rgba(255,255,255,0.8)", border: "1.5px solid #ddd6fe", color: "#7c6aad" }}>{myProfile.interest}</span>}
         </div>
-        <p style={{ fontSize: 12, color: "#7c6aad", marginTop: 14 }}>{myProfile.city}에 <strong style={{ color: "#fff" }}>{sameCity.length}명</strong>이 함께 부임 예정이에요.</p>
+        <p style={{ fontSize: 12, color: "#7c6aad", marginTop: 14 }}>{myProfile.city}에 <strong style={{ color: "#4c1d95" }}>{sameCity.length}명</strong>이 함께 부임 예정이에요.</p>
       </div>
       {[["같은 도시", `${myProfile.city} 부임 예정`, sameCity],["같은 나라", `${myProfile.country} 부임 예정`, sameCountry],["비슷한 고민", "공통 관심사", sameConcern]].map(([title, sub, list]) => (
         <section key={title}>
           <div style={{ marginBottom: 12, padding: "0 2px" }}>
-            <h4 style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>{title}</h4>
+            <h4 style={{ fontSize: 15, fontWeight: 800, background: "linear-gradient(90deg,#4f1c9f,#7c3aed)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", margin: 0 }}>{title}</h4>
             <p style={{ fontSize: 9, color: "#7c6aad", margin: 0 }}>{sub}</p>
           </div>
           <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12 }}>
             {list.length > 0 ? list.map(p => (
               <div key={p.id} style={{ minWidth: 164, maxWidth: 164, ...S.card, borderRadius: 22, display: "flex", flexDirection: "column", gap: 10 }}>
                 <Avatar profile={p} size={50} />
-                <div><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p><p style={{ fontSize: 10, color: "#7c6aad", margin: 0 }}>{p.org}</p></div>
+                <div><p style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p><p style={{ fontSize: 10, color: "#7c6aad", margin: 0 }}>{p.org}</p></div>
                 <div style={{ fontSize: 9, fontWeight: 700, color: "#6d28d9", background: "rgba(124,58,237,0.07)", border: "1px solid rgba(245,158,11,0.1)", padding: "5px 8px", borderRadius: 10, textAlign: "center" }}>{p.city} · {p.country}</div>
                 <p style={{ fontSize: 10, color: "#7c6aad", background: "rgba(255,255,255,0.8)", padding: "6px 8px", borderRadius: 10, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.concern}</p>
                 <div style={{ display: "flex", gap: 6 }}>
@@ -1715,7 +1715,7 @@ function Dashboard({ profiles, myProfile, uid, onRequest, onChat }) {
                   <button onClick={() => onRequest(p)} style={{ ...S.btnAmber, flex: 1, padding: "7px 6px", fontSize: 10, borderRadius: 10 }}>신청</button>
                 </div>
               </div>
-            )) : <div style={{ width: "100%", padding: 28, border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 20, textAlign: "center", color: "#7c6aad", fontSize: 12, fontStyle: "italic" }}>아직 매칭되는 분이 없어요.</div>}
+            )) : <div style={{ width: "100%", padding: 28, border: "1.5px dashed #c4b5fd", borderRadius: 20, textAlign: "center", color: "#7c3aed", fontSize: 12, fontStyle: "italic", background: "rgba(237,233,254,0.3)" }}>아직 매칭되는 분이 없어요.</div>}
           </div>
         </section>
       ))}
@@ -1729,12 +1729,12 @@ function Directory({ profiles, uid, onRequest, onChat, onViewProfile }) {
   return (
     <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <input style={S.inp} placeholder="이름, 도시, 국가, 고민, 관심사로 검색..." value={term} onChange={e => setTerm(e.target.value)} />
-      <p style={{ fontSize: 12, color: "#7c6aad" }}><strong style={{ color: "#fff" }}>{filtered.length}명</strong> 검색됨</p>
+      <p style={{ fontSize: 12, color: "#7c6aad" }}><strong style={{ color: "#1e1b4b" }}>{filtered.length}명</strong> 검색됨</p>
       {filtered.map(p => (
         <div key={p.id} style={{ ...S.card, display: "flex", alignItems: "center", gap: 14, borderRadius: 20, cursor: "pointer" }} onClick={() => onViewProfile(p)}>
           <Avatar profile={p} size={48} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: 0 }}>{p.name}</p>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{p.name}</p>
             <p style={{ fontSize: 10, color: "#7c6aad", margin: 0 }}>{p.org}</p>
             <p style={{ fontSize: 10, color: "#6d28d9", fontWeight: 600, marginTop: 2 }}>{p.city} · {p.country}</p>
             <p style={{ fontSize: 10, color: "#7c6aad", marginTop: 1 }}>{p.concern}</p>
@@ -1760,7 +1760,7 @@ function ProfileView({ profile, onBack, onRequest, onChat }) {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginBottom: 28, paddingTop: 8 }}>
           <Avatar profile={profile} size={80} />
           <div style={{ textAlign: "center" }}>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#fff", margin: 0 }}>{profile.name}</h2>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#1e1b4b", margin: 0 }}>{profile.name}</h2>
             <p style={{ fontSize: 13, color: "#7c6aad", marginTop: 4 }}>{profile.org}</p>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -1804,7 +1804,7 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
         <button onClick={onBack} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
         <div style={{ width: 36, height: 36, background: "rgba(245,158,11,0.1)", borderRadius: 12, border: "1px solid rgba(124,58,237,0.18)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{isGroup ? "👥" : "💬"}</div>
         <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: 0 }}>{name}</p>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{name}</p>
           <p style={{ fontSize: 10, color: "#7c6aad", margin: 0 }}>{isGroup ? `그룹 채팅 · ${memberProfiles.length}명` : "1:1 채팅"}</p>
         </div>
         {currentRoom && (
@@ -1902,7 +1902,7 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <Avatar profile={sender} size={44} />
-                <div><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>{m.fromName} <span style={{ fontSize: 11, fontWeight: 400, color: "#7c6aad" }}>({m.fromOrg})</span></p><p style={{ fontSize: 10, color: "#7c6aad", marginTop: 2 }}>티미팅 신청이 도착했어요</p></div>
+                <div><p style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{m.fromName} <span style={{ fontSize: 11, fontWeight: 400, color: "#7c6aad" }}>({m.fromOrg})</span></p><p style={{ fontSize: 10, color: "#7c6aad", marginTop: 2 }}>티미팅 신청이 도착했어요</p></div>
               </div>
               <span style={stBadge(m.status)}>{m.status}</span>
             </div>
@@ -1922,7 +1922,7 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
         return (
           <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, ...S.card, borderRadius: 16 }}>
             <Avatar profile={receiver} size={36} />
-            <div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>{m.toName}</p><p style={{ fontSize: 10, color: "#7c6aad" }}>{m.toOrg}</p></div>
+            <div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{m.toName}</p><p style={{ fontSize: 10, color: "#7c6aad" }}>{m.toOrg}</p></div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {m.status === "수락함" && <button onClick={() => onChat(m)} style={{ padding: 6, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 8, cursor: "pointer", fontSize: 14 }}>💬</button>}
               <span style={stBadge(m.status)}>{m.status}</span>
@@ -1978,7 +1978,7 @@ function BoardView({ posts, profiles, uid, onOpenPost, onNewPost }) {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <p style={{ fontSize: 12, color: "#7c6aad", margin: 0 }}><strong style={{ color: "#fff" }}>{posts.length}개</strong>의 게시글</p>
+          <p style={{ fontSize: 12, color: "#7c6aad", margin: 0 }}><strong style={{ color: "#1e1b4b" }}>{posts.length}개</strong>의 게시글</p>
           <button onClick={onNewPost} style={{ ...S.btnAmber, padding: "8px 14px", fontSize: 12, borderRadius: 12 }}>+ 글쓰기</button>
         </div>
         {posts.map(post => {
@@ -1986,7 +1986,7 @@ function BoardView({ posts, profiles, uid, onOpenPost, onNewPost }) {
           return (
             <div key={post.id} onClick={() => onOpenPost(post)} style={{ ...S.card, borderRadius: 22, cursor: "pointer", display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>{post.tag && <span style={S.amberBadge}>{post.tag}</span>}<p style={{ fontSize: 10, color: "#7c6aad", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p></div>
-              <div><p style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: 0, marginBottom: 6, lineHeight: 1.4 }}>{post.title}</p><p style={{ fontSize: 13, color: "#7c6aad", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.6 }}>{post.content}</p></div>
+              <div><p style={{ fontSize: 15, fontWeight: 800, color: "#1e1b4b", margin: 0, marginBottom: 6, lineHeight: 1.4 }}>{post.title}</p><p style={{ fontSize: 13, color: "#7c6aad", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.6 }}>{post.content}</p></div>
               {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 14 }} />}
               <div style={{ display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8 }}>
                 <Avatar profile={author} size={20} /><p style={{ fontSize: 11, color: "#7c6aad", margin: 0 }}>{post.authorName}</p>
@@ -2026,13 +2026,13 @@ function Community({ posts, profiles, rooms, dmRooms, uid, onOpenPost, onNewPost
       <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
         {tab === "board" && (
           <>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ fontSize: 12, color: "#7c6aad", margin: 0 }}><strong style={{ color: "#fff" }}>{posts.length}개</strong>의 게시글</p><button onClick={onNewPost} style={{ ...S.btnAmber, padding: "8px 14px", fontSize: 12, borderRadius: 12 }}>+ 글쓰기</button></div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ fontSize: 12, color: "#7c6aad", margin: 0 }}><strong style={{ color: "#1e1b4b" }}>{posts.length}개</strong>의 게시글</p><button onClick={onNewPost} style={{ ...S.btnAmber, padding: "8px 14px", fontSize: 12, borderRadius: 12 }}>+ 글쓰기</button></div>
             {posts.map(post => {
               const author = profiles.find(p => p.id === post.authorId) || { name: post.authorName, id: post.authorId };
               return (
                 <div key={post.id} onClick={() => onOpenPost(post)} style={{ ...S.card, borderRadius: 22, cursor: "pointer", display: "flex", flexDirection: "column", gap: 10 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>{post.tag && <span style={S.amberBadge}>{post.tag}</span>}<p style={{ fontSize: 10, color: "#7c6aad", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p></div>
-                  <div><p style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: 0, marginBottom: 6, lineHeight: 1.4 }}>{post.title}</p><p style={{ fontSize: 13, color: "#7c6aad", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.6 }}>{post.content}</p></div>
+                  <div><p style={{ fontSize: 15, fontWeight: 800, color: "#1e1b4b", margin: 0, marginBottom: 6, lineHeight: 1.4 }}>{post.title}</p><p style={{ fontSize: 13, color: "#7c6aad", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.6 }}>{post.content}</p></div>
                   {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 14 }} />}
                   <div style={{ display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8 }}>
                     <Avatar profile={author} size={20} /><p style={{ fontSize: 11, color: "#7c6aad", margin: 0 }}>{post.authorName}</p>
@@ -2099,7 +2099,7 @@ function Community({ posts, profiles, rooms, dmRooms, uid, onOpenPost, onNewPost
             ) : (
               <div style={{ ...S.card, borderRadius: 18, display: "flex", flexDirection: "column", gap: 12, border: "1px solid rgba(124,58,237,0.25)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: 0 }}>새 채팅방</p>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>새 채팅방</p>
                   <button onClick={() => setCreate(false)} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 18 }}>✕</button>
                 </div>
                 <div><label style={S.lbl}>채팅방 이름</label><input style={S.inp} placeholder="예: 어바인 육아 모임" value={newRoom.name} onChange={e => setNewRoom(r => ({ ...r, name: e.target.value }))} /></div>
@@ -2159,7 +2159,7 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(135deg,#fff,#faf5ff)", overflow: "hidden" }}>
       <div style={S.overlayHeader}>
         <button onClick={onBack} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
-        <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{post.title}</p>
+        <p style={{ fontSize: 14, fontWeight: 700, color: "#1e1b4b", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{post.title}</p>
         {post.tag && <span style={S.amberBadge}>{post.tag}</span>}
         {/* 본인 글이면 수정/삭제 버튼 표시 */}
         {isAuthor && !isEditing && (
@@ -2184,7 +2184,7 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
         ) : (
           /* 보기 모드 */
           <>
-            <p style={{ fontSize: 17, fontWeight: 800, color: "#fff", marginBottom: 4, lineHeight: 1.4 }}>{post.title}</p>
+            <p style={{ fontSize: 17, fontWeight: 800, color: "#1e1b4b", marginBottom: 4, lineHeight: 1.4 }}>{post.title}</p>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
               <Avatar profile={author} size={28} />
               <p style={{ fontSize: 12, color: "#7c6aad", margin: 0 }}>{post.authorName}</p>
@@ -2257,7 +2257,7 @@ function NewPost({ onSubmit, onBack }) {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(135deg,#fff,#faf5ff)", overflow: "hidden" }}>
       <div style={S.overlayHeader}>
         <button onClick={onBack} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 20, padding: 4 }}>✕</button>
-        <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", flex: 1, margin: 0 }}>글쓰기</p>
+        <p style={{ fontSize: 15, fontWeight: 700, color: "#1e1b4b", flex: 1, margin: 0 }}>글쓰기</p>
         <button onClick={submit} disabled={loading} style={{ ...S.btnAmber, padding: "8px 14px", fontSize: 12, borderRadius: 10, opacity: loading ? 0.6 : 1 }}>{loading ? "게시 중..." : "게시"}</button>
       </div>
       <div style={{ ...S.overlayBody, paddingBottom: 40 }}>
@@ -2267,7 +2267,7 @@ function NewPost({ onSubmit, onBack }) {
           <div><label style={S.lbl}>내용</label><textarea style={{ ...S.inp, minHeight: 160, resize: "none" }} placeholder="내용을 자유롭게 작성하세요..." value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} /></div>
           <div>
             <label style={S.lbl}>사진 첨부 (선택)</label>
-            {preview ? <div style={{ position: "relative" }}><img src={preview} alt="" style={{ width: "100%", borderRadius: 14, maxHeight: 200, objectFit: "cover" }} /><button onClick={() => { setPreview(null); setForm(f => ({ ...f, imageUrl: "" })); }} style={{ position: "absolute", top: 8, right: 8, width: 30, height: 30, background: "rgba(243,240,255,0.8)", border: "1.5px solid #ddd6fe", borderRadius: 10, color: "#fff", cursor: "pointer", fontSize: 14 }}>✕</button></div>
+            {preview ? <div style={{ position: "relative" }}><img src={preview} alt="" style={{ width: "100%", borderRadius: 14, maxHeight: 200, objectFit: "cover" }} /><button onClick={() => { setPreview(null); setForm(f => ({ ...f, imageUrl: "" })); }} style={{ position: "absolute", top: 8, right: 8, width: 30, height: 30, background: "rgba(243,240,255,0.8)", border: "1.5px solid #ddd6fe", borderRadius: 10, color: "#1e1b4b", cursor: "pointer", fontSize: 14 }}>✕</button></div>
               : <label htmlFor="newPostImg" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, padding: 32, border: "2px dashed rgba(255,255,255,0.1)", borderRadius: 18, cursor: "pointer", color: "#7c6aad", fontSize: 12 }}>🖼️<span>사진을 첨부하려면 여기를 탭하세요</span></label>}
             <input type="file" id="newPostImg" accept="image/*" style={{ display: "none" }} onChange={handleImg} />
           </div>
@@ -2322,7 +2322,7 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
             <div style={{ width: 56, height: 56, background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.28)", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: "#6d28d9" }}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
             </div>
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#fff", margin: 0 }}>네트워크 미션</h2>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#1e1b4b", margin: 0 }}>네트워크 미션</h2>
             <p style={{ fontSize: 12, color: "#7c6aad", marginTop: 6 }}>미션을 완료하고 연결을 넓혀보세요</p>
             <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 3, overflow: "hidden" }}>
@@ -2343,7 +2343,7 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
                 {m.disabled && <span style={{ background: "rgba(255,255,255,0.85)", color: "#7c6aad", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>비활성화</span>}
                 {!m.disabled && m.done && <span style={{ background: `${m.color}18`, color: m.color, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>완료</span>}
               </div>
-              <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0, marginBottom: 4 }}>{m.title}</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: "#1e1b4b", margin: 0, marginBottom: 4 }}>{m.title}</p>
               <p style={{ fontSize: 12, color: "#7c6aad", margin: 0, lineHeight: 1.5 }}>{m.desc}</p>
             </div>
           </div>
@@ -2369,7 +2369,7 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
                             onUpdate(m.photoKey, updated);
                           }
                         }}
-                        style={{ position: "absolute", top: -6, right: -6, width: 22, height: 22, borderRadius: "50%", background: "#dc2626", border: "2px solid #020617", color: "#fff", fontSize: 12, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
+                        style={{ position: "absolute", top: -6, right: -6, width: 22, height: 22, borderRadius: "50%", background: "#dc2626", border: "2px solid #020617", color: "#1e1b4b", fontSize: 12, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
                       >×</button>
                       {/* 교체 버튼 */}
                       <label htmlFor={`replace_${m.id}_${i}`} style={{ position: "absolute", bottom: -6, right: -6, width: 22, height: 22, borderRadius: "50%", background: m.color, border: "2px solid #020617", color: "#020617", fontSize: 10, fontWeight: 900, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>↺</label>
@@ -2446,7 +2446,7 @@ function ScheduleView() {
       <div style={{ background: "linear-gradient(135deg,rgba(124,58,237,0.12),rgba(56,189,248,0.07))", border: "1px solid rgba(124,58,237,0.2)", borderRadius: 24, padding: "20px 24px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, background: "rgba(245,158,11,0.07)", borderRadius: "50%", pointerEvents: "none" }} />
         <p style={{ fontSize: 10, fontWeight: 700, color: "#6d28d9", letterSpacing: "0.14em", margin: "0 0 6px" }}>HMG 주재원 부임전 정규교육</p>
-        <h2 style={{ fontSize: 20, fontWeight: 900, color: "#fff", margin: 0 }}>교육 시간표</h2>
+        <h2 style={{ fontSize: 20, fontWeight: 900, color: "#1e1b4b", margin: 0 }}>교육 시간표</h2>
       </div>
 
       {/* Day 탭 */}
@@ -2468,7 +2468,7 @@ function ScheduleView() {
             </div>
             {/* 내용 */}
             <div style={{ flex: 1, padding: "14px 16px", minWidth: 0 }}>
-              <p style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: "0 0 6px", lineHeight: 1.3 }}>{s.title}</p>
+              <p style={{ fontSize: 15, fontWeight: 800, color: "#1e1b4b", margin: "0 0 6px", lineHeight: 1.3 }}>{s.title}</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {/* 시간 */}
                 <div style={{ display: "flex", alignItems: "center", gap: 5, background: `${s.color}14`, border: `1px solid ${s.color}30`, borderRadius: 8, padding: "3px 10px" }}>
@@ -2526,7 +2526,7 @@ function CalView({ meetings, events, uid, onAdd }) {
       <div style={{ ...S.card, borderRadius: 22 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
           <button onClick={prevMonth} disabled={!canPrev} style={{ background: "none", border: "none", color: canPrev ? "#94a3b8" : "#2d3748", cursor: canPrev ? "pointer" : "default", fontSize: 22, padding: "0 4px" }}>‹</button>
-          <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>{calYear}년 {MONTHS[calMonth]}</p>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{calYear}년 {MONTHS[calMonth]}</p>
           <button onClick={nextMonth} disabled={!canNext} style={{ background: "none", border: "none", color: canNext ? "#94a3b8" : "#2d3748", cursor: canNext ? "pointer" : "default", fontSize: 22, padding: "0 4px" }}>›</button>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 2, marginBottom: 4 }}>
@@ -2550,7 +2550,7 @@ function CalView({ meetings, events, uid, onAdd }) {
 
       {showForm && (
         <div style={{ ...S.card, borderRadius: 22, border: "1px solid rgba(124,58,237,0.25)", display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: 0 }}>새 일정</p><button onClick={() => setShowForm(false)} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 18 }}>✕</button></div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ fontSize: 14, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>새 일정</p><button onClick={() => setShowForm(false)} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 18 }}>✕</button></div>
           <input style={S.inp} placeholder="일정 제목" value={newEv.title} onChange={e => setNewEv(f => ({ ...f, title: e.target.value }))} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <input type="date" style={S.inp} value={newEv.date} onChange={e => setNewEv(f => ({ ...f, date: e.target.value }))} />
@@ -2563,33 +2563,33 @@ function CalView({ meetings, events, uid, onAdd }) {
 
       {accepted.length > 0 && (
         <div>
-          <h4 style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 10 }}>☕ 수락된 티미팅 <span style={{ color: "#059669" }}>{accepted.length}건</span></h4>
+          <h4 style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", marginBottom: 10 }}>☕ 수락된 티미팅 <span style={{ color: "#059669" }}>{accepted.length}건</span></h4>
           {accepted.map(m => (
             <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(34,197,94,0.05)", border: "1px solid rgba(16,185,129,0.1)", borderRadius: 16, padding: "12px 14px", marginBottom: 8 }}>
               <span style={{ color: "#059669", fontSize: 16 }}>✓</span>
-              <div><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>티미팅 · {m.fromId === uid ? m.toName : m.fromName}</p><p style={{ fontSize: 10, color: "#7c6aad" }}>{m.fromId === uid ? m.toOrg : m.fromOrg}</p></div>
+              <div><p style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>티미팅 · {m.fromId === uid ? m.toName : m.fromName}</p><p style={{ fontSize: 10, color: "#7c6aad" }}>{m.fromId === uid ? m.toOrg : m.fromOrg}</p></div>
             </div>
           ))}
         </div>
       )}
 
       <div>
-        <h4 style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 10 }}>⏰ 오늘 일정</h4>
+        <h4 style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", marginBottom: 10 }}>⏰ 오늘 일정</h4>
         {todayEvs.length === 0 ? <p style={{ fontSize: 12, color: "#7c6aad", fontStyle: "italic" }}>오늘 예정된 일정이 없습니다.</p> : todayEvs.map(e => (
           <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.1)", borderRadius: 14, padding: "12px 14px", marginBottom: 8 }}>
             <div style={{ width: 8, height: 8, background: "#7c3aed", borderRadius: "50%", flexShrink: 0 }} />
-            <div><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>{e.title}</p>{e.time && <p style={{ fontSize: 10, color: "#7c6aad" }}>{e.time}</p>}{e.note && <p style={{ fontSize: 10, color: "#7c6aad" }}>{e.note}</p>}</div>
+            <div><p style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{e.title}</p>{e.time && <p style={{ fontSize: 10, color: "#7c6aad" }}>{e.time}</p>}{e.note && <p style={{ fontSize: 10, color: "#7c6aad" }}>{e.note}</p>}</div>
           </div>
         ))}
       </div>
 
       <div>
-        <h4 style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 10 }}>📅 다가오는 일정</h4>
+        <h4 style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", marginBottom: 10 }}>📅 다가오는 일정</h4>
         {upcoming.length === 0 ? <p style={{ fontSize: 12, color: "#7c6aad", fontStyle: "italic" }}>예정된 일정이 없습니다.</p> : upcoming.map(e => (
           <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 14, ...S.card, borderRadius: 16, marginBottom: 8 }}>
-            <div style={{ textAlign: "center", width: 42, flexShrink: 0 }}><p style={{ fontSize: 9, color: "#7c6aad", margin: 0 }}>{e.date?.slice(5,7)}월</p><p style={{ fontSize: 20, fontWeight: 900, color: "#fff", lineHeight: 1, margin: 0 }}>{e.date?.slice(8,10)}</p></div>
+            <div style={{ textAlign: "center", width: 42, flexShrink: 0 }}><p style={{ fontSize: 9, color: "#7c6aad", margin: 0 }}>{e.date?.slice(5,7)}월</p><p style={{ fontSize: 20, fontWeight: 900, color: "#1e1b4b", lineHeight: 1, margin: 0 }}>{e.date?.slice(8,10)}</p></div>
             <div style={{ width: 1, height: 32, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
-            <div style={{ flex: 1, minWidth: 0 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</p>{e.time && <p style={{ fontSize: 10, color: "#7c6aad" }}>{e.time}</p>}{e.note && <p style={{ fontSize: 10, color: "#7c6aad", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.note}</p>}</div>
+            <div style={{ flex: 1, minWidth: 0 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</p>{e.time && <p style={{ fontSize: 10, color: "#7c6aad" }}>{e.time}</p>}{e.note && <p style={{ fontSize: 10, color: "#7c6aad", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.note}</p>}</div>
             <span style={{ fontSize: 10, fontWeight: 700, color: "#059669", flexShrink: 0 }}>{e.type || "티미팅"}</span>
           </div>
         ))}
