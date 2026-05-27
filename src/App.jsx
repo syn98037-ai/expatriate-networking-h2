@@ -12,7 +12,7 @@ import {
 import {
   ref as storageRef, uploadString, getDownloadURL,
 } from "firebase/storage";
-import { auth, db, storage } from "./firebase";
+import { auth, db, storage, messaging, VAPID_KEY, getToken, onMessage } from "./firebase";
 import { CONCERNS, POST_TAGS, gradFor, timeAgo, S, stBadge } from "./constants";
 
 // ─── 국가/도시 목록 ─────────────────────────────────
@@ -121,8 +121,9 @@ export default function App() {
   const [missions,   setMissions]   = useState({});
   const [rooms,      setRooms]      = useState([]);
   const [dmRooms,    setDmRooms]    = useState([]); // 1:1 채팅방 목록
-  const [notifs,     setNotifs]     = useState([]); // 알림 목록
-  const [showNotifs, setShowNotifs] = useState(false);
+  const [notifs,      setNotifs]      = useState([]); // 알림 목록
+  const [showNotifs,  setShowNotifs]  = useState(false);
+  const [showNotisBanner, setShowNotisBanner] = useState(false); // 알림 허용 배너
   const prevMeetingsRef = useRef([]); // 이전 meetings 상태 추적용
   const [isAdmin,    setIsAdmin]    = useState(false);
   const [isMobile,   setIsMobile]   = useState(typeof window !== "undefined" ? window.innerWidth < 768 : true);
@@ -159,6 +160,39 @@ export default function App() {
 
   const uid = myProfile?.id;
 
+  // ── FCM 토큰 저장 (권한 허용 후 호출) ──────────────
+  const saveFcmToken = async (userId) => {
+    try {
+      const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+      if (!token) return;
+      const snap = await getDoc(docR("profiles", userId));
+      const existing = snap.data()?.fcmTokens || [];
+      if (!existing.includes(token)) {
+        await updateDoc(docR("profiles", userId), {
+          fcmTokens: [...existing, token],
+        });
+      }
+      setShowNotisBanner(false);
+    } catch(e) {
+      console.warn("FCM 토큰 발급 실패:", e.message);
+    }
+  };
+
+  // ── 알림 권한 요청 (사용자 클릭 후) ─────────────────
+  const requestNotifPermission = async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === "granted" && uid) {
+        await saveFcmToken(uid);
+      } else {
+        setShowNotisBanner(false);
+      }
+    } catch(e) {
+      console.warn("알림 권한 요청 실패:", e.message);
+      setShowNotisBanner(false);
+    }
+  };
+
   // ── Firebase Auth 상태 감지 ──────────────────────────
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
@@ -167,8 +201,13 @@ export default function App() {
         if (snap.exists()) {
           setMyProfile({ id: user.uid, ...snap.data() });
           setAuthStatus("auth");
+          // 알림 권한 확인 - 이미 허용됐으면 토큰 저장, 아니면 배너 표시
+          if (Notification.permission === "granted") {
+            saveFcmToken(user.uid);
+          } else if (Notification.permission !== "denied") {
+            setShowNotisBanner(true);
+          }
         } else {
-          // 계정은 있지만 프로필 미완성
           setAuthStatus("needProfile");
           setMyProfile({ id: user.uid });
         }
@@ -178,6 +217,27 @@ export default function App() {
       }
     });
     return () => unsub();
+  }, []);
+
+  // ── 앱 포그라운드 메시지 수신 (앱 열려있을 때) ─────
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const unsub = onMessage(messaging, payload => {
+        const { title, body } = payload.notification || {};
+        // 앱 내부 알림 표시 (브라우저 알림 대신 인앱 토스트)
+        setNotifs(prev => [{
+          id: "push_" + Date.now(),
+          type: payload.data?.type || "chat",
+          fromName: payload.data?.fromName || title || "알림",
+          preview: body || "",
+          roomId: payload.data?.roomId,
+          read: false,
+          createdAt: new Date().toISOString(),
+        }, ...prev]);
+      });
+      return () => unsub();
+    } catch(e) {}
   }, []);
 
   // ── adminOverrides 상태 ───────────────────────────────
@@ -742,6 +802,15 @@ match /{document=**} {
         {/* PC 메인 */}
         {authStatus === "auth" && (
           <>
+            {/* PC 알림 허용 배너 */}
+            {showNotisBanner && (
+              <div style={{ background: "linear-gradient(135deg,rgba(245,158,11,0.12),rgba(245,158,11,0.06))", borderBottom: "1px solid rgba(245,158,11,0.2)", padding: "8px 24px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                <span style={{ fontSize: 16 }}>🔔</span>
+                <p style={{ fontSize: 12, color: "#fde68a", margin: 0, flex: 1 }}>티미팅·채팅 알림을 받으시겠습니까?</p>
+                <button onClick={requestNotifPermission} style={{ background: "#f59e0b", border: "none", color: "#020617", fontSize: 11, fontWeight: 700, padding: "6px 14px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>허용</button>
+                <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#64748b", fontSize: 16, cursor: "pointer" }}>✕</button>
+              </div>
+            )}
             {/* PC 상단 헤더 */}
             <header style={{ padding: "0 20px 0 28px", height: 60, flexShrink: 0, display: "flex", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(2,6,23,0.95)", backdropFilter: "blur(12px)" }}>
               {/* 왼쪽: 로고 + 탭 */}
@@ -902,6 +971,15 @@ match /{document=**} {
       {/* 인증 완료 → 메인 앱 */}
       {authStatus === "auth" && (
         <>
+          {/* 알림 허용 배너 */}
+          {showNotisBanner && (
+            <div style={{ background: "linear-gradient(135deg,rgba(245,158,11,0.15),rgba(245,158,11,0.08))", borderBottom: "1px solid rgba(245,158,11,0.2)", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+              <span style={{ fontSize: 18 }}>🔔</span>
+              <p style={{ fontSize: 12, color: "#fde68a", margin: 0, flex: 1, lineHeight: 1.4 }}>티미팅·채팅 알림을 받으시겠습니까?</p>
+              <button onClick={requestNotifPermission} style={{ background: "#f59e0b", border: "none", color: "#020617", fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif", whiteSpace: "nowrap" }}>허용</button>
+              <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#64748b", fontSize: 16, cursor: "pointer", padding: "0 4px" }}>✕</button>
+            </div>
+          )}
           <header style={{ padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.05)", flexShrink: 0 }}>
             <div>
               <div style={{ fontSize: 17, fontWeight: 900, background: "linear-gradient(90deg,#fde68a,#f59e0b,#d97706)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Global Connect</div>
