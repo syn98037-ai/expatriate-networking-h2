@@ -1,13 +1,13 @@
 // Firebase 앱 설정 - firebase.js와 동일한 값으로 교체하세요
 const FIREBASE_CONFIG = {
-  apiKey:            "여기에_붙여넣기",
-  authDomain:        "여기에_붙여넣기",
-  projectId:         "여기에_붙여넣기",
-  storageBucket:     "여기에_붙여넣기",
-  messagingSenderId: "여기에_붙여넣기",
-  appId:             "여기에_붙여넣기",
+  apiKey: "AIzaSyBZvqaC4t6wcrsoW7Qyllucg72gFry1e2c",
+  authDomain: "expatriate-networking-app.firebaseapp.com",
+  projectId: "expatriate-networking-app",
+  storageBucket: "expatriate-networking-app.firebasestorage.app",
+  messagingSenderId: "661643710726",
+  appId: "1:661643710726:web:02c86e75e96e90b62f4e87",
+  measurementId: "G-VKBNMXHRKT"
 };
-
 importScripts("https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js");
 
