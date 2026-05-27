@@ -92,6 +92,7 @@ function Avatar({ profile, size = 44 }) {
 function NavIcon({ id, active }) {
   const c = active ? "#ffffff" : "#4a7ba8";
   const w = 18; const sw = active ? 2 : 1.6;
+  if (id === "dashboard") return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
   if (id === "directory")  return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="10" r="7"/><path d="M21 21l-4.35-4.35"/></svg>;
   if (id === "community")  return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
   if (id === "board")      return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>;
@@ -560,8 +561,12 @@ export default function App() {
 
   // ── 티미팅 신청 ──────────────────────────────────────
   const sendReq = async (target, message = "") => {
+    // 내가 이미 신청 보낸 경우
     if (meetings.find(m => m.fromId === uid && m.toId === target.id && m.status === "대기중"))
       return alert("이미 신청을 보냈습니다.");
+    // 상대방이 나에게 이미 신청한 경우
+    if (meetings.find(m => m.fromId === target.id && m.toId === uid && (m.status === "대기중" || m.status === "수락함")))
+      return alert("이미 상대방으로부터 티미팅 신청을 받았습니다.");
     await addDoc(col("meetings"), {
       fromId: uid, fromName: myProfile.name, fromOrg: myProfile.org || "",
       toId: target.id, toName: target.name, toOrg: target.org || "",
@@ -793,7 +798,7 @@ match /{document=**} {
   const openChat  = (roomId, name) => openOverlay({ type: "chat", data: { roomId, name } });
 
   const myMissions = missions[uid] || {};
-  const sentCount  = meetings.filter(m => m.fromId === uid).length;
+  const sentCount  = meetings.filter(m => m.fromId === uid && m.status === "수락함").length;
 
   const NAV = [
     { id: "dashboard", label: "홈"      },
@@ -2416,26 +2421,26 @@ const SCHEDULE_DATA = [
   {
     day: "Day 1",
     sessions: [
-      { time: "09:30 – 10:30", title: "HR 리더특강",            venue: "1F 대강당",          color: "#002c5f" },
-      { time: "10:30 – 14:00", title: "주재원 역할 및 행동 이해", venue: "1F 대강당",          color: "#00aad2" },
-      { time: "14:00 – 15:30", title: "부임 국가의 이해",         venue: "분반 강의장",        color: "#002c5f" },
-      { time: "15:30 – 16:30", title: "안전 문화 교육",           venue: "1F 대강당",          color: "#002c5f" },
-      { time: "16:30 – 17:30", title: "보안 교육",               venue: "1F 대강당",          color: "#00aad2" },
+      { time: "09:30 – 10:30", title: "HR 리더특강",            venue: "1F 대강당",          instructor: "글로벌HR실",             color: "#002c5f" },
+      { time: "10:30 – 14:00", title: "주재원 역할 및 행동 이해", venue: "1F 대강당",          instructor: "KOTRA아카데미",           color: "#002c5f" },
+      { time: "14:00 – 15:30", title: "부임 국가의 이해",         venue: "분반 강의장",        instructor: "KOTRA아카데미",           color: "#00aad2" },
+      { time: "15:30 – 16:30", title: "안전 문화 교육",           venue: "1F 대강당",          instructor: "안전기획실",              color: "#00aad2" },
+      { time: "16:30 – 17:30", title: "보안 교육",               venue: "1F 대강당",          instructor: "그룹보안기획팀",          color: "#00aad2" },
     ],
   },
   {
     day: "Day 2",
     sessions: [
-      { time: "08:00 – 11:00", title: "윤리경영 (Do-Better)",    venue: "1F 대강당",          color: "#002c5f" },
-      { time: "11:00 – 12:00", title: "준법 교육",               venue: "1F 대강당",          color: "#00aad2" },
-      { time: "13:00 – 17:00", title: "역할 전환 워크숍",          venue: "분반 강의장",        color: "#002c5f" },
+      { time: "08:00 – 11:00", title: "윤리경영 (Do-Better)",    venue: "1F 대강당",          instructor: "티움컨설팅 / 감사기획팀", color: "#002c5f" },
+      { time: "11:00 – 12:00", title: "준법 교육",               venue: "1F 대강당",          instructor: "준법지원1팀",             color: "#002c5f" },
+      { time: "13:00 – 17:00", title: "역할 전환 워크숍",          venue: "분반 강의장",        instructor: "선배주재원",              color: "#00aad2" },
     ],
   },
   {
     day: "Day 3",
     sessions: [
-      { time: "08:00 – 12:00", title: "글로벌 비즈니스 매너",     venue: "1F 대강당 / 비젼홀", color: "#002c5f" },
-      { time: "13:00 – 16:00", title: "선배주재원 간담회",         venue: "분반 강의장",        color: "#00aad2" },
+      { time: "08:00 – 12:00", title: "글로벌 비즈니스 매너",     venue: "1F 대강당 / 비젼홀", instructor: "코멘트",                  color: "#002c5f" },
+      { time: "13:00 – 16:00", title: "선배주재원 간담회",         venue: "분반 강의장",        instructor: "선배주재원",              color: "#00aad2" },
     ],
   },
 ];
@@ -2484,6 +2489,13 @@ function ScheduleView() {
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                   <span style={{ fontSize: 11, fontWeight: 600, color: "#6b7280" }}>{s.venue}</span>
                 </div>
+                {/* 강사 */}
+                {s.instructor && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, background: "#f5f6f8", border: "1px solid #e0e3e8", borderRadius: 8, padding: "3px 10px" }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "#6b7280" }}>{s.instructor}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
