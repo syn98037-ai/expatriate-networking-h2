@@ -1,15 +1,15 @@
-const functions = require("firebase-functions");
-const admin     = require("firebase-admin");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const admin = require("firebase-admin");
 
 admin.initializeApp();
 
 const db = admin.firestore();
 
 // ── notifications 컬렉션에 문서가 생성될 때 FCM 푸시 발송 ──
-exports.sendPushNotification = functions.firestore
-  .document("notifications/{notifId}")
-  .onCreate(async (snap, context) => {
-    const data = snap.data();
+exports.sendPushNotification = onDocumentCreated(
+  "notifications/{notifId}",
+  async (event) => {
+    const data = event.data?.data();
     if (!data || !data.toId) return null;
 
     // 수신자의 FCM 토큰 조회
@@ -17,7 +17,7 @@ exports.sendPushNotification = functions.firestore
     if (!profileSnap.exists) return null;
 
     const profile = profileSnap.data();
-    const tokens  = profile.fcmTokens || [];
+    const tokens  = (profile.fcmTokens || []).filter(t => t && t.length > 0);
     if (tokens.length === 0) return null;
 
     // 알림 내용 구성
@@ -30,12 +30,12 @@ exports.sendPushNotification = functions.firestore
     } else if (data.type === "received") {
       title = `☕ 티미팅 신청`;
       body  = `${data.fromName} 님이 티미팅을 신청했습니다.`;
+      if (data.message) body += ` "${data.message}"`;
     } else if (data.type === "accepted") {
       title = `🎉 티미팅 수락!`;
       body  = `${data.fromName} 님이 티미팅을 수락했습니다!`;
     }
 
-    // FCM 메시지 구성
     const message = {
       notification: { title, body },
       webpush: {
@@ -43,14 +43,12 @@ exports.sendPushNotification = functions.firestore
           title,
           body,
           icon: "/logo192.png",
-          badge: "/badge.png",
-          click_action: "https://expatriate-networking-app.vercel.app",
         },
         fcm_options: {
           link: "https://expatriate-networking-app.vercel.app",
         },
       },
-      tokens: tokens.filter(t => t && t.length > 0),
+      tokens,
     };
 
     try {
@@ -61,9 +59,9 @@ exports.sendPushNotification = functions.firestore
       const failedTokens = [];
       response.responses.forEach((resp, idx) => {
         if (!resp.success) {
-          const errCode = resp.error?.code;
-          if (errCode === "messaging/invalid-registration-token" ||
-              errCode === "messaging/registration-token-not-registered") {
+          const code = resp.error?.code;
+          if (code === "messaging/invalid-registration-token" ||
+              code === "messaging/registration-token-not-registered") {
             failedTokens.push(tokens[idx]);
           }
         }
@@ -71,13 +69,12 @@ exports.sendPushNotification = functions.firestore
 
       if (failedTokens.length > 0) {
         const validTokens = tokens.filter(t => !failedTokens.includes(t));
-        await db.collection("profiles").doc(data.toId).update({
-          fcmTokens: validTokens,
-        });
+        await db.collection("profiles").doc(data.toId).update({ fcmTokens: validTokens });
       }
     } catch (e) {
       console.error("FCM 발송 오류:", e);
     }
 
     return null;
-  });
+  }
+);
