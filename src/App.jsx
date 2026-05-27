@@ -170,16 +170,11 @@ export default function App() {
         return;
       }
       console.log("FCM 토큰 발급 성공:", token.slice(0, 20) + "...");
-      const snap = await getDoc(docR("profiles", userId));
-      const existing = snap.data()?.fcmTokens || [];
-      if (!existing.includes(token)) {
-        await updateDoc(docR("profiles", userId), {
-          fcmTokens: [...existing, token],
-        });
-        console.log("FCM 토큰 저장 완료");
-      } else {
-        console.log("FCM 토큰 이미 저장됨");
-      }
+      // 토큰을 항상 최신 1개만 유지 (중복 방지)
+      await updateDoc(docR("profiles", userId), {
+        fcmTokens: [token],
+      });
+      console.log("FCM 토큰 저장 완료");
       setShowNotisBanner(false);
     } catch(e) {
       console.warn("FCM 토큰 발급 실패:", e.message);
