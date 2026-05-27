@@ -287,41 +287,26 @@ export default function App() {
         if (uid) { // uid가 있을 때만 알림 처리
           newMeetings.forEach(async nm => {
             const old = prev.find(p => p.id === nm.id);
-            // 새로 생성된 티미팅 신청 → 중복 체크 후 저장
+            // 티미팅 신청 → 문서ID를 고정(received_meetingId)해서 중복 원천 차단
             if (!old && nm.toId === uid) {
               try {
-                // 같은 meetingId로 이미 알림 있는지 확인
-                const existing = await getDocs(
-                  query(col("notifications"),
-                    where("meetingId", "==", nm.id),
-                    where("type", "==", "received"))
-                );
-                if (existing.empty) {
-                  await addDoc(col("notifications"), {
-                    toId: nm.toId, type: "received",
-                    fromName: nm.fromName, fromOrg: nm.fromOrg || "",
-                    message: nm.message || "", meetingId: nm.id,
-                    read: false, createdAt: new Date().toISOString(),
-                  });
-                }
+                await setDoc(docR("notifications", `received_${nm.id}`), {
+                  toId: nm.toId, type: "received",
+                  fromName: nm.fromName, fromOrg: nm.fromOrg || "",
+                  message: nm.message || "", meetingId: nm.id,
+                  read: false, createdAt: new Date().toISOString(),
+                });
               } catch(e) {}
             }
-            // 수락 알림 → 중복 체크 후 저장
+            // 수락 알림 → 문서ID를 고정(accepted_meetingId)해서 중복 원천 차단
             if (old && old.status !== "수락함" && nm.status === "수락함" && nm.fromId === uid) {
               try {
-                const existing = await getDocs(
-                  query(col("notifications"),
-                    where("meetingId", "==", nm.id),
-                    where("type", "==", "accepted"))
-                );
-                if (existing.empty) {
-                  await addDoc(col("notifications"), {
-                    toId: nm.fromId, type: "accepted",
-                    fromName: nm.toName, fromOrg: nm.toOrg || "",
-                    meetingId: nm.id,
-                    read: false, createdAt: new Date().toISOString(),
-                  });
-                }
+                await setDoc(docR("notifications", `accepted_${nm.id}`), {
+                  toId: nm.fromId, type: "accepted",
+                  fromName: nm.toName, fromOrg: nm.toOrg || "",
+                  meetingId: nm.id,
+                  read: false, createdAt: new Date().toISOString(),
+                });
               } catch(e) {}
             }
           });
