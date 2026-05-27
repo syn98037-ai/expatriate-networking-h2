@@ -124,7 +124,8 @@ export default function App() {
   const [notifs,      setNotifs]      = useState([]); // 알림 목록
   const [showNotifs,  setShowNotifs]  = useState(false);
   const [showNotisBanner, setShowNotisBanner] = useState(false); // 알림 허용 배너
-  const prevMeetingsRef = useRef([]); // 이전 meetings 상태 추적용
+  const prevMeetingsRef   = useRef([]); // 이전 meetings 상태 추적용
+  const meetingsLoadedRef = useRef(false); // 첫 로드 완료 여부
   const [isAdmin,    setIsAdmin]    = useState(false);
   const [isMobile,   setIsMobile]   = useState(typeof window !== "undefined" ? window.innerWidth < 768 : true);
 
@@ -214,16 +215,17 @@ export default function App() {
           try {
             if (typeof Notification !== "undefined") {
               if (Notification.permission === "granted") {
+                // 이미 허용 - 바로 토큰 저장 (배너 불필요)
                 saveFcmToken(user.uid);
-              } else if (Notification.permission !== "denied") {
+              } else if (Notification.permission === "default") {
+                // 아직 결정 안 함 - 배너 표시
                 setShowNotisBanner(true);
               }
-            } else {
-              // Notification 미지원 브라우저도 배너는 표시 (클릭 시 처리)
-              setShowNotisBanner(true);
+              // denied면 배너/토큰 모두 스킵
             }
+            // Notification 미지원이면 스킵 (푸시 불가 환경)
           } catch(e) {
-            setShowNotisBanner(true);
+            console.warn("Notification 체크 실패:", e.message);
           }
         } else {
           setAuthStatus("needProfile");
@@ -264,6 +266,8 @@ export default function App() {
   // ── Firestore 실시간 리스너 (로그인 후 또는 관리자) ──
   useEffect(() => {
     if (authStatus !== "auth" && !isAdmin) return;
+    // 리스너 재시작 시 meetings 초기 로드 상태 초기화
+    meetingsLoadedRef.current = false;
     const unsubs = [
       onSnapshot(query(col("profiles")), s => {
         setProfiles(prev => {
@@ -274,6 +278,15 @@ export default function App() {
       }),
       onSnapshot(query(col("meetings")), s => {
         const newMeetings = s.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        // 첫 로드 시엔 알림 생성 건너뜀 (기존 데이터를 새 알림으로 오인 방지)
+        if (!meetingsLoadedRef.current) {
+          meetingsLoadedRef.current = true;
+          prevMeetingsRef.current = newMeetings;
+          setMeetings(newMeetings);
+          return;
+        }
+
         const prev = prevMeetingsRef.current;
 
         if (uid) { // uid가 있을 때만 알림 처리
