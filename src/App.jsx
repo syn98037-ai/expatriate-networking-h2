@@ -796,7 +796,7 @@ match /{document=**} {
   const sentCount  = meetings.filter(m => m.fromId === uid).length;
 
   const NAV = [
-    { id: "dashboard", label: "추천"    },
+    { id: "dashboard", label: "홈"      },
     { id: "directory", label: "검색"    },
     { id: "board",     label: "게시판"  },
     { id: "meetings",  label: "티미팅"  },
@@ -819,17 +819,17 @@ match /{document=**} {
 
   // ── 로딩 ─────────────────────────────────────────────
   if (authStatus === "loading") return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh", background: "#faf8ff", flexDirection: "column", gap: 16 }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh", background: "linear-gradient(135deg,#fff,#faf5ff)", flexDirection: "column", gap: 16 }}>
       <div style={{ width: 48, height: 48, border: "3px solid #f59e0b", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.9s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <p style={{ color: "#7c3aed", fontSize: 12, fontWeight: 700, letterSpacing: "0.18em" }}>GLOBAL CONNECT</p>
+      <p style={{ color: "#6d28d9", fontSize: 12, fontWeight: 700, letterSpacing: "0.18em" }}>GLOBAL CONNECT</p>
     </div>
   );
 
   // PC 레이아웃
   if (!isMobile) {
     return (
-      <div style={{ width: "100vw", height: "100dvh", background: "#faf8ff", color: "#1e1b4b", fontFamily: "Pretendard,sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ width: "100vw", height: "100dvh", background: "linear-gradient(135deg,#fff,#faf5ff)", color: "#1e1b4b", fontFamily: "Pretendard,sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <style>{`@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css'); ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(124,58,237,0.28);border-radius:3px} *{box-sizing:border-box;} select option{background:#020617;}`}</style>
 
         {/* PC 미인증 */}
@@ -850,14 +850,14 @@ match /{document=**} {
                 <span style={{ fontSize: 16 }}>🔔</span>
                 <p style={{ fontSize: 12, color: "#c4b5fd", margin: 0, flex: 1 }}>티미팅·채팅 알림을 받으시겠습니까?</p>
                 <button onClick={requestNotifPermission} style={{ background: "#7c3aed", border: "none", color: "#020617", fontSize: 11, fontWeight: 700, padding: "6px 14px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>허용</button>
-                <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#9ca3af", fontSize: 16, cursor: "pointer" }}>✕</button>
+                <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#7c6aad", fontSize: 16, cursor: "pointer" }}>✕</button>
               </div>
             )}
             {/* PC 상단 헤더 */}
-            <header style={{ padding: "0 20px 0 28px", height: 60, flexShrink: 0, display: "flex", alignItems: "center", background: "linear-gradient(135deg,#7c3aed 0%,#9333ea 50%,#a855f7 100%)" }}>
+            <header style={{ padding: "0 20px 0 28px", height: 60, flexShrink: 0, display: "flex", alignItems: "center", background: "linear-gradient(135deg,#4f1c9f 0%,#7c3aed 40%,#a855f7 70%,#c084fc 100%)" }}>
               {/* 왼쪽: 로고 + 탭 */}
               <div style={{ display: "flex", alignItems: "center", gap: 20, flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: 16, fontWeight: 900, color: "#fff", flexShrink: 0, letterSpacing: "-0.3px" }}>Global Connect</span>
+                <span style={{ fontSize: 16, fontWeight: 900, background: "linear-gradient(90deg,#fff,#e9d5ff,#c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", flexShrink: 0, letterSpacing: "-0.3px" }}>Global Connect</span>
                 <nav style={{ display: "flex", gap: 1, overflow: "hidden", minWidth: 0 }}>
                   {NAV.map(n => (
                     <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 9px", borderRadius: 9, background: view === n.id ? "rgba(124,58,237,0.1)" : "none", border: view === n.id ? "1px solid rgba(124,58,237,0.25)" : "1px solid transparent", color: view === n.id ? "#7c3aed" : "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 12, fontWeight: 600, transition: "all 0.2s", whiteSpace: "nowrap" }}>
@@ -886,28 +886,28 @@ match /{document=**} {
             </header>
 
             {/* PC 본문 - 3컬럼, 헤더 아래 꽉 채움 */}
-            <div style={{ position: "absolute", top: 60, left: 0, right: 0, bottom: 0, display: "flex", gap: 0, overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 60, left: 0, right: 0, bottom: 0, display: "flex", gap: 0, overflow: "hidden", background: "linear-gradient(160deg,#f3f0ff 0%,#e9e3ff 35%,#f8f4ff 65%,#eef3ff 100%)" }}>
               {/* 왼쪽 사이드바 */}
-              <aside style={{ width: 280, flexShrink: 0, overflowY: "auto", borderRight: "1.5px solid #ddd6fe", padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14, background: "rgba(255,255,255,0.4)" }}>
+              <aside style={{ width: 280, flexShrink: 0, overflowY: "auto", borderRight: "1.5px solid #ddd6fe", padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14, background: "rgba(255,255,255,0.35)" }}>
                 {/* 내 프로필 카드 */}
                 <div style={{ background: "linear-gradient(135deg,#fff 0%,#faf5ff 100%)", border: "1.5px solid #ddd6fe", borderRadius: 18, padding: 16 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
                     <Avatar profile={myProfile} size={48} />
                     <div>
-                      <p style={{ fontSize: 14, fontWeight: 800, color: "#fff", margin: 0 }}>{myProfile?.name}</p>
-                      <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>{myProfile?.org}</p>
-                      <p style={{ fontSize: 11, color: "#7c3aed", marginTop: 2, fontWeight: 600 }}>{myProfile?.city} · {myProfile?.country}</p>
+                      <p style={{ fontSize: 14, fontWeight: 800, color: "#1e1b4b", margin: 0 }}>{myProfile?.name}</p>
+                      <p style={{ fontSize: 11, color: "#7c3aed", fontWeight: 600, marginTop: 2 }}>{myProfile?.org}</p>
+                      <p style={{ fontSize: 11, color: "#6d28d9", marginTop: 2, fontWeight: 600 }}>{myProfile?.city} · {myProfile?.country}</p>
                     </div>
                   </div>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-                    <span style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)", color: "#7c3aed", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.concern}</span>
-                    {myProfile?.interest && <span style={{ background: "rgba(255,255,255,0.8)", border: "1.5px solid #ddd6fe", color: "#6b7280", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.interest}</span>}
+                    <span style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)", color: "#6d28d9", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.concern}</span>
+                    {myProfile?.interest && <span style={{ background: "rgba(255,255,255,0.8)", border: "1.5px solid #ddd6fe", color: "#7c6aad", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.interest}</span>}
                   </div>
-                  <button onClick={() => openOverlay({ type: "profile" })} style={{ width: "100%", padding: "8px", background: "rgba(124,58,237,0.07)", border: "1px solid rgba(124,58,237,0.18)", color: "#7c3aed", fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>✏️ 프로필 수정</button>
+                  <button onClick={() => openOverlay({ type: "profile" })} style={{ width: "100%", padding: "8px", background: "rgba(124,58,237,0.07)", border: "1px solid rgba(124,58,237,0.18)", color: "#6d28d9", fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>✏️ 프로필 수정</button>
                 </div>
                 {/* 미션 요약 */}
                 <div style={{ background: "linear-gradient(135deg,#fff 0%,#faf5ff 100%)", border: "1.5px solid #ddd6fe", borderRadius: 18, padding: 16 }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "#7c3aed", margin: "0 0 12px", letterSpacing: "0.08em" }}>네트워크 미션</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, background: "linear-gradient(90deg,#4f1c9f,#7c3aed)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", margin: "0 0 12px", letterSpacing: "0.08em" }}>네트워크 미션</p>
                   {[
                     ["티미팅 발송", Math.min(meetings.filter(m => m.fromId === uid).length, 2), 2],
                     ["티미팅 인증샷", Math.min((missions[uid]?.m2Photos||[]).length, 2), 2],
@@ -915,7 +915,7 @@ match /{document=**} {
                   ].map(([label, cur, tot]) => (
                     <div key={label} style={{ marginBottom: 10 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontSize: 11, color: "#6b7280" }}>{label}</span>
+                        <span style={{ fontSize: 11, color: "#7c6aad" }}>{label}</span>
                         <span style={{ fontSize: 11, fontWeight: 700, color: cur >= tot ? "#059669" : "#7c3aed" }}>{cur}/{tot}</span>
                       </div>
                       <div style={{ height: 4, background: "rgba(255,255,255,0.07)", borderRadius: 2, overflow: "hidden" }}>
@@ -927,13 +927,13 @@ match /{document=**} {
 
                 {/* 수락된 티미팅 */}
                 <div style={{ background: "linear-gradient(135deg,#fff 0%,#faf5ff 100%)", border: "1.5px solid #ddd6fe", borderRadius: 18, padding: 16 }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "#7c3aed", margin: "0 0 10px", letterSpacing: "0.08em" }}>수락된 티미팅</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#6d28d9", margin: "0 0 10px", letterSpacing: "0.08em" }}>수락된 티미팅</p>
                   {meetings.filter(m => (m.fromId===uid||m.toId===uid) && m.status==="수락함").length === 0
-                    ? <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic" }}>아직 없어요.</p>
+                    ? <p style={{ fontSize: 12, color: "#7c6aad", fontStyle: "italic" }}>아직 없어요.</p>
                     : meetings.filter(m => (m.fromId===uid||m.toId===uid) && m.status==="수락함").map(m => (
                       <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "8px 10px", background: "rgba(16,185,129,0.06)", borderRadius: 12, border: "1px solid rgba(16,185,129,0.12)" }}>
                         <span style={{ color: "#059669", fontSize: 14 }}>✓</span>
-                        <div><p style={{ fontSize: 12, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{m.fromId===uid?m.toName:m.fromName}</p><p style={{ fontSize: 10, color: "#9ca3af" }}>{m.fromId===uid?m.toOrg:m.fromOrg}</p></div>
+                        <div><p style={{ fontSize: 12, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{m.fromId===uid?m.toName:m.fromName}</p><p style={{ fontSize: 10, color: "#7c6aad" }}>{m.fromId===uid?m.toOrg:m.fromOrg}</p></div>
                       </div>
                     ))
                   }
@@ -941,27 +941,27 @@ match /{document=**} {
               </aside>
 
               {/* 가운데 메인 콘텐츠 */}
-              <main style={{ flex: 1, overflowY: "auto", minWidth: 0, borderRight: "1.5px solid #ddd6fe" }}>
+              <main style={{ flex: 1, overflowY: "auto", minWidth: 0, borderRight: "1.5px solid #c4b5fd", background: "transparent" }}>
                 {renderMain()}
               </main>
 
               {/* 오른쪽 사이드바 - 최근 게시글 */}
-              <aside style={{ width: 260, flexShrink: 0, overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14, background: "rgba(255,255,255,0.4)" }}>
+              <aside style={{ width: 260, flexShrink: 0, overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14, background: "rgba(255,255,255,0.35)" }}>
                 <div style={{ background: "linear-gradient(135deg,#fff 0%,#faf5ff 100%)", border: "1.5px solid #ddd6fe", borderRadius: 18, padding: 16 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: "#7c3aed", margin: 0, letterSpacing: "0.08em" }}>최근 게시글</p>
-                    <button onClick={() => setView("community")} style={{ background: "none", border: "none", color: "#9ca3af", fontSize: 11, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>더보기</button>
+                    <p style={{ fontSize: 11, fontWeight: 700, background: "linear-gradient(90deg,#4f1c9f,#7c3aed)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", margin: 0, letterSpacing: "0.08em" }}>최근 게시글</p>
+                    <button onClick={() => setView("community")} style={{ background: "none", border: "none", color: "#7c6aad", fontSize: 11, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>더보기</button>
                   </div>
                   {posts.length === 0
-                    ? <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic" }}>게시글이 없어요.</p>
+                    ? <p style={{ fontSize: 12, color: "#7c6aad", fontStyle: "italic" }}>게시글이 없어요.</p>
                     : posts.slice(0, 6).map(post => (
                       <div key={post.id} onClick={() => openOverlay({ type: "post", data: post })} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", cursor: "pointer" }}>
                         <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
-                          <span style={{ background: "rgba(124,58,237,0.1)", color: "#7c3aed", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 6 }}>{post.tag}</span>
-                          <span style={{ fontSize: 9, color: "#9ca3af" }}>{timeAgo(post.createdAt)}</span>
+                          <span style={{ background: "rgba(124,58,237,0.1)", color: "#6d28d9", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 6 }}>{post.tag}</span>
+                          <span style={{ fontSize: 9, color: "#7c6aad" }}>{timeAgo(post.createdAt)}</span>
                         </div>
-                        <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{post.title}</p>
-                        <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>{post.authorName} · 댓글 {post.commentCount||0}</p>
+                        <p style={{ fontSize: 12, fontWeight: 700, color: "#1e1b4b", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{post.title}</p>
+                        <p style={{ fontSize: 10, color: "#7c6aad", marginTop: 2 }}>{post.authorName} · 댓글 {post.commentCount||0}</p>
                       </div>
                     ))
                   }
@@ -1003,7 +1003,7 @@ match /{document=**} {
 
   // ── 모바일 레이아웃 ──────────────────────────────────
   return (
-    <div style={{ width: "100%", maxWidth: 420, margin: "0 auto", height: "100dvh", display: "flex", flexDirection: "column", background: "linear-gradient(160deg,#f3f0ff 0%,#ede9fe 40%,#faf5ff 70%,#f0f9ff 100%)", color: "#1e1b4b", fontFamily: "Pretendard,sans-serif", position: "relative", overflow: "hidden" }}>
+    <div style={{ width: "100%", maxWidth: 420, margin: "0 auto", height: "100dvh", display: "flex", flexDirection: "column", background: "linear-gradient(160deg,#f3f0ff 0%,#e9e3ff 35%,#f8f4ff 65%,#eef3ff 100%)", color: "#1e1b4b", fontFamily: "Pretendard,sans-serif", position: "relative", overflow: "hidden" }}>
       <style>{`@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css'); ::-webkit-scrollbar{display:none;} *{box-sizing:border-box;} select option{background:#020617;} html,body,#root{height:100%;height:100dvh;overflow:hidden;}`}</style>
 
       {/* 미인증 → 로그인/회원가입 */}
@@ -1027,12 +1027,12 @@ match /{document=**} {
               <span style={{ fontSize: 18 }}>🔔</span>
               <p style={{ fontSize: 12, color: "#c4b5fd", margin: 0, flex: 1, lineHeight: 1.4 }}>티미팅·채팅 알림을 받으시겠습니까?</p>
               <button onClick={requestNotifPermission} style={{ background: "#7c3aed", border: "none", color: "#020617", fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif", whiteSpace: "nowrap" }}>허용</button>
-              <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#9ca3af", fontSize: 16, cursor: "pointer", padding: "0 4px" }}>✕</button>
+              <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#7c6aad", fontSize: 16, cursor: "pointer", padding: "0 4px" }}>✕</button>
             </div>
           )}
-          <header style={{ padding: "13px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, background: "linear-gradient(135deg,#7c3aed 0%,#9333ea 50%,#a855f7 100%)" }}>
+          <header style={{ padding: "13px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, background: "linear-gradient(135deg,#4f1c9f 0%,#7c3aed 40%,#a855f7 70%,#c084fc 100%)" }}>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", letterSpacing: "-0.3px" }}>Global Connect</div>
+              <div style={{ fontSize: 16, fontWeight: 900, background: "linear-gradient(90deg,#fff,#e9d5ff,#c084fc)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: "-0.3px" }}>Global Connect</div>
               <div style={{ fontSize: 8, color: "rgba(255,255,255,0.6)", letterSpacing: "0.14em" }}>HMG 주재원 네트워크</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1108,12 +1108,12 @@ match /{document=**} {
 function SendReqModal({ target, onSend, onBack }) {
   const [msg, setMsg] = useState("");
   return (
-    <div style={{ width: "88%", maxWidth: 360, background: "#fff", border: "1.5px solid #c4b5fd", borderRadius: 24, padding: 28, display: "flex", flexDirection: "column", gap: 18 }}>
+    <div style={{ width: "88%", maxWidth: 360, background: "linear-gradient(135deg,#fff,#faf5ff)", border: "1.5px solid #c4b5fd", borderRadius: 24, padding: 28, display: "flex", flexDirection: "column", gap: 18 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
         <Avatar profile={target} size={52} />
         <div>
           <p style={{ fontSize: 16, fontWeight: 800, color: "#fff", margin: 0 }}>{target.name}</p>
-          <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 3 }}>{target.org} · {target.city}</p>
+          <p style={{ fontSize: 11, color: "#7c6aad", marginTop: 3 }}>{target.org} · {target.city}</p>
         </div>
       </div>
       <div>
@@ -1137,22 +1137,22 @@ function SendReqModal({ target, onSend, onBack }) {
 function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings, onGoChat }) {
   const unreadCount = notifs.filter(n => !n.read).length;
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#faf8ff" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(135deg,#fff,#faf5ff)" }}>
       <div style={S.overlayHeader}>
-        <button onClick={onClose} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
+        <button onClick={onClose} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>알림</p>
-          {unreadCount > 0 && <p style={{ fontSize: 10, color: "#7c3aed", margin: 0 }}>읽지 않은 알림 {unreadCount}개</p>}
+          {unreadCount > 0 && <p style={{ fontSize: 10, color: "#6d28d9", margin: 0 }}>읽지 않은 알림 {unreadCount}개</p>}
         </div>
         {unreadCount > 0 && (
-          <button onClick={onReadAll} style={{ background: "none", border: "none", color: "#7c3aed", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>모두 읽음</button>
+          <button onClick={onReadAll} style={{ background: "none", border: "none", color: "#6d28d9", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>모두 읽음</button>
         )}
       </div>
       <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
         {notifs.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 200, gap: 12 }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            <p style={{ fontSize: 13, color: "#9ca3af", fontStyle: "italic" }}>알림이 없습니다.</p>
+            <p style={{ fontSize: 13, color: "#7c6aad", fontStyle: "italic" }}>알림이 없습니다.</p>
           </div>
         ) : notifs.map(n => {
           const isChatNotif = n.type === "chat";
@@ -1177,14 +1177,14 @@ function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings, onGoChat
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: "0 0 4px" }}>{title}</p>
                   {isChatNotif && n.preview && (
-                    <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{n.preview}"</p>
+                    <p style={{ fontSize: 12, color: "#7c6aad", margin: "0 0 4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{n.preview}"</p>
                   )}
                   {!isChatNotif && n.message && (
                     <div style={{ background: "rgba(255,255,255,0.85)", borderRadius: 10, padding: "6px 10px", marginBottom: 4 }}>
-                      <p style={{ fontSize: 12, color: "#374151", margin: 0 }}>"{n.message}"</p>
+                      <p style={{ fontSize: 12, color: "#1e1b4b", margin: 0 }}>"{n.message}"</p>
                     </div>
                   )}
-                  <p style={{ fontSize: 10, color: "#9ca3af", margin: 0 }}>{timeAgo(n.createdAt)}</p>
+                  <p style={{ fontSize: 10, color: "#7c6aad", margin: 0 }}>{timeAgo(n.createdAt)}</p>
                   <p style={{ fontSize: 11, color: accent, fontWeight: 600, marginTop: 4 }}>
                     {isChatNotif ? "→ 채팅방 열기" : "→ 티미팅 탭에서 확인"}
                   </p>
@@ -1277,7 +1277,7 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
   const lbl = { ...S.lbl };
 
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "#faf8ff", position: "relative", overflow: "hidden" }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "linear-gradient(135deg,#fff,#faf5ff)", position: "relative", overflow: "hidden" }}>
       {/* 배경 */}
       <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", opacity: 0.12 }} viewBox="0 0 400 750" preserveAspectRatio="xMidYMid slice">
         <defs><radialGradient id="ag" cx="50%" cy="30%" r="50%"><stop offset="0%" stopColor="#7c3aed" stopOpacity="0.9"/><stop offset="100%" stopColor="#7c3aed" stopOpacity="0"/></radialGradient></defs>
@@ -1316,13 +1316,13 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
             <button onClick={doLogin} disabled={loading} style={{ ...S.btnAmber, width: "100%", padding: 16, fontSize: 15, borderRadius: 18, opacity: loading ? 0.6 : 1 }}>
               {loading ? "로그인 중..." : "로그인"}
             </button>
-            <p style={{ textAlign: "center", fontSize: 12, color: "#9ca3af", margin: 0 }}>아직 계정이 없으신가요? <button onClick={() => { setMode("register"); setErrMsg(""); }} style={{ background: "none", border: "none", color: "#7c3aed", fontWeight: 700, cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 12 }}>회원가입</button></p>
+            <p style={{ textAlign: "center", fontSize: 12, color: "#7c6aad", margin: 0 }}>아직 계정이 없으신가요? <button onClick={() => { setMode("register"); setErrMsg(""); }} style={{ background: "none", border: "none", color: "#6d28d9", fontWeight: 700, cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 12 }}>회원가입</button></p>
           </>
         )}
 
         {mode === "register" && step === 1 && (
           <>
-            <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>사용할 아이디와 비밀번호를 설정해주세요.</p>
+            <p style={{ fontSize: 13, color: "#7c6aad", margin: 0 }}>사용할 아이디와 비밀번호를 설정해주세요.</p>
             <div><label style={lbl}>아이디</label><input style={inp} placeholder="영문, 숫자 조합 (예: gildong83)" value={uname} onChange={e => setUname(e.target.value)} /></div>
             <div><label style={lbl}>비밀번호</label><input type="password" style={inp} placeholder="4자 이상" value={pw} onChange={e => setPw(e.target.value)} /></div>
             <div><label style={lbl}>비밀번호 확인</label><input type="password" style={inp} placeholder="비밀번호를 다시 입력하세요" value={pw2} onChange={e => setPw2(e.target.value)} onKeyDown={e => e.key === "Enter" && doNext()} /></div>
@@ -1334,8 +1334,8 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
         {mode === "register" && step === 2 && (
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <button onClick={() => setStep(1)} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 18, padding: 0 }}>←</button>
-              <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>프로필 정보를 입력해주세요.</p>
+              <button onClick={() => setStep(1)} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 18, padding: 0 }}>←</button>
+              <p style={{ fontSize: 13, color: "#7c6aad", margin: 0 }}>프로필 정보를 입력해주세요.</p>
             </div>
             {/* 사진 */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
@@ -1346,7 +1346,7 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
                 <label htmlFor="regPhoto" style={{ position: "absolute", bottom: -4, right: -4, width: 24, height: 24, background: "#7c3aed", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 12 }}>📷</label>
                 <input ref={fileRef} id="regPhoto" type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhoto} />
               </div>
-              <p style={{ fontSize: 10, color: "#9ca3af", margin: 0 }}>프로필 사진 (선택)</p>
+              <p style={{ fontSize: 10, color: "#7c6aad", margin: 0 }}>프로필 사진 (선택)</p>
             </div>
             <div><label style={lbl}>이름 *</label><input style={inp} placeholder="성함을 입력하세요" value={prof.name} onChange={e => setProf(f => ({ ...f, name: e.target.value }))} /></div>
             <div>
@@ -1417,9 +1417,9 @@ function ProfileForm({ initialData, onSave, onBack, onLogout }) {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#faf8ff", overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(135deg,#fff,#faf5ff)", overflow: "hidden" }}>
       <div style={S.overlayHeader}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
         <span style={{ fontWeight: 700, fontSize: 15, color: "#1e1b4b", flex: 1 }}>내 프로필</span>
         <button onClick={onLogout} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#dc2626", fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 10, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>로그아웃</button>
       </div>
@@ -1486,7 +1486,7 @@ function AdminAuth({ onSuccess, onBack }) {
     <div style={{ ...S.overlay, alignItems: "center", justifyContent: "center" }}>
       <div style={{ padding: 40, textAlign: "center", width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: 24, alignItems: "center" }}>
         <div style={{ width: 80, height: 80, background: "rgba(245,158,11,0.1)", borderRadius: 24, border: "1px solid rgba(124,58,237,0.18)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40 }}>🛡️</div>
-        <div><h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: 0 }}>관리자 로그인</h2><p style={{ fontSize: 13, color: "#9ca3af", marginTop: 6 }}>기획자 전용 비밀번호를 입력해주세요.</p></div>
+        <div><h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", margin: 0 }}>관리자 로그인</h2><p style={{ fontSize: 13, color: "#7c6aad", marginTop: 6 }}>기획자 전용 비밀번호를 입력해주세요.</p></div>
         <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12 }}>
           <input type="password" style={{ ...S.inp, textAlign: "center", fontSize: 24, letterSpacing: "0.5em" }} maxLength={8} placeholder="••••••••" value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => e.key === "Enter" && go()} />
           {err && <p style={{ color: "#dc2626", fontSize: 12, fontWeight: 700, margin: 0 }}>비밀번호가 일치하지 않습니다.</p>}
@@ -1508,12 +1508,12 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
   const saveEdit  = async () => { setSaving(true); await onUpdateProfile(editId, editForm); setEditId(null); setSaving(false); };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#faf8ff" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(135deg,#fff,#faf5ff)" }}>
       <div style={S.overlayHeader}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 20 }}>←</button>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 20 }}>←</button>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 700, color: "#fff", fontSize: 15 }}>관리자 대시보드</div>
-          <div style={{ fontSize: 9, color: "#7c3aed", letterSpacing: "0.1em" }}>ADMIN PANEL</div>
+          <div style={{ fontSize: 9, color: "#6d28d9", letterSpacing: "0.1em" }}>ADMIN PANEL</div>
         </div>
       </div>
       <div style={{ padding: "12px 16px 0", flexShrink: 0 }}>
@@ -1554,7 +1554,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
             <div style={{ background: "rgba(124,58,237,0.07)", border: "1px solid rgba(124,58,237,0.18)", borderRadius: 14, padding: "12px 14px" }}>
               <p style={{ fontSize: 11, color: "#c4b5fd", lineHeight: 1.6, fontStyle: "italic", margin: 0 }}>🔧 도시·국가·고민 수정 시 추천 매칭에 반영됩니다.</p>
             </div>
-            <p style={{ fontSize: 12, color: "#9ca3af" }}>가입 사용자 <strong style={{ color: "#1e1b4b" }}>{profiles.length}명</strong></p>
+            <p style={{ fontSize: 12, color: "#7c6aad" }}>가입 사용자 <strong style={{ color: "#1e1b4b" }}>{profiles.length}명</strong></p>
             {profiles.map(p => (
               <div key={p.id} style={{ ...S.card, borderRadius: 18 }}>
                 {editId === p.id ? (
@@ -1578,13 +1578,13 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <Avatar profile={p} size={40} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{p.name} <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 400 }}>({p.org})</span></p>
-                      <p style={{ fontSize: 10, color: "#6b7280", marginTop: 2 }}>{p.city} · {p.country}</p>
-                      <p style={{ fontSize: 10, color: "#9ca3af" }}>{p.concern}</p>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{p.name} <span style={{ fontSize: 10, color: "#7c6aad", fontWeight: 400 }}>({p.org})</span></p>
+                      <p style={{ fontSize: 10, color: "#7c6aad", marginTop: 2 }}>{p.city} · {p.country}</p>
+                      <p style={{ fontSize: 10, color: "#7c6aad" }}>{p.concern}</p>
                       {p.username && <p style={{ fontSize: 9, color: "#059669", marginTop: 2, fontWeight: 700 }}>● {p.username}</p>}
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 5, flexShrink: 0 }}>
-                      <button onClick={() => startEdit(p)} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(124,58,237,0.18)", color: "#7c3aed", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>수정</button>
+                      <button onClick={() => startEdit(p)} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(124,58,237,0.18)", color: "#6d28d9", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>수정</button>
                       <button onClick={() => { if (window.confirm(`${p.name} (${p.username||"샘플"}) 계정을 삭제하시겠습니까?\n삭제 시 재가입이 필요합니다.`)) onDeleteAccount(p.id); }} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#dc2626", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>삭제</button>
                     </div>
                   </div>
@@ -1596,7 +1596,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
 
         {tab === "missions" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>전체 미션 현황</p>
+            <p style={{ fontSize: 12, color: "#7c6aad", marginBottom: 4 }}>전체 미션 현황</p>
             {profiles.map(p => {
               const ms     = missions[p.id] || {};
               // 티미팅 발송: missions의 m1Count 대신 실제 meetings에서 계산
@@ -1608,7 +1608,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                 <div key={p.id} style={{ ...S.card, borderRadius: 18 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
                     <Avatar profile={p} size={36} />
-                    <div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{p.name}</p><p style={{ fontSize: 10, color: "#9ca3af" }}>{p.org}</p></div>
+                    <div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{p.name}</p><p style={{ fontSize: 10, color: "#7c6aad" }}>{p.org}</p></div>
                     {allDone && <span style={{ background: "rgba(16,185,129,0.1)", color: "#059669", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 8 }}>완료</span>}
                   </div>
                   <div style={{ display: "flex", gap: 6, marginBottom: (ms.m2Photos||[]).length > 0 ? 10 : 0 }}>
@@ -1625,7 +1625,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                   {/* 티미팅 인증샷 미리보기 */}
                   {(ms.m2Photos||[]).length > 0 && (
                     <div>
-                      <p style={{ fontSize: 9, color: "#9ca3af", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.06em" }}>티미팅 인증샷</p>
+                      <p style={{ fontSize: 9, color: "#7c6aad", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.06em" }}>티미팅 인증샷</p>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         {(ms.m2Photos||[]).map((photo, idx) => (
                           <img key={idx} src={photo.img} alt={`인증샷 ${idx+1}`}
@@ -1644,12 +1644,12 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
 
         {tab === "posts" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <p style={{ fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>전체 게시글 <strong style={{ color: "#1e1b4b" }}>{posts.length}개</strong></p>
+            <p style={{ fontSize: 12, color: "#7c6aad", marginBottom: 4 }}>전체 게시글 <strong style={{ color: "#1e1b4b" }}>{posts.length}개</strong></p>
             {posts.map(post => (
               <div key={post.id} style={{ ...S.card, borderRadius: 18 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                   <span style={{ ...S.amberBadge, fontSize: 9 }}>{post.tag}</span>
-                  <p style={{ fontSize: 10, color: "#9ca3af", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p>
+                  <p style={{ fontSize: 10, color: "#7c6aad", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p>
                   <button
                     onClick={() => { if (window.confirm(`"${post.title}" 게시글을 삭제하시겠습니까?`)) onDeletePost(post.id); }}
                     style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#dc2626", fontSize: 10, fontWeight: 700, padding: "4px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif", flexShrink: 0 }}>
@@ -1657,7 +1657,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                   </button>
                 </div>
                 <p style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{post.title}</p>
-                <p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>작성자: {post.authorName} · 댓글 {post.commentCount || 0} · 공감 {post.likeCount || 0}</p>
+                <p style={{ fontSize: 11, color: "#7c6aad", margin: 0 }}>작성자: {post.authorName} · 댓글 {post.commentCount || 0} · 공감 {post.likeCount || 0}</p>
               </div>
             ))}
           </div>
@@ -1686,36 +1686,36 @@ function Dashboard({ profiles, myProfile, uid, onRequest, onChat }) {
         <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
           <Avatar profile={myProfile} size={56} />
           <div>
-            <p style={{ fontSize: 10, color: "#7c3aed", fontWeight: 700, letterSpacing: "0.12em", marginBottom: 4 }}>HMG 주재원</p>
+            <p style={{ fontSize: 10, color: "#6d28d9", fontWeight: 700, letterSpacing: "0.12em", marginBottom: 4 }}>HMG 주재원</p>
             <h3 style={{ fontSize: 20, fontWeight: 700, color: "#fff", margin: 0 }}>안녕하세요, {myProfile.name} 님!</h3>
-            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>{myProfile.city} · {myProfile.country}</p>
+            <p style={{ fontSize: 12, color: "#7c6aad", marginTop: 2 }}>{myProfile.city} · {myProfile.country}</p>
           </div>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 16 }}>
           <span style={S.amberBadge}>{myProfile.concern}</span>
-          {myProfile.interest && <span style={{ ...S.amberBadge, background: "rgba(255,255,255,0.8)", border: "1.5px solid #ddd6fe", color: "#6b7280" }}>{myProfile.interest}</span>}
+          {myProfile.interest && <span style={{ ...S.amberBadge, background: "rgba(255,255,255,0.8)", border: "1.5px solid #ddd6fe", color: "#7c6aad" }}>{myProfile.interest}</span>}
         </div>
-        <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 14 }}>{myProfile.city}에 <strong style={{ color: "#fff" }}>{sameCity.length}명</strong>이 함께 부임 예정이에요.</p>
+        <p style={{ fontSize: 12, color: "#7c6aad", marginTop: 14 }}>{myProfile.city}에 <strong style={{ color: "#fff" }}>{sameCity.length}명</strong>이 함께 부임 예정이에요.</p>
       </div>
       {[["같은 도시", `${myProfile.city} 부임 예정`, sameCity],["같은 나라", `${myProfile.country} 부임 예정`, sameCountry],["비슷한 고민", "공통 관심사", sameConcern]].map(([title, sub, list]) => (
         <section key={title}>
           <div style={{ marginBottom: 12, padding: "0 2px" }}>
             <h4 style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0 }}>{title}</h4>
-            <p style={{ fontSize: 9, color: "#9ca3af", margin: 0 }}>{sub}</p>
+            <p style={{ fontSize: 9, color: "#7c6aad", margin: 0 }}>{sub}</p>
           </div>
           <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12 }}>
             {list.length > 0 ? list.map(p => (
               <div key={p.id} style={{ minWidth: 164, maxWidth: 164, ...S.card, borderRadius: 22, display: "flex", flexDirection: "column", gap: 10 }}>
                 <Avatar profile={p} size={50} />
-                <div><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p><p style={{ fontSize: 10, color: "#9ca3af", margin: 0 }}>{p.org}</p></div>
-                <div style={{ fontSize: 9, fontWeight: 700, color: "#7c3aed", background: "rgba(124,58,237,0.07)", border: "1px solid rgba(245,158,11,0.1)", padding: "5px 8px", borderRadius: 10, textAlign: "center" }}>{p.city} · {p.country}</div>
-                <p style={{ fontSize: 10, color: "#6b7280", background: "rgba(255,255,255,0.8)", padding: "6px 8px", borderRadius: 10, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.concern}</p>
+                <div><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p><p style={{ fontSize: 10, color: "#7c6aad", margin: 0 }}>{p.org}</p></div>
+                <div style={{ fontSize: 9, fontWeight: 700, color: "#6d28d9", background: "rgba(124,58,237,0.07)", border: "1px solid rgba(245,158,11,0.1)", padding: "5px 8px", borderRadius: 10, textAlign: "center" }}>{p.city} · {p.country}</div>
+                <p style={{ fontSize: 10, color: "#7c6aad", background: "rgba(255,255,255,0.8)", padding: "6px 8px", borderRadius: 10, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.concern}</p>
                 <div style={{ display: "flex", gap: 6 }}>
                   <button onClick={() => onChat(p)} style={{ ...S.btnGhost, flex: 1, padding: "7px 6px", fontSize: 10, borderRadius: 10 }}>💬 채팅</button>
                   <button onClick={() => onRequest(p)} style={{ ...S.btnAmber, flex: 1, padding: "7px 6px", fontSize: 10, borderRadius: 10 }}>신청</button>
                 </div>
               </div>
-            )) : <div style={{ width: "100%", padding: 28, border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 20, textAlign: "center", color: "#9ca3af", fontSize: 12, fontStyle: "italic" }}>아직 매칭되는 분이 없어요.</div>}
+            )) : <div style={{ width: "100%", padding: 28, border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 20, textAlign: "center", color: "#7c6aad", fontSize: 12, fontStyle: "italic" }}>아직 매칭되는 분이 없어요.</div>}
           </div>
         </section>
       ))}
@@ -1729,15 +1729,15 @@ function Directory({ profiles, uid, onRequest, onChat, onViewProfile }) {
   return (
     <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
       <input style={S.inp} placeholder="이름, 도시, 국가, 고민, 관심사로 검색..." value={term} onChange={e => setTerm(e.target.value)} />
-      <p style={{ fontSize: 12, color: "#9ca3af" }}><strong style={{ color: "#fff" }}>{filtered.length}명</strong> 검색됨</p>
+      <p style={{ fontSize: 12, color: "#7c6aad" }}><strong style={{ color: "#fff" }}>{filtered.length}명</strong> 검색됨</p>
       {filtered.map(p => (
         <div key={p.id} style={{ ...S.card, display: "flex", alignItems: "center", gap: 14, borderRadius: 20, cursor: "pointer" }} onClick={() => onViewProfile(p)}>
           <Avatar profile={p} size={48} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: 0 }}>{p.name}</p>
-            <p style={{ fontSize: 10, color: "#9ca3af", margin: 0 }}>{p.org}</p>
-            <p style={{ fontSize: 10, color: "#7c3aed", fontWeight: 600, marginTop: 2 }}>{p.city} · {p.country}</p>
-            <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 1 }}>{p.concern}</p>
+            <p style={{ fontSize: 10, color: "#7c6aad", margin: 0 }}>{p.org}</p>
+            <p style={{ fontSize: 10, color: "#6d28d9", fontWeight: 600, marginTop: 2 }}>{p.city} · {p.country}</p>
+            <p style={{ fontSize: 10, color: "#7c6aad", marginTop: 1 }}>{p.concern}</p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <button onClick={e => { e.stopPropagation(); onChat(p); }} style={{ ...S.btnGhost, padding: "7px 10px", fontSize: 10, borderRadius: 10 }}>💬</button>
@@ -1751,9 +1751,9 @@ function Directory({ profiles, uid, onRequest, onChat, onViewProfile }) {
 
 function ProfileView({ profile, onBack, onRequest, onChat }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#faf8ff", overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(135deg,#fff,#faf5ff)", overflow: "hidden" }}>
       <div style={S.overlayHeader}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
         <span style={{ fontWeight: 700, fontSize: 15, color: "#1e1b4b" }}>프로필</span>
       </div>
       <div style={{ ...S.overlayBody, paddingBottom: 40 }}>
@@ -1761,7 +1761,7 @@ function ProfileView({ profile, onBack, onRequest, onChat }) {
           <Avatar profile={profile} size={80} />
           <div style={{ textAlign: "center" }}>
             <h2 style={{ fontSize: 22, fontWeight: 800, color: "#fff", margin: 0 }}>{profile.name}</h2>
-            <p style={{ fontSize: 13, color: "#9ca3af", marginTop: 4 }}>{profile.org}</p>
+            <p style={{ fontSize: 13, color: "#7c6aad", marginTop: 4 }}>{profile.org}</p>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={onChat}    style={{ ...S.btnGhost, padding: "10px 20px", borderRadius: 12 }}>💬 채팅하기</button>
@@ -1771,7 +1771,7 @@ function ProfileView({ profile, onBack, onRequest, onChat }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {[["🌏 부임지", `${profile.city} · ${profile.country}`],["😟 주요 고민", profile.concern],["⭐ 관심사", profile.interest||"—"],["💡 네트워킹 희망", profile.targetPartner||"—"]].map(([label, value]) => (
             <div key={label} style={{ ...S.card, borderRadius: 16 }}>
-              <p style={{ fontSize: 10, fontWeight: 700, color: "#7c3aed", margin: 0, marginBottom: 4 }}>{label}</p>
+              <p style={{ fontSize: 10, fontWeight: 700, color: "#6d28d9", margin: 0, marginBottom: 4 }}>{label}</p>
               <p style={{ fontSize: 14, color: "#1e1b4b", margin: 0, lineHeight: 1.5 }}>{value}</p>
             </div>
           ))}
@@ -1801,16 +1801,16 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
   return (
     <div style={S.overlay}>
       <div style={S.overlayHeader}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
         <div style={{ width: 36, height: 36, background: "rgba(245,158,11,0.1)", borderRadius: 12, border: "1px solid rgba(124,58,237,0.18)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>{isGroup ? "👥" : "💬"}</div>
         <div style={{ flex: 1 }}>
           <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: 0 }}>{name}</p>
-          <p style={{ fontSize: 10, color: "#9ca3af", margin: 0 }}>{isGroup ? `그룹 채팅 · ${memberProfiles.length}명` : "1:1 채팅"}</p>
+          <p style={{ fontSize: 10, color: "#7c6aad", margin: 0 }}>{isGroup ? `그룹 채팅 · ${memberProfiles.length}명` : "1:1 채팅"}</p>
         </div>
         {currentRoom && (
           <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={() => setShowPanel(showPanel === "members" ? null : "members")} style={{ background: "rgba(255,255,255,0.8)", border: "1.5px solid #ddd6fe", color: "#6b7280", fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>멤버</button>
-            <button onClick={() => setShowPanel(showPanel === "invite" ? null : "invite")} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(124,58,237,0.18)", color: "#7c3aed", fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>초대</button>
+            <button onClick={() => setShowPanel(showPanel === "members" ? null : "members")} style={{ background: "rgba(255,255,255,0.8)", border: "1.5px solid #ddd6fe", color: "#7c6aad", fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>멤버</button>
+            <button onClick={() => setShowPanel(showPanel === "invite" ? null : "invite")} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(124,58,237,0.18)", color: "#6d28d9", fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>초대</button>
             <button onClick={() => { if(window.confirm("채팅방을 나가시겠습니까?")) { onLeaveRoom(roomId); onBack(); } }} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#dc2626", fontSize: 11, fontWeight: 700, padding: "5px 8px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>나가기</button>
           </div>
         )}
@@ -1818,13 +1818,13 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
       {/* 멤버 패널 */}
       {showPanel === "members" && (
         <div style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1.5px solid #e8e5ff", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8, maxHeight: 200, overflowY: "auto" }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", margin: 0 }}>참여 멤버 {memberProfiles.length}명</p>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "#7c6aad", margin: 0 }}>참여 멤버 {memberProfiles.length}명</p>
           {memberProfiles.map(p => (
             <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Avatar profile={p} size={28} />
               <div>
-                <p style={{ fontSize: 12, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{p.name} {p.id === uid ? <span style={{ fontSize: 10, color: "#7c3aed" }}>(나)</span> : ""}</p>
-                <p style={{ fontSize: 10, color: "#9ca3af" }}>{p.org}</p>
+                <p style={{ fontSize: 12, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{p.name} {p.id === uid ? <span style={{ fontSize: 10, color: "#6d28d9" }}>(나)</span> : ""}</p>
+                <p style={{ fontSize: 10, color: "#7c6aad" }}>{p.org}</p>
               </div>
             </div>
           ))}
@@ -1833,8 +1833,8 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
       {/* 초대 패널 */}
       {showPanel === "invite" && (
         <div style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1.5px solid #e8e5ff", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8, maxHeight: 240, overflowY: "auto" }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#9ca3af", margin: 0 }}>초대할 멤버 선택</p>
-          {nonMembers.length === 0 ? <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic" }}>초대할 수 있는 멤버가 없어요.</p> :
+          <p style={{ fontSize: 11, fontWeight: 700, color: "#7c6aad", margin: 0 }}>초대할 멤버 선택</p>
+          {nonMembers.length === 0 ? <p style={{ fontSize: 12, color: "#7c6aad", fontStyle: "italic" }}>초대할 수 있는 멤버가 없어요.</p> :
             nonMembers.map(p => {
               const sel = invitees.includes(p.id);
               return (
@@ -1854,7 +1854,7 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
         </div>
       )}
       <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-        {msgs.length === 0 && <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#9ca3af", fontSize: 13, fontStyle: "italic" }}>첫 메시지를 보내보세요 👋</div>}
+        {msgs.length === 0 && <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#7c6aad", fontSize: 13, fontStyle: "italic" }}>첫 메시지를 보내보세요 👋</div>}
         {msgs.map((m, i) => {
           const mine   = m.senderId === uid;
           const sender = profiles.find(p => p.id === m.senderId) || { name: m.senderName, id: m.senderId };
@@ -1864,9 +1864,9 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
             <div key={m.id} style={{ display: "flex", gap: 8, flexDirection: mine ? "row-reverse" : "row", alignItems: "flex-end" }}>
               {!mine && <div style={{ width: 28, flexShrink: 0 }}>{showHead && <Avatar profile={sender} size={28} />}</div>}
               <div style={{ maxWidth: "72%", display: "flex", flexDirection: "column", gap: 3, alignItems: mine ? "flex-end" : "flex-start" }}>
-                {!mine && showHead && <span style={{ fontSize: 10, color: "#9ca3af", marginLeft: 2 }}>{m.senderName}</span>}
+                {!mine && showHead && <span style={{ fontSize: 10, color: "#7c6aad", marginLeft: 2 }}>{m.senderName}</span>}
                 <div style={{ padding: "10px 14px", borderRadius: mine ? "18px 18px 4px 18px" : "18px 18px 18px 4px", fontSize: 13, background: mine ? "#7c3aed" : "rgba(255,255,255,0.08)", color: mine ? "#020617" : "#f1f5f9", fontWeight: mine ? 600 : 400, border: mine ? "none" : "1.5px solid #ddd6fe" }}>{m.text}</div>
-                <span style={{ fontSize: 9, color: "#374151", margin: "0 4px" }}>{timeAgo(ts)}</span>
+                <span style={{ fontSize: 9, color: "#1e1b4b", margin: "0 4px" }}>{timeAgo(ts)}</span>
               </div>
             </div>
           );
@@ -1895,21 +1895,21 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
       </div>
     </div>
     <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
-      {tab === "received" && (received.length === 0 ? <div style={{ padding: 36, border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 20, textAlign: "center", color: "#9ca3af", fontSize: 12, fontStyle: "italic" }}>아직 받은 신청이 없어요.</div> : received.map(m => {
+      {tab === "received" && (received.length === 0 ? <div style={{ padding: 36, border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 20, textAlign: "center", color: "#7c6aad", fontSize: 12, fontStyle: "italic" }}>아직 받은 신청이 없어요.</div> : received.map(m => {
         const sender = profiles.find(p => p.id === m.fromId) || { name: m.fromName, id: m.fromId };
         return (
           <div key={m.id} style={{ ...S.card, display: "flex", flexDirection: "column", gap: 14, borderRadius: 22 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <Avatar profile={sender} size={44} />
-                <div><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>{m.fromName} <span style={{ fontSize: 11, fontWeight: 400, color: "#9ca3af" }}>({m.fromOrg})</span></p><p style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>티미팅 신청이 도착했어요</p></div>
+                <div><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>{m.fromName} <span style={{ fontSize: 11, fontWeight: 400, color: "#7c6aad" }}>({m.fromOrg})</span></p><p style={{ fontSize: 10, color: "#7c6aad", marginTop: 2 }}>티미팅 신청이 도착했어요</p></div>
               </div>
               <span style={stBadge(m.status)}>{m.status}</span>
             </div>
             {m.message && (
               <div style={{ background: "rgba(255,255,255,0.8)", border: "1.5px solid #ddd6fe", borderRadius: 12, padding: "10px 14px" }}>
-                <p style={{ fontSize: 11, color: "#7c3aed", margin: "0 0 4px", fontWeight: 700 }}>신청 멘트</p>
-                <p style={{ fontSize: 13, color: "#374151", margin: 0, lineHeight: 1.5 }}>"{m.message}"</p>
+                <p style={{ fontSize: 11, color: "#6d28d9", margin: "0 0 4px", fontWeight: 700 }}>신청 멘트</p>
+                <p style={{ fontSize: 13, color: "#1e1b4b", margin: 0, lineHeight: 1.5 }}>"{m.message}"</p>
               </div>
             )}
             {m.status === "대기중" && <div style={{ display: "flex", gap: 8 }}><button onClick={() => onUpdate(m.id, "수락함")} style={{ ...S.btnAmber, flex: 1, padding: 10 }}>수락</button><button onClick={() => onUpdate(m.id, "거절함")} style={{ ...S.btnGhost, flex: 1, padding: 10 }}>거절</button></div>}
@@ -1917,12 +1917,12 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
           </div>
         );
       }))}
-      {tab === "sent" && (sent.length === 0 ? <p style={{ textAlign: "center", padding: 20, color: "#9ca3af", fontSize: 12, fontStyle: "italic" }}>먼저 동료에게 신청을 보내보세요!</p> : sent.map(m => {
+      {tab === "sent" && (sent.length === 0 ? <p style={{ textAlign: "center", padding: 20, color: "#7c6aad", fontSize: 12, fontStyle: "italic" }}>먼저 동료에게 신청을 보내보세요!</p> : sent.map(m => {
         const receiver = profiles.find(p => p.id === m.toId) || { name: m.toName, id: m.toId };
         return (
           <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, ...S.card, borderRadius: 16 }}>
             <Avatar profile={receiver} size={36} />
-            <div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>{m.toName}</p><p style={{ fontSize: 10, color: "#9ca3af" }}>{m.toOrg}</p></div>
+            <div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>{m.toName}</p><p style={{ fontSize: 10, color: "#7c6aad" }}>{m.toOrg}</p></div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {m.status === "수락함" && <button onClick={() => onChat(m)} style={{ padding: 6, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 8, cursor: "pointer", fontSize: 14 }}>💬</button>}
               <span style={stBadge(m.status)}>{m.status}</span>
@@ -1936,7 +1936,7 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {/* 1:1 채팅 */}
           {(dmRooms||[]).length > 0 && <>
-            <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", letterSpacing: "0.08em", margin: "4px 2px 0" }}>1:1 채팅</p>
+            <p style={{ fontSize: 10, fontWeight: 700, color: "#7c6aad", letterSpacing: "0.08em", margin: "4px 2px 0" }}>1:1 채팅</p>
             {(dmRooms||[]).map(dm => {
               const other = profiles.find(p => p.id === dm.otherId);
               const otherName = other?.name || "알 수 없음";
@@ -1945,26 +1945,26 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
                   <Avatar profile={other||{name:otherName,id:dm.otherId}} size={44} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 14, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{otherName}</p>
-                    <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dm.lastMsg||""}</p>
+                    <p style={{ fontSize: 11, color: "#7c6aad", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dm.lastMsg||""}</p>
                   </div>
-                  <span style={{ color: "#9ca3af" }}>→</span>
+                  <span style={{ color: "#7c6aad" }}>→</span>
                 </button>
               );
             })}
           </>}
           {/* 그룹 채팅 */}
           {myRooms.length > 0 && <>
-            <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", letterSpacing: "0.08em", margin: "8px 2px 0" }}>그룹 채팅</p>
+            <p style={{ fontSize: 10, fontWeight: 700, color: "#7c6aad", letterSpacing: "0.08em", margin: "8px 2px 0" }}>그룹 채팅</p>
             {myRooms.map(room => (
               <button key={room.id} onClick={() => onOpenChat(room.id, room.name)} style={{ display: "flex", alignItems: "center", gap: 14, ...S.card, borderRadius: 18, cursor: "pointer", width: "100%", textAlign: "left" }}>
                 <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.8)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>💬</div>
-                <div style={{ flex: 1 }}><p style={{ fontSize: 14, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{room.name}</p><p style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>멤버 {room.members?.length||0}명</p></div>
-                <span style={{ color: "#9ca3af" }}>→</span>
+                <div style={{ flex: 1 }}><p style={{ fontSize: 14, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{room.name}</p><p style={{ fontSize: 11, color: "#7c6aad", marginTop: 2 }}>멤버 {room.members?.length||0}명</p></div>
+                <span style={{ color: "#7c6aad" }}>→</span>
               </button>
             ))}
           </>}
           {(dmRooms||[]).length === 0 && myRooms.length === 0 && (
-            <p style={{ textAlign: "center", padding: 32, color: "#9ca3af", fontSize: 12, fontStyle: "italic" }}>아직 참여 중인 채팅방이 없어요.<br/>티미팅을 수락하면 1:1 채팅이 시작됩니다!</p>
+            <p style={{ textAlign: "center", padding: 32, color: "#7c6aad", fontSize: 12, fontStyle: "italic" }}>아직 참여 중인 채팅방이 없어요.<br/>티미팅을 수락하면 1:1 채팅이 시작됩니다!</p>
           )}
         </div>
       )}
@@ -1978,19 +1978,19 @@ function BoardView({ posts, profiles, uid, onOpenPost, onNewPost }) {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}><strong style={{ color: "#fff" }}>{posts.length}개</strong>의 게시글</p>
+          <p style={{ fontSize: 12, color: "#7c6aad", margin: 0 }}><strong style={{ color: "#fff" }}>{posts.length}개</strong>의 게시글</p>
           <button onClick={onNewPost} style={{ ...S.btnAmber, padding: "8px 14px", fontSize: 12, borderRadius: 12 }}>+ 글쓰기</button>
         </div>
         {posts.map(post => {
           const author = profiles.find(p => p.id === post.authorId) || { name: post.authorName, id: post.authorId };
           return (
             <div key={post.id} onClick={() => onOpenPost(post)} style={{ ...S.card, borderRadius: 22, cursor: "pointer", display: "flex", flexDirection: "column", gap: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>{post.tag && <span style={S.amberBadge}>{post.tag}</span>}<p style={{ fontSize: 10, color: "#9ca3af", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p></div>
-              <div><p style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: 0, marginBottom: 6, lineHeight: 1.4 }}>{post.title}</p><p style={{ fontSize: 13, color: "#6b7280", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.6 }}>{post.content}</p></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>{post.tag && <span style={S.amberBadge}>{post.tag}</span>}<p style={{ fontSize: 10, color: "#7c6aad", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p></div>
+              <div><p style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: 0, marginBottom: 6, lineHeight: 1.4 }}>{post.title}</p><p style={{ fontSize: 13, color: "#7c6aad", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.6 }}>{post.content}</p></div>
               {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 14 }} />}
               <div style={{ display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8 }}>
-                <Avatar profile={author} size={20} /><p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>{post.authorName}</p>
-                <span style={{ marginLeft: "auto", fontSize: 10, color: "#9ca3af" }}>💬 {post.commentCount||0}  ❤️ {post.likeCount||0}</span>
+                <Avatar profile={author} size={20} /><p style={{ fontSize: 11, color: "#7c6aad", margin: 0 }}>{post.authorName}</p>
+                <span style={{ marginLeft: "auto", fontSize: 10, color: "#7c6aad" }}>💬 {post.commentCount||0}  ❤️ {post.likeCount||0}</span>
               </div>
             </div>
           );
@@ -2026,17 +2026,17 @@ function Community({ posts, profiles, rooms, dmRooms, uid, onOpenPost, onNewPost
       <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
         {tab === "board" && (
           <>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}><strong style={{ color: "#fff" }}>{posts.length}개</strong>의 게시글</p><button onClick={onNewPost} style={{ ...S.btnAmber, padding: "8px 14px", fontSize: 12, borderRadius: 12 }}>+ 글쓰기</button></div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ fontSize: 12, color: "#7c6aad", margin: 0 }}><strong style={{ color: "#fff" }}>{posts.length}개</strong>의 게시글</p><button onClick={onNewPost} style={{ ...S.btnAmber, padding: "8px 14px", fontSize: 12, borderRadius: 12 }}>+ 글쓰기</button></div>
             {posts.map(post => {
               const author = profiles.find(p => p.id === post.authorId) || { name: post.authorName, id: post.authorId };
               return (
                 <div key={post.id} onClick={() => onOpenPost(post)} style={{ ...S.card, borderRadius: 22, cursor: "pointer", display: "flex", flexDirection: "column", gap: 10 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>{post.tag && <span style={S.amberBadge}>{post.tag}</span>}<p style={{ fontSize: 10, color: "#9ca3af", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p></div>
-                  <div><p style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: 0, marginBottom: 6, lineHeight: 1.4 }}>{post.title}</p><p style={{ fontSize: 13, color: "#6b7280", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.6 }}>{post.content}</p></div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>{post.tag && <span style={S.amberBadge}>{post.tag}</span>}<p style={{ fontSize: 10, color: "#7c6aad", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p></div>
+                  <div><p style={{ fontSize: 15, fontWeight: 800, color: "#fff", margin: 0, marginBottom: 6, lineHeight: 1.4 }}>{post.title}</p><p style={{ fontSize: 13, color: "#7c6aad", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.6 }}>{post.content}</p></div>
                   {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 14 }} />}
                   <div style={{ display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8 }}>
-                    <Avatar profile={author} size={20} /><p style={{ fontSize: 11, color: "#9ca3af", margin: 0 }}>{post.authorName}</p>
-                    <span style={{ marginLeft: "auto", fontSize: 10, color: "#9ca3af" }}>💬 {post.commentCount||0}  ❤️ {post.likeCount||0}</span>
+                    <Avatar profile={author} size={20} /><p style={{ fontSize: 11, color: "#7c6aad", margin: 0 }}>{post.authorName}</p>
+                    <span style={{ marginLeft: "auto", fontSize: 10, color: "#7c6aad" }}>💬 {post.commentCount||0}  ❤️ {post.likeCount||0}</span>
                   </div>
                 </div>
               );
@@ -2048,14 +2048,14 @@ function Community({ posts, profiles, rooms, dmRooms, uid, onOpenPost, onNewPost
             {/* 전체 채팅방 */}
             <button onClick={() => onOpenChat("global", "전체 채팅방")} style={{ display: "flex", alignItems: "center", gap: 14, background: "linear-gradient(135deg,rgba(245,158,11,0.1),transparent)", border: "1px solid rgba(124,58,237,0.18)", borderRadius: 18, padding: 16, cursor: "pointer", width: "100%", textAlign: "left" }}>
               <div style={{ width: 44, height: 44, background: "rgba(124,58,237,0.12)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🌐</div>
-              <div style={{ flex: 1 }}><p style={{ fontSize: 14, fontWeight: 700, color: "#7c3aed", margin: 0 }}>전체 채팅방</p><p style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>모든 참여자 {profiles.length}명</p></div>
-              <span style={{ color: "#7c3aed", opacity: 0.5 }}>→</span>
+              <div style={{ flex: 1 }}><p style={{ fontSize: 14, fontWeight: 700, color: "#6d28d9", margin: 0 }}>전체 채팅방</p><p style={{ fontSize: 11, color: "#7c6aad", marginTop: 2 }}>모든 참여자 {profiles.length}명</p></div>
+              <span style={{ color: "#6d28d9", opacity: 0.5 }}>→</span>
             </button>
 
             {/* 1:1 채팅방 */}
             {dmRooms.length > 0 && (
               <>
-                <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", letterSpacing: "0.08em", margin: "4px 2px 0" }}>1:1 채팅</p>
+                <p style={{ fontSize: 10, fontWeight: 700, color: "#7c6aad", letterSpacing: "0.08em", margin: "4px 2px 0" }}>1:1 채팅</p>
                 {dmRooms.sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt)).map(dm => {
                   // 상대방 프로필에서 이름 동적으로 가져오기 → 내 화면에선 상대방 이름, 상대방 화면에선 내 이름
                   const other     = profiles.find(p => p.id === dm.otherId);
@@ -2065,9 +2065,9 @@ function Community({ posts, profiles, rooms, dmRooms, uid, onOpenPost, onNewPost
                       <div style={{ flexShrink: 0 }}><Avatar profile={other || { name: otherName, id: dm.otherId }} size={44} /></div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: 14, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{otherName}</p>
-                        <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dm.lastMsg || ""}</p>
+                        <p style={{ fontSize: 11, color: "#7c6aad", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dm.lastMsg || ""}</p>
                       </div>
-                      <span style={{ color: "#9ca3af", flexShrink: 0 }}>→</span>
+                      <span style={{ color: "#7c6aad", flexShrink: 0 }}>→</span>
                     </button>
                   );
                 })}
@@ -2077,30 +2077,30 @@ function Community({ posts, profiles, rooms, dmRooms, uid, onOpenPost, onNewPost
             {/* 그룹 채팅방 */}
             {myRooms.length > 0 && (
               <>
-                <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", letterSpacing: "0.08em", margin: "4px 2px 0" }}>그룹 채팅</p>
+                <p style={{ fontSize: 10, fontWeight: 700, color: "#7c6aad", letterSpacing: "0.08em", margin: "4px 2px 0" }}>그룹 채팅</p>
                 {myRooms.map(room => (
                   <button key={room.id} onClick={() => onOpenChat(room.id, room.name)} style={{ display: "flex", alignItems: "center", gap: 14, ...S.card, borderRadius: 18, cursor: "pointer", width: "100%", textAlign: "left" }}>
                     <div style={{ width: 44, height: 44, background: "rgba(255,255,255,0.8)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>💬</div>
                     <div style={{ flex: 1 }}>
                       <p style={{ fontSize: 14, fontWeight: 700, color: "#1e1b4b", margin: 0 }}>{room.name}</p>
-                      <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>멤버 {room.members?.length || 0}명</p>
+                      <p style={{ fontSize: 11, color: "#7c6aad", marginTop: 2 }}>멤버 {room.members?.length || 0}명</p>
                     </div>
-                    <span style={{ color: "#9ca3af" }}>→</span>
+                    <span style={{ color: "#7c6aad" }}>→</span>
                   </button>
                 ))}
               </>
             )}
 
             {dmRooms.length === 0 && myRooms.length === 0 && (
-              <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic", textAlign: "center", padding: "20px 0" }}>참여 중인 채팅방이 없어요.<br/>동료에게 채팅을 걸거나 새 채팅방을 만들어보세요!</p>
+              <p style={{ fontSize: 12, color: "#7c6aad", fontStyle: "italic", textAlign: "center", padding: "20px 0" }}>참여 중인 채팅방이 없어요.<br/>동료에게 채팅을 걸거나 새 채팅방을 만들어보세요!</p>
             )}
             {!showCreate ? (
-              <button onClick={() => setCreate(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 14, border: "2px dashed rgba(255,255,255,0.12)", borderRadius: 18, background: "none", color: "#9ca3af", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 13, fontWeight: 700, width: "100%" }}>+ 채팅방 만들기</button>
+              <button onClick={() => setCreate(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: 14, border: "2px dashed rgba(255,255,255,0.12)", borderRadius: 18, background: "none", color: "#7c6aad", cursor: "pointer", fontFamily: "Pretendard,sans-serif", fontSize: 13, fontWeight: 700, width: "100%" }}>+ 채팅방 만들기</button>
             ) : (
               <div style={{ ...S.card, borderRadius: 18, display: "flex", flexDirection: "column", gap: 12, border: "1px solid rgba(124,58,237,0.25)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: 0 }}>새 채팅방</p>
-                  <button onClick={() => setCreate(false)} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 18 }}>✕</button>
+                  <button onClick={() => setCreate(false)} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 18 }}>✕</button>
                 </div>
                 <div><label style={S.lbl}>채팅방 이름</label><input style={S.inp} placeholder="예: 어바인 육아 모임" value={newRoom.name} onChange={e => setNewRoom(r => ({ ...r, name: e.target.value }))} /></div>
                 <div>
@@ -2156,15 +2156,15 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#faf8ff", overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(135deg,#fff,#faf5ff)", overflow: "hidden" }}>
       <div style={S.overlayHeader}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
         <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{post.title}</p>
         {post.tag && <span style={S.amberBadge}>{post.tag}</span>}
         {/* 본인 글이면 수정/삭제 버튼 표시 */}
         {isAuthor && !isEditing && (
           <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
-            <button onClick={() => { setIsEditing(true); setEditForm({ title: post.title, content: post.content }); }} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(124,58,237,0.18)", color: "#7c3aed", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>수정</button>
+            <button onClick={() => { setIsEditing(true); setEditForm({ title: post.title, content: post.content }); }} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(124,58,237,0.18)", color: "#6d28d9", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>수정</button>
             <button onClick={() => { if (window.confirm("게시글을 삭제하시겠습니까?")) onDeletePost(); }} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#dc2626", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif" }}>삭제</button>
           </div>
         )}
@@ -2173,7 +2173,7 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
         {isEditing ? (
           /* 수정 모드 */
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: "#7c3aed", margin: 0 }}>게시글 수정</p>
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#6d28d9", margin: 0 }}>게시글 수정</p>
             <div><label style={S.lbl}>제목</label><input style={S.inp} value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} /></div>
             <div><label style={S.lbl}>내용</label><textarea style={{ ...S.inp, minHeight: 200, resize: "none" }} value={editForm.content} onChange={e => setEditForm(f => ({ ...f, content: e.target.value }))} /></div>
             <div style={{ display: "flex", gap: 8 }}>
@@ -2187,17 +2187,17 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
             <p style={{ fontSize: 17, fontWeight: 800, color: "#fff", marginBottom: 4, lineHeight: 1.4 }}>{post.title}</p>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
               <Avatar profile={author} size={28} />
-              <p style={{ fontSize: 12, color: "#9ca3af", margin: 0 }}>{post.authorName}</p>
-              <p style={{ fontSize: 10, color: "#9ca3af", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p>
+              <p style={{ fontSize: 12, color: "#7c6aad", margin: 0 }}>{post.authorName}</p>
+              <p style={{ fontSize: 10, color: "#7c6aad", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p>
             </div>
-            <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.8, whiteSpace: "pre-wrap", marginBottom: 14 }}>{post.content}</p>
+            <p style={{ fontSize: 14, color: "#1e1b4b", lineHeight: 1.8, whiteSpace: "pre-wrap", marginBottom: 14 }}>{post.content}</p>
             {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", borderRadius: 16, maxHeight: 260, objectFit: "cover", marginBottom: 14 }} />}
             {/* 좋아요 / 댓글 수 */}
             <div style={{ display: "flex", gap: 14, paddingTop: 4, marginBottom: 20 }}>
               <button onClick={onToggleLike} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 12, border: `1px solid ${isLiked ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, background: isLiked ? "rgba(220,38,38,0.1)" : "rgba(255,255,255,0.8)", color: isLiked ? "#f87171" : "#64748b", cursor: "pointer", fontFamily: "Pretendard,sans-serif", transition: "all 0.2s" }}>
                 {isLiked ? "❤️" : "🤍"} 공감 {post.likeCount || 0}
               </button>
-              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#9ca3af" }}>💬 댓글 {comments.length}개</span>
+              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#7c6aad" }}>💬 댓글 {comments.length}개</span>
             </div>
           </>
         )}
@@ -2205,7 +2205,7 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
         {/* 댓글 목록 */}
         {!isEditing && (
           <div style={{ borderTop: "1.5px solid #e8e5ff", paddingTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", margin: 0 }}>댓글 {comments.length}개</p>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#7c6aad", margin: 0 }}>댓글 {comments.length}개</p>
             {comments.map(c => {
               const cp   = profiles.find(p => p.id === c.authorId) || { name: c.authorName, id: c.authorId };
               const ts   = c.createdAt?.toDate ? c.createdAt.toDate().toISOString() : c.createdAt;
@@ -2216,15 +2216,15 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
                   <div style={{ flex: 1 }}>
                     <div style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.05)", padding: "10px 14px", borderRadius: 16, position: "relative" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                        <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", margin: 0 }}>{c.authorName}</p>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: "#7c6aad", margin: 0 }}>{c.authorName}</p>
                         {/* 본인 댓글 삭제 */}
                         {mine && (
-                          <button onClick={() => { if (window.confirm("댓글을 삭제하시겠습니까?")) onDeleteComment(c.id); }} style={{ background: "none", border: "none", color: "#9ca3af", fontSize: 11, cursor: "pointer", fontFamily: "Pretendard,sans-serif", padding: 0 }}>삭제</button>
+                          <button onClick={() => { if (window.confirm("댓글을 삭제하시겠습니까?")) onDeleteComment(c.id); }} style={{ background: "none", border: "none", color: "#7c6aad", fontSize: 11, cursor: "pointer", fontFamily: "Pretendard,sans-serif", padding: 0 }}>삭제</button>
                         )}
                       </div>
                       <p style={{ fontSize: 13, color: "#1e1b4b", margin: 0 }}>{c.text}</p>
                     </div>
-                    <p style={{ fontSize: 9, color: "#374151", marginTop: 3, marginLeft: 4 }}>{timeAgo(ts)}</p>
+                    <p style={{ fontSize: 9, color: "#1e1b4b", marginTop: 3, marginLeft: 4 }}>{timeAgo(ts)}</p>
                   </div>
                 </div>
               );
@@ -2254,9 +2254,9 @@ function NewPost({ onSubmit, onBack }) {
     setLoading(true); await onSubmit(form); setLoading(false);
   };
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#faf8ff", overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "linear-gradient(135deg,#fff,#faf5ff)", overflow: "hidden" }}>
       <div style={S.overlayHeader}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 20, padding: 4 }}>✕</button>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 20, padding: 4 }}>✕</button>
         <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", flex: 1, margin: 0 }}>글쓰기</p>
         <button onClick={submit} disabled={loading} style={{ ...S.btnAmber, padding: "8px 14px", fontSize: 12, borderRadius: 10, opacity: loading ? 0.6 : 1 }}>{loading ? "게시 중..." : "게시"}</button>
       </div>
@@ -2268,7 +2268,7 @@ function NewPost({ onSubmit, onBack }) {
           <div>
             <label style={S.lbl}>사진 첨부 (선택)</label>
             {preview ? <div style={{ position: "relative" }}><img src={preview} alt="" style={{ width: "100%", borderRadius: 14, maxHeight: 200, objectFit: "cover" }} /><button onClick={() => { setPreview(null); setForm(f => ({ ...f, imageUrl: "" })); }} style={{ position: "absolute", top: 8, right: 8, width: 30, height: 30, background: "rgba(243,240,255,0.8)", border: "1.5px solid #ddd6fe", borderRadius: 10, color: "#fff", cursor: "pointer", fontSize: 14 }}>✕</button></div>
-              : <label htmlFor="newPostImg" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, padding: 32, border: "2px dashed rgba(255,255,255,0.1)", borderRadius: 18, cursor: "pointer", color: "#9ca3af", fontSize: 12 }}>🖼️<span>사진을 첨부하려면 여기를 탭하세요</span></label>}
+              : <label htmlFor="newPostImg" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, padding: 32, border: "2px dashed rgba(255,255,255,0.1)", borderRadius: 18, cursor: "pointer", color: "#7c6aad", fontSize: 12 }}>🖼️<span>사진을 첨부하려면 여기를 탭하세요</span></label>}
             <input type="file" id="newPostImg" accept="image/*" style={{ display: "none" }} onChange={handleImg} />
           </div>
         </div>
@@ -2316,19 +2316,19 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
     <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
       <div style={{ ...S.cardLg, background: "linear-gradient(135deg,rgba(124,58,237,0.1),rgba(56,189,248,0.06))", border: "1px solid rgba(124,58,237,0.18)", textAlign: "center" }}>
         {allDone ? (
-          <><div style={{ fontSize: 48, marginBottom: 8 }}>🎉</div><h2 style={{ fontSize: 20, fontWeight: 800, color: "#7c3aed", margin: 0 }}>네트워크 미션 완료!</h2><p style={{ fontSize: 13, color: "#6b7280", marginTop: 8 }}>모든 미션을 완료하셨습니다. 수고하셨어요!</p></>
+          <><div style={{ fontSize: 48, marginBottom: 8 }}>🎉</div><h2 style={{ fontSize: 20, fontWeight: 800, color: "#6d28d9", margin: 0 }}>네트워크 미션 완료!</h2><p style={{ fontSize: 13, color: "#7c6aad", marginTop: 8 }}>모든 미션을 완료하셨습니다. 수고하셨어요!</p></>
         ) : (
           <>
-            <div style={{ width: 56, height: 56, background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.28)", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: "#7c3aed" }}>
+            <div style={{ width: 56, height: 56, background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.28)", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: "#6d28d9" }}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
             </div>
             <h2 style={{ fontSize: 18, fontWeight: 800, color: "#fff", margin: 0 }}>네트워크 미션</h2>
-            <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>미션을 완료하고 연결을 넓혀보세요</p>
+            <p style={{ fontSize: 12, color: "#7c6aad", marginTop: 6 }}>미션을 완료하고 연결을 넓혀보세요</p>
             <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 3, overflow: "hidden" }}>
                 <div style={{ height: "100%", width: `${([m1Done,m2Done].filter(Boolean).length / 2) * 100}%`, background: "linear-gradient(90deg,#f59e0b,#fde68a)", borderRadius: 3, transition: "width 0.6s ease" }} />
               </div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#7c3aed" }}>{[m1Done,m2Done].filter(Boolean).length}/2</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#6d28d9" }}>{[m1Done,m2Done].filter(Boolean).length}/2</span>
             </div>
           </>
         )}
@@ -2340,15 +2340,15 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, color: m.disabled ? "#4b5563" : m.color, letterSpacing: "0.1em" }}>MISSION {m.num}</span>
-                {m.disabled && <span style={{ background: "rgba(255,255,255,0.85)", color: "#9ca3af", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>비활성화</span>}
+                {m.disabled && <span style={{ background: "rgba(255,255,255,0.85)", color: "#7c6aad", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>비활성화</span>}
                 {!m.disabled && m.done && <span style={{ background: `${m.color}18`, color: m.color, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6 }}>완료</span>}
               </div>
               <p style={{ fontSize: 15, fontWeight: 700, color: "#fff", margin: 0, marginBottom: 4 }}>{m.title}</p>
-              <p style={{ fontSize: 12, color: "#9ca3af", margin: 0, lineHeight: 1.5 }}>{m.desc}</p>
+              <p style={{ fontSize: 12, color: "#7c6aad", margin: 0, lineHeight: 1.5 }}>{m.desc}</p>
             </div>
           </div>
           {!m.disabled && <div style={{ marginBottom: m.photos ? 12 : 0 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><span style={{ fontSize: 10, color: "#9ca3af" }}>진행 현황</span><span style={{ fontSize: 12, fontWeight: 700, color: m.done ? m.color : "#94a3b8" }}>{m.current} / {m.target}회</span></div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><span style={{ fontSize: 10, color: "#7c6aad" }}>진행 현황</span><span style={{ fontSize: 12, fontWeight: 700, color: m.done ? m.color : "#94a3b8" }}>{m.current} / {m.target}회</span></div>
             <div style={{ height: 5, background: "rgba(255,255,255,0.07)", borderRadius: 3, overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${Math.min((m.current/m.target)*100, 100)}%`, background: `linear-gradient(90deg,${m.color},${m.color}aa)`, borderRadius: 3, transition: "width 0.5s" }} />
             </div>
@@ -2412,9 +2412,9 @@ const SCHEDULE_DATA = [
   {
     day: "Day 1",
     sessions: [
-      { time: "09:30 – 10:30", title: "HR 리더특강",            venue: "1F 대강당",          color: "#7c3aed" },
+      { time: "09:30 – 10:30", title: "HR 리더특강",            venue: "1F 대강당",          color: "#6d28d9" },
       { time: "10:30 – 14:00", title: "주재원 역할 및 행동 이해", venue: "1F 대강당",          color: "#38bdf8" },
-      { time: "14:00 – 15:30", title: "부임 국가의 이해",         venue: "분반 강의장",        color: "#a78bfa" },
+      { time: "14:00 – 15:30", title: "부임 국가의 이해",         venue: "분반 강의장",        color: "#7c3aed" },
       { time: "15:30 – 16:30", title: "안전 문화 교육",           venue: "1F 대강당",          color: "#059669" },
       { time: "16:30 – 17:30", title: "보안 교육",               venue: "1F 대강당",          color: "#fb923c" },
     ],
@@ -2422,9 +2422,9 @@ const SCHEDULE_DATA = [
   {
     day: "Day 2",
     sessions: [
-      { time: "08:00 – 11:00", title: "윤리경영 (Do-Better)",    venue: "1F 대강당",          color: "#7c3aed" },
+      { time: "08:00 – 11:00", title: "윤리경영 (Do-Better)",    venue: "1F 대강당",          color: "#6d28d9" },
       { time: "11:00 – 12:00", title: "준법 교육",               venue: "1F 대강당",          color: "#38bdf8" },
-      { time: "13:00 – 17:00", title: "역할 전환 워크숍",          venue: "분반 강의장",        color: "#a78bfa" },
+      { time: "13:00 – 17:00", title: "역할 전환 워크숍",          venue: "분반 강의장",        color: "#7c3aed" },
     ],
   },
   {
@@ -2445,7 +2445,7 @@ function ScheduleView() {
       {/* 헤더 */}
       <div style={{ background: "linear-gradient(135deg,rgba(124,58,237,0.12),rgba(56,189,248,0.07))", border: "1px solid rgba(124,58,237,0.2)", borderRadius: 24, padding: "20px 24px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, background: "rgba(245,158,11,0.07)", borderRadius: "50%", pointerEvents: "none" }} />
-        <p style={{ fontSize: 10, fontWeight: 700, color: "#7c3aed", letterSpacing: "0.14em", margin: "0 0 6px" }}>HMG 주재원 부임전 정규교육</p>
+        <p style={{ fontSize: 10, fontWeight: 700, color: "#6d28d9", letterSpacing: "0.14em", margin: "0 0 6px" }}>HMG 주재원 부임전 정규교육</p>
         <h2 style={{ fontSize: 20, fontWeight: 900, color: "#fff", margin: 0 }}>교육 시간표</h2>
       </div>
 
@@ -2478,7 +2478,7 @@ function ScheduleView() {
                 {/* 장소 */}
                 <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,0.8)", border: "1.5px solid #ddd6fe", borderRadius: 8, padding: "3px 10px" }}>
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "#6b7280" }}>{s.venue}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#7c6aad" }}>{s.venue}</span>
                 </div>
               </div>
             </div>
@@ -2550,7 +2550,7 @@ function CalView({ meetings, events, uid, onAdd }) {
 
       {showForm && (
         <div style={{ ...S.card, borderRadius: 22, border: "1px solid rgba(124,58,237,0.25)", display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: 0 }}>새 일정</p><button onClick={() => setShowForm(false)} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 18 }}>✕</button></div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><p style={{ fontSize: 14, fontWeight: 700, color: "#fff", margin: 0 }}>새 일정</p><button onClick={() => setShowForm(false)} style={{ background: "none", border: "none", color: "#7c6aad", cursor: "pointer", fontSize: 18 }}>✕</button></div>
           <input style={S.inp} placeholder="일정 제목" value={newEv.title} onChange={e => setNewEv(f => ({ ...f, title: e.target.value }))} />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <input type="date" style={S.inp} value={newEv.date} onChange={e => setNewEv(f => ({ ...f, date: e.target.value }))} />
@@ -2567,7 +2567,7 @@ function CalView({ meetings, events, uid, onAdd }) {
           {accepted.map(m => (
             <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(34,197,94,0.05)", border: "1px solid rgba(16,185,129,0.1)", borderRadius: 16, padding: "12px 14px", marginBottom: 8 }}>
               <span style={{ color: "#059669", fontSize: 16 }}>✓</span>
-              <div><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>티미팅 · {m.fromId === uid ? m.toName : m.fromName}</p><p style={{ fontSize: 10, color: "#9ca3af" }}>{m.fromId === uid ? m.toOrg : m.fromOrg}</p></div>
+              <div><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>티미팅 · {m.fromId === uid ? m.toName : m.fromName}</p><p style={{ fontSize: 10, color: "#7c6aad" }}>{m.fromId === uid ? m.toOrg : m.fromOrg}</p></div>
             </div>
           ))}
         </div>
@@ -2575,21 +2575,21 @@ function CalView({ meetings, events, uid, onAdd }) {
 
       <div>
         <h4 style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 10 }}>⏰ 오늘 일정</h4>
-        {todayEvs.length === 0 ? <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic" }}>오늘 예정된 일정이 없습니다.</p> : todayEvs.map(e => (
+        {todayEvs.length === 0 ? <p style={{ fontSize: 12, color: "#7c6aad", fontStyle: "italic" }}>오늘 예정된 일정이 없습니다.</p> : todayEvs.map(e => (
           <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.1)", borderRadius: 14, padding: "12px 14px", marginBottom: 8 }}>
             <div style={{ width: 8, height: 8, background: "#7c3aed", borderRadius: "50%", flexShrink: 0 }} />
-            <div><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>{e.title}</p>{e.time && <p style={{ fontSize: 10, color: "#9ca3af" }}>{e.time}</p>}{e.note && <p style={{ fontSize: 10, color: "#9ca3af" }}>{e.note}</p>}</div>
+            <div><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0 }}>{e.title}</p>{e.time && <p style={{ fontSize: 10, color: "#7c6aad" }}>{e.time}</p>}{e.note && <p style={{ fontSize: 10, color: "#7c6aad" }}>{e.note}</p>}</div>
           </div>
         ))}
       </div>
 
       <div>
         <h4 style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 10 }}>📅 다가오는 일정</h4>
-        {upcoming.length === 0 ? <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic" }}>예정된 일정이 없습니다.</p> : upcoming.map(e => (
+        {upcoming.length === 0 ? <p style={{ fontSize: 12, color: "#7c6aad", fontStyle: "italic" }}>예정된 일정이 없습니다.</p> : upcoming.map(e => (
           <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 14, ...S.card, borderRadius: 16, marginBottom: 8 }}>
-            <div style={{ textAlign: "center", width: 42, flexShrink: 0 }}><p style={{ fontSize: 9, color: "#9ca3af", margin: 0 }}>{e.date?.slice(5,7)}월</p><p style={{ fontSize: 20, fontWeight: 900, color: "#fff", lineHeight: 1, margin: 0 }}>{e.date?.slice(8,10)}</p></div>
+            <div style={{ textAlign: "center", width: 42, flexShrink: 0 }}><p style={{ fontSize: 9, color: "#7c6aad", margin: 0 }}>{e.date?.slice(5,7)}월</p><p style={{ fontSize: 20, fontWeight: 900, color: "#fff", lineHeight: 1, margin: 0 }}>{e.date?.slice(8,10)}</p></div>
             <div style={{ width: 1, height: 32, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
-            <div style={{ flex: 1, minWidth: 0 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</p>{e.time && <p style={{ fontSize: 10, color: "#9ca3af" }}>{e.time}</p>}{e.note && <p style={{ fontSize: 10, color: "#9ca3af", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.note}</p>}</div>
+            <div style={{ flex: 1, minWidth: 0 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#fff", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</p>{e.time && <p style={{ fontSize: 10, color: "#7c6aad" }}>{e.time}</p>}{e.note && <p style={{ fontSize: 10, color: "#7c6aad", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.note}</p>}</div>
             <span style={{ fontSize: 10, fontWeight: 700, color: "#059669", flexShrink: 0 }}>{e.type || "티미팅"}</span>
           </div>
         ))}
