@@ -338,7 +338,7 @@ export default function App() {
             .sort((a,b) => new Date(b.updatedAt||0) - new Date(a.updatedAt||0)));
         }),
         onSnapshot(query(col("notifications"), where("toId", "==", uid)), s => {
-          const newNotifs = s.docs.map(d => ({
+          const fsNotifs = s.docs.map(d => ({
             id: "n_" + d.id, firestoreId: d.id,
             type: d.data().type,
             fromName: d.data().fromName || "",
@@ -346,11 +346,13 @@ export default function App() {
             message: d.data().message || "",
             roomId: d.data().roomId || "",
             preview: d.data().preview || "",
+            tag: d.data().tag || "",
             meetingId: d.data().meetingId || "",
             read: d.data().read || false,
             createdAt: d.data().createdAt || new Date().toISOString(),
           })).sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
-          setNotifs(newNotifs);
+          // Firestore 알림으로 전체 교체 (메모리 티미팅 알림은 Firestore에도 저장되므로 중복 없음)
+          setNotifs(fsNotifs);
         }),
       ] : []),
     ];
@@ -526,11 +528,15 @@ export default function App() {
 
   // ── 게시글 수정 ──────────────────────────────────────
   const editPost = async (postId, updates) => {
-    let imageUrl = updates.imageUrl;
-    if (imageUrl && imageUrl.startsWith("data:")) {
-      imageUrl = await uploadPhoto(imageUrl, `posts/${uid}_${Date.now()}`);
+    const payload = { title: updates.title, content: updates.content, updatedAt: new Date().toISOString() };
+    if (updates.imageUrl) {
+      if (updates.imageUrl.startsWith("data:")) {
+        payload.imageUrl = await uploadPhoto(updates.imageUrl, `posts/${uid}_${Date.now()}`);
+      } else {
+        payload.imageUrl = updates.imageUrl;
+      }
     }
-    await updateDoc(docR("posts", postId), { ...updates, imageUrl, updatedAt: new Date().toISOString() });
+    await updateDoc(docR("posts", postId), payload);
   };
 
   // ── 게시글 삭제 ──────────────────────────────────────
@@ -561,7 +567,7 @@ export default function App() {
     try {
       const snap = await getDocs(col("profiles"));
       const now = new Date().toISOString();
-      await Promise.all(
+      const results = await Promise.allSettled(
         snap.docs.filter(d => d.id !== uid).map(d =>
           addDoc(col("notifications"), {
             toId: d.id, type: "newPost",
@@ -569,10 +575,13 @@ export default function App() {
             preview: postData.title || "",
             tag: postData.tag || "",
             read: false, createdAt: now,
-          }).catch(() => {})
+          })
         )
       );
-    } catch(e) {}
+      const failed = results.filter(r => r.status === "rejected").length;
+      if (failed > 0) console.warn(`게시글 알림 ${failed}건 실패`);
+      else console.log(`게시글 알림 ${results.length}건 발송`);
+    } catch(e) { console.error("게시글 알림 오류:", e); }
   };
 
   // ── 티미팅 신청 ──────────────────────────────────────
@@ -927,8 +936,8 @@ match /{document=**} {
                   <button onClick={() => openOverlay({ type: "profile" })} style={{ width: "100%", padding: "8px", background: "#f5f6f8", border: "1px solid #d1d8e0", color: "#002c5f", fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>✏️ 프로필 수정</button>
                 </div>
                 {/* 미션 요약 */}
-                <div style={{ background: "#ffffff", border: "1px solid #e0e3e8", borderRadius: 18, padding: 16 }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "#002c5f", margin: "0 0 12px", letterSpacing: "0.08em" }}>네트워킹 미션</p>
+                <div style={{ background: "linear-gradient(135deg,#002c5f 0%,#004080 50%,#00648c 100%)", border: "none", borderRadius: 18, padding: 16, boxShadow: "0 4px 12px rgba(0,44,95,0.2)" }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.9)", margin: "0 0 12px", letterSpacing: "0.08em" }}>네트워킹 미션</p>
                   {[
                     ["티미팅 발송", Math.min(meetings.filter(m => m.fromId === uid).length, 2), 2],
                     ["티미팅 인증샷", Math.min((missions[uid]?.m2Photos||[]).length, 2), 2],
@@ -936,11 +945,11 @@ match /{document=**} {
                   ].map(([label, cur, tot]) => (
                     <div key={label} style={{ marginBottom: 10 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontSize: 11, color: "#6b7280" }}>{label}</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: cur >= tot ? "#059669" : "#002c5f" }}>{cur}/{tot}</span>
+                        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.75)" }}>{label}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: cur >= tot ? "#6ee7b7" : "rgba(255,255,255,0.95)" }}>{cur}/{tot}</span>
                       </div>
-                      <div style={{ height: 4, background: "rgba(255,255,255,0.07)", borderRadius: 2, overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${Math.min((cur/tot)*100,100)}%`, background: cur >= tot ? "#059669" : "#002c5f", borderRadius: 2, transition: "width 0.4s" }} />
+                      <div style={{ height: 4, background: "rgba(255,255,255,0.2)", borderRadius: 2, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${Math.min((cur/tot)*100,100)}%`, background: cur >= tot ? "#6ee7b7" : "#00aad2", borderRadius: 2, transition: "width 0.4s" }} />
                       </div>
                     </div>
                   ))}
@@ -2344,21 +2353,23 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
 
   return (
     <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ ...S.cardLg, background: "linear-gradient(135deg,rgba(124,58,237,0.1),rgba(56,189,248,0.06))", border: "1px solid #d1d8e0", textAlign: "center" }}>
+      <div style={{ background: "linear-gradient(135deg,#002c5f 0%,#004080 50%,#00648c 100%)", borderRadius: 20, padding: 24, position: "relative", overflow: "hidden", boxShadow: "0 6px 20px rgba(0,44,95,0.2)", textAlign: "center" }}>
+        <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, background: "rgba(255,255,255,0.05)", borderRadius: "50%", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: -20, left: -20, width: 80, height: 80, background: "rgba(0,170,210,0.15)", borderRadius: "50%", pointerEvents: "none" }} />
         {allDone ? (
-          <><div style={{ fontSize: 48, marginBottom: 8 }}>🎉</div><h2 style={{ fontSize: 20, fontWeight: 800, color: "#111827", margin: 0 }}>네트워킹 미션 완료!</h2><p style={{ fontSize: 13, color: "#6b7280", marginTop: 8 }}>모든 미션을 완료하셨습니다. 수고하셨어요!</p></>
+          <><div style={{ fontSize: 48, marginBottom: 8 }}>🎉</div><h2 style={{ fontSize: 20, fontWeight: 800, color: "#ffffff", margin: 0 }}>네트워킹 미션 완료!</h2><p style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", marginTop: 8 }}>모든 미션을 완료하셨습니다. 수고하셨어요!</p></>
         ) : (
           <>
-            <div style={{ width: 56, height: 56, background: "#e8f0f8", border: "1px solid rgba(124,58,237,0.28)", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: "#002c5f" }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+            <div style={{ width: 56, height: 56, background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: "#ffffff" }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </div>
-            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#111827", margin: 0 }}>네트워킹 미션</h2>
-            <p style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>미션을 완료하고 연결을 넓혀보세요</p>
+            <h2 style={{ fontSize: 18, fontWeight: 800, color: "#ffffff", margin: 0 }}>네트워킹 미션</h2>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 6 }}>미션을 완료하고 연결을 넓혀보세요</p>
             <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 3, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${([m1Done,m2Done].filter(Boolean).length / 2) * 100}%`, background: "linear-gradient(90deg,#f59e0b,#fde68a)", borderRadius: 3, transition: "width 0.6s ease" }} />
+              <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.2)", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${([m1Done,m2Done].filter(Boolean).length / 2) * 100}%`, background: "linear-gradient(90deg,#00aad2,#6ee7b7)", borderRadius: 3, transition: "width 0.6s ease" }} />
               </div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#002c5f" }}>{[m1Done,m2Done].filter(Boolean).length}/2</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>{[m1Done,m2Done].filter(Boolean).length}/2</span>
             </div>
           </>
         )}
