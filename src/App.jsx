@@ -2479,7 +2479,18 @@ const SCHEDULE_DATA = [
 
 function ScheduleView() {
   const [activeDay, setActiveDay] = useState(0);
+  const [activeTab, setActiveTab] = useState("schedule"); // schedule | videos
   const day = SCHEDULE_DATA[activeDay];
+
+  const VIDEOS = [
+    { title: "마북캠퍼스 생활 안내", id: "Ix1fP0Y3hEs" },
+    { title: "더 나은 미래로 향하는 길 | 현대자동차그룹 홍보 영상", id: "TecIkqBrLtI" },
+    { title: "[특집] 인사이트 인터뷰 | 현대자동차 인도네시아", id: "MXgu6i6p1BA" },
+    { title: "[특집] 인사이트 인터뷰 | 현대자동차 아태권역본부", id: "LGR4LXJaNxw" },
+    { title: "[특집] 인사이트 인터뷰 | 이노션 아태지역본부", id: "GXDFP8ecEwA" },
+    { title: "[특집] 인사이트 인터뷰 | 글로비스 인도네시아", id: "eh7w3sEuiYA" },
+    { title: "[특집] 인사이트 인터뷰 | 현대트랜시스 인도네시아", id: "hy8mf_ZUu7Y" },
+  ];
 
   return (
     <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
@@ -2490,17 +2501,43 @@ function ScheduleView() {
         <h2 style={{ fontSize: 20, fontWeight: 900, color: "#ffffff", margin: 0 }}>교육 시간표</h2>
       </div>
 
-      {/* Day 탭 */}
-      {SCHEDULE_DATA.length > 1 && (
-        <div style={{ display: "flex", gap: 6 }}>
-          {SCHEDULE_DATA.map((d, i) => (
-            <button key={i} onClick={() => setActiveDay(i)} style={{ padding: "8px 18px", borderRadius: 12, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: activeDay === i ? "#002c5f" : "#ffffff", color: activeDay === i ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{d.day}</button>
+      {/* 탭 선택 */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {SCHEDULE_DATA.map((d, i) => (
+          <button key={i} onClick={() => { setActiveTab("schedule"); setActiveDay(i); }}
+            style={{ padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: activeTab === "schedule" && activeDay === i ? "#002c5f" : "#ffffff", color: activeTab === "schedule" && activeDay === i ? "#ffffff" : "#6b7280", boxShadow: "0 1px 4px rgba(0,44,95,0.1)", transition: "all 0.2s" }}>{d.day}
+          </button>
+        ))}
+        <button onClick={() => setActiveTab("videos")}
+          style={{ padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: activeTab === "videos" ? "#00aad2" : "#ffffff", color: activeTab === "videos" ? "#ffffff" : "#6b7280", boxShadow: "0 1px 4px rgba(0,44,95,0.1)", transition: "all 0.2s" }}>▶ 영상
+        </button>
+      </div>
+
+      {/* 영상 탭 */}
+      {activeTab === "videos" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {VIDEOS.map((v, i) => (
+            <div key={i} style={{ background: "#ffffff", border: "1px solid #e0e3e8", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 8px rgba(0,44,95,0.07)" }}>
+              <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden" }}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${v.id}`}
+                  title={v.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                />
+              </div>
+              <div style={{ padding: "12px 16px" }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0, lineHeight: 1.4 }}>{v.title}</p>
+              </div>
+            </div>
           ))}
         </div>
       )}
 
-      {/* 세션 카드들 */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* 시간표 세션 카드들 */}
+      {activeTab === "schedule" && <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {day.sessions.map((s, i) => (
           <div key={i} style={{ display: "flex", gap: 0, background: "#ffffff", border: "1px solid #e0e3e8", borderRadius: 18, overflow: "hidden" }}>
             {/* 왼쪽 컬러 바 + 순서 */}
@@ -2532,7 +2569,7 @@ function ScheduleView() {
             </div>
           </div>
         ))}
-      </div>
+      </div>}
     </div>
   );
 }
