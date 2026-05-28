@@ -557,6 +557,22 @@ export default function App() {
       ...postData, imageUrl, authorId: uid, authorName: myProfile?.name || "나",
       commentCount: 0, likeCount: 0, createdAt: new Date().toISOString(),
     });
+    // 나를 제외한 모든 사용자에게 새 게시글 알림
+    try {
+      const snap = await getDocs(col("profiles"));
+      const now = new Date().toISOString();
+      await Promise.all(
+        snap.docs.filter(d => d.id !== uid).map(d =>
+          addDoc(col("notifications"), {
+            toId: d.id, type: "newPost",
+            fromName: myProfile?.name || "알 수 없음",
+            preview: postData.title || "",
+            tag: postData.tag || "",
+            read: false, createdAt: now,
+          }).catch(() => {})
+        )
+      );
+    } catch(e) {}
   };
 
   // ── 티미팅 신청 ──────────────────────────────────────
@@ -998,7 +1014,7 @@ match /{document=**} {
               const promises = notifs.filter(n => !n.read && n.firestoreId).map(n => updateDoc(docR("notifications", n.firestoreId), { read: true }).catch(()=>{}));
               await Promise.all(promises);
               setNotifs(prev => prev.map(n => ({ ...n, read: true })));
-            }} onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }} onGoChat={(roomId, name) => { setShowNotifs(false); openChat(roomId, name); }} />
+            }} onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }} onGoChat={(roomId, name) => { setShowNotifs(false); openChat(roomId, name); }} onGoBoard={() => { setShowNotifs(false); setView("board"); }} />
             </div>
           </div>
         )}
@@ -1102,6 +1118,7 @@ match /{document=**} {
             }}
             onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }}
             onGoChat={(roomId, name) => { setShowNotifs(false); openChat(roomId, name); }}
+            onGoBoard={() => { setShowNotifs(false); setView("board"); }}
           />
         </div>
       )}
@@ -1139,7 +1156,7 @@ function SendReqModal({ target, onSend, onBack }) {
 }
 
 /* ════════ 알림 패널 ════════ */
-function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings, onGoChat }) {
+function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings, onGoChat, onGoBoard }) {
   const unreadCount = notifs.filter(n => !n.read).length;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#ffffff" }}>
@@ -1161,16 +1178,20 @@ function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings, onGoChat
           </div>
         ) : notifs.map(n => {
           const isChatNotif = n.type === "chat";
-          const accent = isChatNotif ? "#00aad2" : n.type === "accepted" ? "#059669" : "#002c5f";
-          const icon   = isChatNotif ? "💬" : n.type === "accepted" ? "🎉" : "☕";
+          const isPostNotif = n.type === "newPost";
+          const accent = isChatNotif ? "#00aad2" : isPostNotif ? "#374151" : n.type === "accepted" ? "#059669" : "#002c5f";
+          const icon   = isChatNotif ? "💬" : isPostNotif ? "📝" : n.type === "accepted" ? "🎉" : "☕";
           const title  = isChatNotif
             ? `${n.fromName} 님이 메시지를 보냈습니다`
-            : n.type === "accepted"
-              ? `${n.fromName} 님이 티미팅을 수락했습니다!`
-              : `${n.fromName} 님이 티미팅을 신청했습니다.`;
+            : isPostNotif
+              ? `${n.fromName} 님이 게시글을 올렸습니다`
+              : n.type === "accepted"
+                ? `${n.fromName} 님이 티미팅을 수락했습니다!`
+                : `${n.fromName} 님이 티미팅을 신청했습니다.`;
           const handleClick = () => {
             onRead(n.id);
             if (isChatNotif && onGoChat) onGoChat(n.roomId, n.fromName);
+            else if (isPostNotif && onGoBoard) onGoBoard();
             else onGoMeetings();
           };
           return (
@@ -1191,7 +1212,7 @@ function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings, onGoChat
                   )}
                   <p style={{ fontSize: 10, color: "#6b7280", margin: 0 }}>{timeAgo(n.createdAt)}</p>
                   <p style={{ fontSize: 11, color: accent, fontWeight: 600, marginTop: 4 }}>
-                    {isChatNotif ? "→ 채팅방 열기" : "→ 티미팅 탭에서 확인"}
+                    {isChatNotif ? "→ 채팅방 열기" : isPostNotif ? "→ 게시판 보기" : "→ 티미팅 탭에서 확인"}
                   </p>
                 </div>
               </div>

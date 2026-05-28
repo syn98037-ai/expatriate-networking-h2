@@ -27,6 +27,9 @@ exports.sendPushNotification = onDocumentCreated(
     if (data.type === "chat") {
       title = `💬 ${data.fromName}`;
       body  = data.preview || "새 메시지가 도착했습니다.";
+    } else if (data.type === "newPost") {
+      title = `📝 ${data.fromName}`;
+      body  = data.preview ? `[${data.tag || "게시글"}] ${data.preview}` : "새 게시글이 등록되었습니다.";
     } else if (data.type === "received") {
       title = `☕ 티미팅 신청`;
       body  = `${data.fromName} 님이 티미팅을 신청했습니다.`;
