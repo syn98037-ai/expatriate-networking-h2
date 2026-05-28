@@ -2483,13 +2483,25 @@ function ScheduleView() {
   const day = SCHEDULE_DATA[activeDay];
 
   const VIDEOS = [
-    { title: "마북캠퍼스 생활 안내", id: "Ix1fP0Y3hEs" },
+    { title: "마북캠퍼스 생활 안내 | 현대자동차그룹 인재개발원", id: "Ix1fP0Y3hEs" },
     { title: "더 나은 미래로 향하는 길 | 현대자동차그룹 홍보 영상", id: "TecIkqBrLtI" },
     { title: "[특집] 인사이트 인터뷰 | 현대자동차 인도네시아", id: "MXgu6i6p1BA" },
     { title: "[특집] 인사이트 인터뷰 | 현대자동차 아태권역본부", id: "LGR4LXJaNxw" },
     { title: "[특집] 인사이트 인터뷰 | 이노션 아태지역본부", id: "GXDFP8ecEwA" },
     { title: "[특집] 인사이트 인터뷰 | 글로비스 인도네시아", id: "eh7w3sEuiYA" },
     { title: "[특집] 인사이트 인터뷰 | 현대트랜시스 인도네시아", id: "hy8mf_ZUu7Y" },
+    { title: "최첨단 제조 혁신 기술 플랫폼 | 현대차그룹 메타플랜트 아메리카 HMGMA", id: "N8Mh2HJUp3A" },
+    { title: "싱가포르에서 시작되는 모빌리티 혁신의 첫 번째 챕터 | 현대차그룹 싱가포르 글로벌 혁신센터 HMGICS", id: "4Yj320eZCCo" },
+    { title: "현대차그룹은 왜 싱가포르 도심에 모빌리티 테스트베드를 만들었을까요?", id: "nypSVzVF07I" },
+    { title: "장인 정신으로 기술의 본질을 연구하는 현대자동차그룹 일본기술연구소", id: "wXY_hqbZdEc" },
+    { title: "기아 글로벌 플랜트 랜선 투어 | 미국 조지아 플랜트", id: "Aa_0-2TjZ18" },
+    { title: "기아 글로벌 플랜트 랜선 투어 | 기아 슬로바키아 플랜트", id: "pkNwgDw7NLw" },
+    { title: "현대자동차 글로벌 플랜트 랜선 투어 | 체코편", id: "2tzFL-2flzg" },
+    { title: "현대자동차 최초의 글로벌 플랜트가 있는 곳은? | 튀르키예편", id: "-q2r4cSGcqU" },
+    { title: "신시장 개척과 미주 공략을 위한 생산 거점! K3, 프라이드 양산하는 기아 멕시코 공장", id: "cEr63FHihac" },
+    { title: "현대자동차 글로벌 플랜트 랜선 투어 | 브라질 플랜트", id: "y494jkELLlc" },
+    { title: "폭발적 반응의 소형 SUV 쏘넷을 양산하는 기아 인도 공장의 모든 것", id: "oJebqUET3_I" },
+    { title: "북미 핵심 5개 모델 생산 공장, 현대자동차 미국 앨라배마 플랜트 랜선 투어", id: "o4E98CUPVe8" },
   ];
 
   return (
