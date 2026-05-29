@@ -1247,6 +1247,8 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
   const [prof, setProf] = useState({ name:"", org:"", country:"", city:"", concern: CONCERNS[0], interest:"", personality:"사교적인", targetPartner:"", photoUrl:"" });
   const [preview, setPreview] = useState(null);
   const fileRef = useRef();
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
+  const [showPrivacy,   setShowPrivacy]   = useState(false);
 
   const doLogin = async () => {
     setErrMsg(""); setLoading(true);
