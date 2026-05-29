@@ -915,7 +915,7 @@ match /{document=**} {
               </div>
             )}
             {/* PC 상단 헤더 */}
-            <header style={{ padding: "0 20px 0 28px", height: 60, flexShrink: 0, display: "flex", alignItems: "center", background: "#002c5f" }}>
+            <header className="pwa-header" style={{ padding: "0 20px 0 28px", height: 60, flexShrink: 0, display: "flex", alignItems: "center", background: "#002c5f" }}>
               {/* 왼쪽: 로고 + 탭 */}
               <div style={{ display: "flex", alignItems: "center", gap: 16, flex: "0 0 auto" }}>
                 <span style={{ fontSize: 16, fontWeight: 900, color: "#ffffff", flexShrink: 0, letterSpacing: "-0.3px" }}>Global Connect</span>
@@ -1091,7 +1091,7 @@ match /{document=**} {
               <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#6b7280", fontSize: 16, fontWeight: 700, cursor: "pointer", padding: "0 4px", flexShrink: 0 }}>✕</button>
             </div>
           )}
-          <header style={{ padding: "13px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, background: "#002c5f" }}>
+          <header className="pwa-header" style={{ padding: "13px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, background: "#002c5f" }}>
             <div>
               <div style={{ fontSize: 16, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.3px" }}>Global Connect</div>
               <div style={{ fontSize: 8, color: "rgba(255,255,255,0.55)", letterSpacing: "0.12em" }}>HMG 주재원 네트워크</div>
@@ -1348,7 +1348,7 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "#f5f6f8", position: "relative", overflow: "hidden" }}>
       {/* 상단 네이비 헤더 배너 */}
-      <div style={{ background: "#002c5f", padding: "36px 32px 24px", position: "relative", overflow: "hidden" }}>
+      <div className="pwa-header" style={{ background: "#002c5f", padding: "36px 32px 24px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.04)", pointerEvents: "none" }} />
         <div style={{ position: "absolute", bottom: -10, left: -10, width: 80, height: 80, borderRadius: "50%", background: "rgba(0,170,210,0.1)", pointerEvents: "none" }} />
         <div style={{ position: "relative" }}>
