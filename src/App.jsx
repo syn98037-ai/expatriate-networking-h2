@@ -1358,7 +1358,7 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
           <>
             <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>사용할 아이디와 비밀번호를 설정해주세요.</p>
             <div><label style={lbl}>아이디</label><input style={inp} placeholder="영문, 숫자 조합 (예: gildong83)" value={uname} onChange={e => setUname(e.target.value)} /></div>
-            <div><label style={lbl}>비밀번호</label><input type="password" style={inp} placeholder="4자 이상" value={pw} onChange={e => setPw(e.target.value)} /></div>
+            <div><label style={lbl}>비밀번호</label><input type="password" style={inp} placeholder="6자 이상" value={pw} onChange={e => setPw(e.target.value)} /></div>
             <div><label style={lbl}>비밀번호 확인</label><input type="password" style={inp} placeholder="비밀번호를 다시 입력하세요" value={pw2} onChange={e => setPw2(e.target.value)} onKeyDown={e => e.key === "Enter" && doNext()} /></div>
             {errMsg && <p style={{ color: "#c0392b", fontSize: 12, fontWeight: 700, margin: 0, textAlign: "center" }}>{errMsg}</p>}
             <button onClick={doNext} style={{ ...S.btnAmber, width: "100%", padding: 16, fontSize: 15, borderRadius: 18 }}>다음 → 프로필 입력</button>
@@ -1448,15 +1448,6 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
 
         <div style={{ borderTop: "1px solid #e0e3e8", paddingTop: 16, textAlign: "center" }}>
           <button onClick={onAdmin} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 11, letterSpacing: "0.08em" }}>관리자 로그인</button>
-        </div>
-        <div style={{ textAlign: "center", paddingBottom: 12, paddingTop: 8 }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <div style={{ width: 20, height: 14, border: "1.5px solid #c4c9d0", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 900, color: "#c4c9d0" }}>H</div>
-              <span style={{ fontSize: 8, fontWeight: 700, color: "#c4c9d0", letterSpacing: "0.1em" }}>HYUNDAI MOTOR GROUP</span>
-            </div>
-            <span style={{ fontSize: 8, color: "#c4c9d0", letterSpacing: "0.05em" }}>현대자동차그룹</span>
-          </div>
         </div>
       </div>
     </div>
