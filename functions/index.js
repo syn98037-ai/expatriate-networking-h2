@@ -5,14 +5,12 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
-// ── notifications 컬렉션에 문서가 생성될 때 FCM 푸시 발송 ──
 exports.sendPushNotification = onDocumentCreated(
   "notifications/{notifId}",
   async (event) => {
     const data = event.data?.data();
     if (!data || !data.toId) return null;
 
-    // 수신자의 FCM 토큰 조회
     const profileSnap = await db.collection("profiles").doc(data.toId).get();
     if (!profileSnap.exists) return null;
 
@@ -20,7 +18,6 @@ exports.sendPushNotification = onDocumentCreated(
     const tokens  = (profile.fcmTokens || []).filter(t => t && t.length > 0);
     if (tokens.length === 0) return null;
 
-    // 알림 내용 구성
     let title = "Global Connect";
     let body  = "";
 
@@ -39,14 +36,19 @@ exports.sendPushNotification = onDocumentCreated(
       body  = `${data.fromName} 님이 티미팅을 수락했습니다!`;
     }
 
+    // ✅ notification 필드 제거 → data 필드만 사용
+    // notification 필드가 있으면 FCM이 자동으로 시스템 알림 표시 → 중복 발생
+    // data 필드만 보내면 Service Worker에서 직접 showNotification 호출
     const message = {
-      notification: { title, body },
+      data: {
+        title,
+        body,
+        type: data.type || "",
+        roomId: data.roomId || "",
+        link: "https://expatriate-networking-app.vercel.app",
+      },
       webpush: {
-        notification: {
-          title,
-          body,
-          icon: "/logo192.png",
-        },
+        headers: { Urgency: "high" },
         fcm_options: {
           link: "https://expatriate-networking-app.vercel.app",
         },
@@ -58,7 +60,6 @@ exports.sendPushNotification = onDocumentCreated(
       const response = await admin.messaging().sendEachForMulticast(message);
       console.log(`푸시 발송: ${response.successCount}건 성공, ${response.failureCount}건 실패`);
 
-      // 실패한 토큰 제거
       const failedTokens = [];
       response.responses.forEach((resp, idx) => {
         if (!resp.success) {
