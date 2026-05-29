@@ -1053,11 +1053,11 @@ match /{document=**} {
         <>
           {/* 알림 허용 배너 */}
           {showNotisBanner && (
-            <div style={{ background: "#f3f4f6", borderBottom: "1px solid #d1d5db", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-              <span style={{ fontSize: 18 }}>🔔</span>
-              <p style={{ fontSize: 12, color: "#c5d5e8", margin: 0, flex: 1, lineHeight: 1.4 }}>티미팅·채팅 알림을 받으시겠습니까?</p>
+            <div style={{ background: "#f3f4f6", borderBottom: "1px solid #e5e7eb", padding: "10px 16px", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+              <span style={{ fontSize: 16 }}>🔔</span>
               <p style={{ fontSize: 12, color: "#374151", margin: 0, flex: 1, lineHeight: 1.4 }}>티미팅·채팅 알림을 받으시겠습니까?</p>
-              <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#6b7280", fontSize: 16, cursor: "pointer", padding: "0 4px" }}>✕</button>
+              <button onClick={requestNotifPermission} style={{ background: "#002c5f", border: "none", color: "#ffffff", fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: "Pretendard,sans-serif", whiteSpace: "nowrap", flexShrink: 0 }}>허용</button>
+              <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#6b7280", fontSize: 16, fontWeight: 700, cursor: "pointer", padding: "0 4px", flexShrink: 0 }}>✕</button>
             </div>
           )}
           <header style={{ padding: "13px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, background: "#002c5f" }}>
