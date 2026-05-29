@@ -586,12 +586,12 @@ export default function App() {
 
   // ── 티미팅 신청 ──────────────────────────────────────
   const sendReq = async (target, message = "") => {
-    // 내가 이미 신청 보낸 경우
-    if (meetings.find(m => m.fromId === uid && m.toId === target.id && m.status === "대기중"))
-      return alert("이미 신청을 보냈습니다.");
-    // 상대방이 나에게 이미 신청한 경우
-    if (meetings.find(m => m.fromId === target.id && m.toId === uid && (m.status === "대기중" || m.status === "수락함")))
-      return alert("이미 상대방으로부터 티미팅 신청을 받았습니다.");
+    // 내가 이미 신청 보낸 경우 (상태 무관)
+    if (meetings.find(m => m.fromId === uid && m.toId === target.id))
+      return alert("이미 티미팅 신청을 보낸 분입니다.");
+    // 상대방이 나에게 이미 신청한 경우 (상태 무관)
+    if (meetings.find(m => m.fromId === target.id && m.toId === uid))
+      return alert("이미 상대방으로부터 티미팅 신청을 받은 분입니다.");
     await addDoc(col("meetings"), {
       fromId: uid, fromName: myProfile.name, fromOrg: myProfile.org || "",
       toId: target.id, toName: target.name, toOrg: target.org || "",
@@ -1295,6 +1295,7 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
     if (!prof.name.trim())    return setErrMsg("이름을 입력해주세요.");
     if (!prof.country.trim()) return setErrMsg("부임 국가를 입력해주세요.");
     if (!prof.city.trim())    return setErrMsg("부임 도시를 입력해주세요.");
+    if (!privacyAgreed)       return setErrMsg("개인정보 수집·이용에 동의해주세요.");
     setLoading(true);
     const err = await onRegister(uname.trim(), pw, prof);
     if (err) setErrMsg(err);
@@ -1409,6 +1410,34 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
             </div>
             <div><label style={lbl}>관심사</label><input style={inp} placeholder="예: 골프, 테니스, 맛집 탐방" value={prof.interest} onChange={e => setProf(f => ({ ...f, interest: e.target.value }))} /></div>
             {errMsg && <p style={{ color: "#c0392b", fontSize: 12, fontWeight: 700, margin: 0, textAlign: "center" }}>{errMsg}</p>}
+            {/* 개인정보 수집 동의 */}
+            <div style={{ background: "#f5f6f8", border: "1.5px solid #e0e3e8", borderRadius: 14, padding: 16 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10 }}>
+                <div onClick={() => setPrivacyAgreed(v => !v)}
+                  style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${privacyAgreed ? "#002c5f" : "#d1d5db"}`, background: privacyAgreed ? "#002c5f" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, marginTop: 2 }}>
+                  {privacyAgreed && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#002c5f", margin: "0 0 4px" }}>
+                    개인정보 수집·이용 동의 <span style={{ color: "#c0392b" }}>(필수)</span>
+                  </p>
+                  <button onClick={() => setShowPrivacy(v => !v)} style={{ background: "none", border: "none", color: "#002c5f", fontSize: 11, cursor: "pointer", padding: 0, fontFamily: "Pretendard,sans-serif", fontWeight: 600 }}>
+                    {showPrivacy ? "▲ 내용 접기" : "▼ 전문 보기"}
+                  </button>
+                </div>
+              </div>
+              {showPrivacy && (
+                <div style={{ background: "#fff", border: "1px solid #e0e3e8", borderRadius: 10, padding: 14, fontSize: 11, color: "#374151", lineHeight: 1.8, maxHeight: 200, overflowY: "auto" }}>
+                  <p style={{ fontWeight: 700, color: "#002c5f", marginBottom: 8 }}>개인정보 수집·이용 동의서</p>
+                  <p style={{ marginBottom: 6 }}><strong>수집 목적:</strong> 현대자동차그룹 주재원 부임전 정규교육 네트워킹 프로그램 운영</p>
+                  <p style={{ marginBottom: 6 }}><strong>수집 항목:</strong> 성명, 소속 계열사, 부임 국가·도시, 고민사항, 관심사, 프로필 사진</p>
+                  <p style={{ marginBottom: 6 }}><strong>이용 목적:</strong> 동료 주재원 매칭 및 네트워킹, 교육 과정 내 커뮤니티 활동</p>
+                  <p style={{ marginBottom: 6 }}><strong>보유 및 이용 기간:</strong> 교육 과정 종료 시점까지 보유하며, <strong style={{ color: "#c0392b" }}>교육 과정이 종료되는 시점에 수집된 모든 개인정보는 즉시 파기</strong>됩니다.</p>
+                  <p style={{ marginBottom: 6 }}><strong>제3자 제공:</strong> 동의 없이 제3자에게 제공하지 않습니다.</p>
+                  <p style={{ marginBottom: 0, color: "#6b7280" }}>위 사항에 동의하지 않을 경우 서비스 이용이 제한될 수 있습니다.</p>
+                </div>
+              )}
+            </div>
             <button onClick={doRegister} disabled={loading} style={{ ...S.btnAmber, width: "100%", padding: 16, fontSize: 15, borderRadius: 18, opacity: loading ? 0.6 : 1 }}>
               {loading ? "가입 중..." : "가입 완료 및 시작하기"}
             </button>
@@ -1568,7 +1597,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
               onClearChats();
             }
           }}
-          style={{ width: "100%", padding: "10px", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.25)", color: "#00aad2", fontSize: 12, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", marginBottom: 8 }}
+          style={{ width: "100%", padding: "10px", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.25)", color: "#002c5f", fontSize: 12, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", marginBottom: 8 }}
         >
           💬 채팅 기록 초기화
         </button>
@@ -2455,9 +2484,9 @@ const SCHEDULE_DATA = [
     sessions: [
       { time: "09:30 – 10:30", title: "HR 리더특강",            venue: "1F 대강당",          instructor: "글로벌HR실",             color: "#002c5f" },
       { time: "10:30 – 14:00", title: "주재원 역할 및 행동 이해", venue: "1F 대강당",          instructor: "KOTRA아카데미",           color: "#002c5f" },
-      { time: "14:00 – 15:30", title: "부임 국가의 이해",         venue: "분반 강의장",        instructor: "KOTRA아카데미",           color: "#00aad2" },
-      { time: "15:30 – 16:30", title: "안전 문화 교육",           venue: "1F 대강당",          instructor: "안전기획실",              color: "#00aad2" },
-      { time: "16:30 – 17:30", title: "보안 교육",               venue: "1F 대강당",          instructor: "그룹보안기획팀",          color: "#00aad2" },
+      { time: "14:00 – 15:30", title: "부임 국가의 이해",         venue: "분반 강의장",        instructor: "KOTRA아카데미",           color: "#002c5f" },
+      { time: "15:30 – 16:30", title: "안전 문화 교육",           venue: "1F 대강당",          instructor: "안전기획실",              color: "#002c5f" },
+      { time: "16:30 – 17:30", title: "보안 교육",               venue: "1F 대강당",          instructor: "그룹보안기획팀",          color: "#002c5f" },
     ],
   },
   {
@@ -2465,14 +2494,14 @@ const SCHEDULE_DATA = [
     sessions: [
       { time: "08:00 – 11:00", title: "윤리경영 (Do-Better)",    venue: "1F 대강당",          instructor: "티움컨설팅 / 감사기획팀", color: "#002c5f" },
       { time: "11:00 – 12:00", title: "준법 교육",               venue: "1F 대강당",          instructor: "준법지원1팀",             color: "#002c5f" },
-      { time: "13:00 – 17:00", title: "역할 전환 워크숍",          venue: "분반 강의장",        instructor: "선배주재원",              color: "#00aad2" },
+      { time: "13:00 – 17:00", title: "역할 전환 워크숍",          venue: "분반 강의장",        instructor: "선배주재원",              color: "#002c5f" },
     ],
   },
   {
     day: "Day 3",
     sessions: [
       { time: "08:00 – 12:00", title: "글로벌 비즈니스 매너",     venue: "1F 대강당 / 비젼홀", instructor: "코멘트",                  color: "#002c5f" },
-      { time: "13:00 – 16:00", title: "선배주재원 간담회",         venue: "분반 강의장",        instructor: "선배주재원",              color: "#00aad2" },
+      { time: "13:00 – 16:00", title: "선배주재원 간담회",         venue: "분반 강의장",        instructor: "선배주재원",              color: "#002c5f" },
     ],
   },
 ];
