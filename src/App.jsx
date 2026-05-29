@@ -210,17 +210,19 @@ export default function App() {
           try {
             if (typeof Notification !== "undefined") {
               if (Notification.permission === "granted") {
-                // 이미 허용 - 바로 토큰 저장 (배너 불필요)
+                // 이미 허용 - 바로 토큰 저장
                 saveFcmToken(user.uid);
-              } else if (Notification.permission === "default") {
-                // 아직 결정 안 함 - 배너 표시
+              } else {
+                // default 또는 기타 → 배너 표시 (denied 포함, iOS 크롬은 항상 배너)
                 setShowNotisBanner(true);
               }
-              // denied면 배너/토큰 모두 스킵
+            } else {
+              // Notification API 없어도 배너 표시 (iOS 크롬 등)
+              setShowNotisBanner(true);
             }
-            // Notification 미지원이면 스킵 (푸시 불가 환경)
           } catch(e) {
-            console.warn("Notification 체크 실패:", e.message);
+            // 오류 발생해도 배너 표시
+            setShowNotisBanner(true);
           }
         } else {
           setAuthStatus("needProfile");
@@ -1857,6 +1859,7 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
   const [input,     setInput]     = useState("");
   const [showPanel, setShowPanel] = useState(null); // null | "members" | "invite"
   const [invitees,  setInvitees]  = useState([]);
+  const bottomRef = useRef(null);
   const isGroup = roomId.startsWith("city_") || roomId === "global" || roomId.startsWith("room");
   const currentRoom = rooms?.find(r => r.id === roomId);
   const memberProfiles = (currentRoom?.members || []).map(mid => profiles.find(p => p.id === mid)).filter(Boolean);
@@ -1864,8 +1867,17 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
 
   useEffect(() => {
     const q = query(collection(db, "chats", roomId, "messages"), orderBy("createdAt"));
-    return onSnapshot(q, snap => setMsgs(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+    return onSnapshot(q, snap => {
+      setMsgs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      // 새 메시지 오면 맨 아래로 스크롤
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    });
   }, [roomId]);
+
+  // msgs 변경될 때마다 맨 아래로 스크롤
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [msgs]);
 
   const send = () => { if (!input.trim()) return; onSend(roomId, input.trim()); setInput(""); };
 
@@ -1924,7 +1936,7 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
           )}
         </div>
       )}
-      <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }} id="chat-scroll-area">
         {msgs.length === 0 && <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#6b7280", fontSize: 13, fontStyle: "italic" }}>첫 메시지를 보내보세요 👋</div>}
         {msgs.map((m, i) => {
           const mine   = m.senderId === uid;
@@ -1942,6 +1954,7 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
             </div>
           );
         })}
+        <div ref={bottomRef} style={{ height: 1 }} />
       </div>
       <div style={S.overlayFooter}>
         <input style={{ ...S.inp, flex: 1 }} placeholder="메시지를 입력하세요..." value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} />
