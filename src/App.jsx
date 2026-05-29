@@ -487,17 +487,21 @@ export default function App() {
           }, { merge: true });
         } catch(e) { console.warn("dmRooms write err:", e); }
 
-        // 상대방에게 채팅 알림 전송
+        // 상대방에게 채팅 알림 전송 (상대방이 같은 채팅방에 있으면 스킵)
         try {
-          await addDoc(col("notifications"), {
-            toId: otherId,
-            type: "chat",
-            fromName: myProfile?.name || "알 수 없음",
-            roomId,
-            preview: text.length > 30 ? text.slice(0, 30) + "..." : text,
-            read: false,
-            createdAt: now,
-          });
+          const otherProfile = await getDoc(docR("profiles", otherId));
+          const otherActiveRoom = otherProfile.data()?.activeRoomId;
+          if (otherActiveRoom !== roomId) {
+            await addDoc(col("notifications"), {
+              toId: otherId,
+              type: "chat",
+              fromName: myProfile?.name || "알 수 없음",
+              roomId,
+              preview: text.length > 30 ? text.slice(0, 30) + "..." : text,
+              read: false,
+              createdAt: now,
+            });
+          }
         } catch(e) {}
       }
     }
@@ -820,7 +824,13 @@ match /{document=**} {
   };
 
   const roomFor   = (otherId) => [uid, otherId].sort().join("_");
-  const openChat  = (roomId, name) => openOverlay({ type: "chat", data: { roomId, name } });
+  const openChat  = async (roomId, name) => {
+    openOverlay({ type: "chat", data: { roomId, name } });
+    // 현재 열린 채팅방 ID를 Firestore에 저장 (알림 중복 방지용)
+    if (uid) {
+      try { await updateDoc(docR("profiles", uid), { activeRoomId: roomId }); } catch(e) {}
+    }
+  };
 
   const myMissions = missions[uid] || {};
   const sentCount  = meetings.filter(m => m.fromId === uid && m.status === "수락함").length;
@@ -1097,7 +1107,7 @@ match /{document=**} {
       {overlay?.type === "profile"     && <div style={S.overlay}><ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} /></div>}
       {overlay?.type === "adminAuth"   && <div style={S.overlay}><AdminAuth onSuccess={() => { setIsAdmin(true); openOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} /></div>}
       {overlay?.type === "admin"       && <div style={S.overlay}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} /></div>}
-      {overlay?.type === "chat"        && <div style={S.overlay}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div>}
+      {overlay?.type === "chat"        && <div style={S.overlay}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={async () => { setOverlay(null); if (uid) { try { await updateDoc(docR("profiles", uid), { activeRoomId: null }); } catch(e) {} } }} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div>}
       {overlay?.type === "post"        && <div style={S.overlay}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div>}
       {overlay?.type === "newPost"     && <div style={S.overlay}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
       {overlay?.type === "profileView" && <div style={S.overlay}><ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type: "sendReq", data: overlay.data })} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} /></div>}
