@@ -185,10 +185,28 @@ export default function App() {
   const requestNotifPermission = async () => {
     setShowNotisBanner(false);
     try {
-      if (typeof Notification === "undefined") {
-        alert("이 브라우저는 알림을 지원하지 않습니다.\n크롬 브라우저를 사용해주세요.");
+      const ua = navigator.userAgent || "";
+      const isIOS = /iPad|iPhone|iPod/.test(ua);
+      const isChromeOnIOS = isIOS && /CriOS/.test(ua);
+      const isSafariOnIOS = isIOS && !isChromeOnIOS;
+
+      // iOS 크롬: 웹 푸시 미지원
+      if (isChromeOnIOS) {
+        alert("iOS 크롬은 웹 푸시 알림을 지원하지 않아요.\n\nSafari로 접속 후\n하단 공유 버튼 → 홈 화면에 추가\n하시면 푸시 알림을 받을 수 있어요.");
         return;
       }
+
+      // iOS Safari 일반 브라우저: 홈 화면 추가 필요
+      if (isSafariOnIOS && typeof Notification === "undefined") {
+        alert("아이폰에서 알림을 받으려면 홈 화면에 앱을 추가해야 해요.\n\n① 하단 공유 버튼(□↑) 탭\n② '홈 화면에 추가' 선택\n③ 홈 화면 아이콘으로 앱 실행\n④ 로그인 후 알림 허용");
+        return;
+      }
+
+      if (typeof Notification === "undefined") {
+        alert("이 브라우저는 알림을 지원하지 않습니다.\nChrome 또는 Safari(홈 화면 추가) 브라우저를 사용해 주세요.");
+        return;
+      }
+
       const permission = await Notification.requestPermission();
       if (permission === "granted" && uid) {
         await saveFcmToken(uid);
@@ -197,6 +215,7 @@ export default function App() {
       console.warn("알림 권한 요청 실패:", e.message);
     }
   };
+
 
   // ── Firebase Auth 상태 감지 ──────────────────────────
   useEffect(() => {
