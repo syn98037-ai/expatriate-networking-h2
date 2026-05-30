@@ -566,9 +566,24 @@ export default function App() {
           const otherProfile = await getDoc(docR("profiles", otherId));
           const otherActiveRoom = otherProfile.data()?.activeRoomId;
           if (otherActiveRoom !== roomId) {
-            console.log(`채팅 알림 발송: ${otherId} (activeRoom: ${otherActiveRoom}, roomId: ${roomId})`);
-            // setDoc으로 덮어쓰기 + updatedAt 갱신으로 onSnapshot 트리거 보장
-            await setDoc(docR("notifications", `chat_${roomId}_${otherId}`), {
+            // 같은 채팅방의 기존 안읽은 알림 삭제 후 새로 추가
+            // → addDoc으로 새 문서 생성해야 Cloud Functions onCreate 트리거됨
+            try {
+              const existingQ = await getDocs(
+                query(col("notifications"),
+                  where("toId","==",otherId),
+                  where("type","==","chat"),
+                  where("roomId","==",roomId),
+                  where("read","==",false)
+                )
+              );
+              // 기존 안읽은 채팅 알림 삭제
+              for (const d of existingQ.docs) {
+                await deleteDoc(d.ref);
+              }
+            } catch(e) {}
+            // 새 알림 문서 생성 (Cloud Functions FCM 트리거)
+            await addDoc(col("notifications"), {
               toId: otherId,
               type: "chat",
               fromName: myProfile?.name || "알 수 없음",
@@ -576,7 +591,6 @@ export default function App() {
               preview: text.length > 30 ? text.slice(0, 30) + "..." : text,
               read: false,
               createdAt: now,
-              updatedAt: now,
             });
           }
         } catch(e) {}
@@ -1088,7 +1102,7 @@ match /{document=**} {
         {overlay?.type === "chat"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:480,height:"75vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div></div>}
         {overlay?.type === "post"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"80vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div></div>}
         {overlay?.type === "newPost"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div></div>}
-        {overlay?.type === "profileView" && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,height:"70vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type:"sendReq", data:overlay.data })} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} /></div></div>}
+        {overlay?.type === "profileView" && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,height:"70vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type:"sendReq", data:overlay.data })} onChat={async () => { const id = overlay.data.id; const name = overlay.data.name; setOverlay(null); await openChat(roomFor(id), name); }} /></div></div>}
         {overlay?.type === "sendReq"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:150 }}><SendReqModal target={overlay.data} onSend={(msg) => { sendReq(overlay.data, msg); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
 
         {/* PC 알림 패널 - 오른쪽 슬라이드 */}
@@ -1180,7 +1194,7 @@ match /{document=**} {
       {overlay?.type === "chat"        && <div style={S.overlay}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={async () => { setOverlay(null); if (uid) { try { await updateDoc(docR("profiles", uid), { activeRoomId: null }); } catch(e) {} } }} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div>}
       {overlay?.type === "post"        && <div style={S.overlay}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div>}
       {overlay?.type === "newPost"     && <div style={S.overlay}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
-      {overlay?.type === "profileView" && <div style={S.overlay}><ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type: "sendReq", data: overlay.data })} onChat={() => { openChat(roomFor(overlay.data.id), overlay.data.name); setOverlay(null); }} /></div>}
+      {overlay?.type === "profileView" && <div style={S.overlay}><ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type: "sendReq", data: overlay.data })} onChat={async () => { const id = overlay.data.id; const name = overlay.data.name; setOverlay(null); await openChat(roomFor(id), name); }} /></div>}
       {overlay?.type === "sendReq"     && <div style={S.overlay}><SendReqModal target={overlay.data} onSend={(msg) => { sendReq(overlay.data, msg); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
 
       {/* 알림 패널 - 모바일: 절대 위치 오버레이 */}
