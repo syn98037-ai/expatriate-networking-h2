@@ -253,7 +253,6 @@ export default function App() {
         if (snap.exists()) {
           setMyProfile({ id: user.uid, ...snap.data() });
           setAuthStatus("auth");
-          // 알림 권한 확인
           try {
             if (typeof Notification !== "undefined") {
               if (Notification.permission === "granted") {
@@ -267,15 +266,7 @@ export default function App() {
           } catch(e) {
             setShowNotisBanner(true);
           }
-          // PWA 포그라운드 복귀 시 FCM 토큰 재확인 (홈화면 앱 재실행 대응)
-          // PWA 포그라운드 복귀 시 FCM 토큰 재확인
-          const handleVisibility = () => {
-            if (document.visibilityState === "visible" && Notification?.permission === "granted") {
-              saveFcmToken(user.uid);
-            }
-          };
-          document.addEventListener("visibilitychange", handleVisibility);
-          // cleanup은 useEffect return에서 처리
+        } else {
           setAuthStatus("needProfile");
           setMyProfile({ id: user.uid });
         }
@@ -286,6 +277,7 @@ export default function App() {
     });
     return () => unsub();
   }, []);
+
 
   // ── 앱 포그라운드 메시지 수신 (앱 열려있을 때) ─────
   useEffect(() => {
