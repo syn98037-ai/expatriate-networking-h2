@@ -268,14 +268,14 @@ export default function App() {
             setShowNotisBanner(true);
           }
           // PWA 포그라운드 복귀 시 FCM 토큰 재확인 (홈화면 앱 재실행 대응)
+          // PWA 포그라운드 복귀 시 FCM 토큰 재확인
           const handleVisibility = () => {
             if (document.visibilityState === "visible" && Notification?.permission === "granted") {
               saveFcmToken(user.uid);
             }
           };
           document.addEventListener("visibilitychange", handleVisibility);
-          return () => document.removeEventListener("visibilitychange", handleVisibility);
-        } else {
+          // cleanup은 useEffect return에서 처리
           setAuthStatus("needProfile");
           setMyProfile({ id: user.uid });
         }
