@@ -317,68 +317,7 @@ export default function App() {
         });
       }),
       onSnapshot(query(col("meetings")), s => {
-        const newMeetings = s.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        // 첫 로드 시엔 알림 생성 건너뜀 (기존 데이터를 새 알림으로 오인 방지)
-        if (!meetingsLoadedRef.current) {
-          meetingsLoadedRef.current = true;
-          prevMeetingsRef.current = newMeetings;
-          setMeetings(newMeetings);
-          return;
-        }
-
-        const prev = prevMeetingsRef.current;
-
-        if (uid) { // uid가 있을 때만 알림 처리
-          newMeetings.forEach(async nm => {
-            const old = prev.find(p => p.id === nm.id);
-
-            // 티미팅 신청 알림
-            // addDoc으로 새 문서 생성해야 Cloud Functions onCreate 트리거 → FCM 발송
-            // 중복 방지: 이미 알림이 있는지 먼저 확인
-            if (!old && nm.toId === uid) {
-              try {
-                const existing = await getDocs(
-                  query(col("notifications"),
-                    where("meetingId","==",nm.id),
-                    where("type","==","received")
-                  )
-                );
-                if (existing.empty) {
-                  await addDoc(col("notifications"), {
-                    toId: nm.toId, type: "received",
-                    fromName: nm.fromName, fromOrg: nm.fromOrg || "",
-                    message: nm.message || "", meetingId: nm.id,
-                    read: false, createdAt: new Date().toISOString(),
-                  });
-                }
-              } catch(e) {}
-            }
-
-            // 수락 알림
-            if (old && old.status !== "수락함" && nm.status === "수락함" && nm.fromId === uid) {
-              try {
-                const existing = await getDocs(
-                  query(col("notifications"),
-                    where("meetingId","==",nm.id),
-                    where("type","==","accepted")
-                  )
-                );
-                if (existing.empty) {
-                  await addDoc(col("notifications"), {
-                    toId: nm.fromId, type: "accepted",
-                    fromName: nm.toName, fromOrg: nm.toOrg || "",
-                    meetingId: nm.id,
-                    read: false, createdAt: new Date().toISOString(),
-                  });
-                }
-              } catch(e) {}
-            }
-          });
-        }
-
-        prevMeetingsRef.current = newMeetings;
-        setMeetings(newMeetings);
+        setMeetings(s.docs.map(d => ({ id: d.id, ...d.data() })));
       }),
       onSnapshot(query(col("posts"), orderBy("createdAt", "desc")), s => setPosts(s.docs.map(d => ({ id: d.id, ...d.data() })))),
       // 게시글 공지: 1건짜리 공지 문서 구독 (최근 20개)
@@ -692,24 +631,58 @@ export default function App() {
 
   // ── 티미팅 신청 ──────────────────────────────────────
   const sendReq = async (target, message = "") => {
-    // 내가 이미 신청 보낸 경우 (상태 무관)
+    // 중복 신청 방지
     if (meetings.find(m => m.fromId === uid && m.toId === target.id))
       return alert("이미 티미팅 신청을 보낸 분입니다.");
-    // 상대방이 나에게 이미 신청한 경우 (상태 무관)
     if (meetings.find(m => m.fromId === target.id && m.toId === uid))
       return alert("이미 상대방으로부터 티미팅 신청을 받은 분입니다.");
-    await addDoc(col("meetings"), {
+
+    // meetings 문서 생성
+    const mtgRef = await addDoc(col("meetings"), {
       fromId: uid, fromName: myProfile.name, fromOrg: myProfile.org || "",
       toId: target.id, toName: target.name, toOrg: target.org || "",
       message: message.trim(),
       status: "대기중", timestamp: new Date().toISOString(),
     });
+
+    // 상대방에게 알림 직접 생성 (상대방 앱 상태와 무관하게 작동)
+    try {
+      await addDoc(col("notifications"), {
+        toId: target.id,
+        type: "received",
+        fromName: myProfile.name,
+        fromOrg: myProfile.org || "",
+        message: message.trim(),
+        meetingId: mtgRef.id,
+        read: false,
+        createdAt: new Date().toISOString(),
+      });
+    } catch(e) { console.error("티미팅 신청 알림 오류:", e); }
+
     setView("meetings");
   };
 
   // ── 티미팅 상태 변경 ─────────────────────────────────
   const updateMtg = async (id, status) => {
     await updateDoc(docR("meetings", id), { status });
+
+    // 수락 시 신청자에게 알림 직접 생성
+    if (status === "수락함") {
+      try {
+        const mtg = meetings.find(m => m.id === id);
+        if (mtg) {
+          await addDoc(col("notifications"), {
+            toId: mtg.fromId,
+            type: "accepted",
+            fromName: myProfile?.name || "",
+            fromOrg: myProfile?.org || "",
+            meetingId: id,
+            read: false,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      } catch(e) { console.error("티미팅 수락 알림 오류:", e); }
+    }
   };
 
   // ── 일정 추가 ────────────────────────────────────────
