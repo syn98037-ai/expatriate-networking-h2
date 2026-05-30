@@ -898,10 +898,10 @@ match /{document=**} {
 
   const renderMain = () => {
     switch (view) {
-      case "dashboard":  return <Dashboard profiles={mergedProfiles} myProfile={mergedProfiles.find(p => p.id === uid) || myProfile} uid={uid} onRequest={p => openOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} />;
+      case "dashboard":  return <Dashboard profiles={mergedProfiles} myProfile={mergedProfiles.find(p => p.id === uid) || myProfile} uid={uid} onRequest={p => openOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} onViewProfile={p => openOverlay({ type: "profileView", data: p })} />;
       case "directory":  return <Directory profiles={mergedProfiles} uid={uid} onRequest={p => openOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} onViewProfile={p => openOverlay({ type: "profileView", data: p })} />;
       case "board":      return <BoardView posts={posts} profiles={mergedProfiles} uid={uid} onOpenPost={p => openOverlay({ type: "post", data: p })} onNewPost={() => openOverlay({ type: "newPost" })} />;
-      case "meetings":   return <Meetings meetings={meetings} profiles={mergedProfiles} rooms={rooms} dmRooms={dmRooms} uid={uid} onUpdate={updateMtg} onChat={m => { const oid = m.fromId === uid ? m.toId : m.fromId; openChat(roomFor(oid), m.fromId === uid ? m.toName : m.fromName); }} onOpenChat={(id,name) => openChat(id,name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} />;
+      case "meetings":   return <Meetings meetings={meetings} profiles={mergedProfiles} rooms={rooms} dmRooms={dmRooms} uid={uid} onUpdate={updateMtg} onChat={m => { const oid = m.fromId === uid ? m.toId : m.fromId; openChat(roomFor(oid), m.fromId === uid ? m.toName : m.fromName); }} onOpenChat={(id,name) => openChat(id,name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} onViewProfile={p => openOverlay({ type: "profileView", data: p })} />;
       case "missions":   return <MissionView myMissions={myMissions} sentCount={sentCount} uid={uid} onUpdate={updateMission} />;
 
       case "schedule":   return <ScheduleView />;
@@ -1801,7 +1801,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
 //   데이터 접근만 Firebase 기반으로 동작)
 // ══════════════════════════════════════════════════════════
 
-function Dashboard({ profiles, myProfile, uid, onRequest, onChat }) {
+function Dashboard({ profiles, myProfile, uid, onRequest, onChat, onViewProfile }) {
   if (!myProfile) return null;
   const others      = profiles.filter(p => p.id !== uid);
   const sameCity    = others.filter(p => p.city    === myProfile.city);
@@ -1834,7 +1834,7 @@ function Dashboard({ profiles, myProfile, uid, onRequest, onChat }) {
           <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 12 }}>
             {list.length > 0 ? list.map(p => (
               <div key={p.id} style={{ minWidth: 164, maxWidth: 164, ...S.card, borderRadius: 22, display: "flex", flexDirection: "column", gap: 10 }}>
-                <Avatar profile={p} size={50} />
+                <div style={{ cursor: "pointer" }} onClick={() => onViewProfile?.(p)}><Avatar profile={p} size={50} /></div>
                 <div><p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p><p style={{ fontSize: 10, color: "#6b7280", margin: 0 }}>{p.org}</p></div>
                 <div style={{ fontSize: 9, fontWeight: 700, color: "#002c5f", background: "#f5f6f8", border: "1px solid rgba(245,158,11,0.1)", padding: "5px 8px", borderRadius: 10, textAlign: "center" }}>{p.city} · {p.country}</div>
                 <p style={{ fontSize: 10, color: "#6b7280", background: "rgba(255,255,255,0.8)", padding: "6px 8px", borderRadius: 10, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.concern}</p>
@@ -2019,7 +2019,7 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
   );
 }
 
-function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, onOpenChat, onCreateRoom, onLeaveRoom, onInviteToRoom }) {
+function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, onOpenChat, onCreateRoom, onLeaveRoom, onInviteToRoom, onViewProfile }) {
   const [tab, setTab] = useState("received");
   const received = meetings.filter(m => m.toId   === uid);
   const sent     = meetings.filter(m => m.fromId === uid);
@@ -2040,7 +2040,7 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
           <div key={m.id} style={{ ...S.card, display: "flex", flexDirection: "column", gap: 14, borderRadius: 22 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <Avatar profile={sender} size={44} />
+                <div style={{ cursor: "pointer" }} onClick={() => onViewProfile?.(sender)}><Avatar profile={sender} size={44} /></div>
                 <div><p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0 }}>{m.fromName} <span style={{ fontSize: 11, fontWeight: 400, color: "#6b7280" }}>({m.fromOrg})</span></p><p style={{ fontSize: 10, color: "#6b7280", marginTop: 2 }}>티미팅 신청이 도착했어요</p></div>
               </div>
               <span style={stBadge(m.status)}>{m.status}</span>
@@ -2060,7 +2060,7 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
         const receiver = profiles.find(p => p.id === m.toId) || { name: m.toName, id: m.toId };
         return (
           <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, ...S.card, borderRadius: 16 }}>
-            <Avatar profile={receiver} size={36} />
+            <div style={{ cursor: "pointer" }} onClick={() => onViewProfile?.(receiver)}><Avatar profile={receiver} size={36} /></div>
             <div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0 }}>{m.toName}</p><p style={{ fontSize: 10, color: "#6b7280" }}>{m.toOrg}</p></div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               {m.status === "수락함" && <button onClick={() => onChat(m)} style={{ padding: 6, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 8, cursor: "pointer", fontSize: 14 }}>💬</button>}
@@ -2081,7 +2081,7 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
               const otherName = other?.name || "알 수 없음";
               return (
                 <button key={dm.roomId||dm.id} onClick={() => onOpenChat(dm.roomId||dm.id, otherName)} style={{ display: "flex", alignItems: "center", gap: 14, ...S.card, borderRadius: 18, cursor: "pointer", width: "100%", textAlign: "left" }}>
-                  <Avatar profile={other||{name:otherName,id:dm.otherId}} size={44} />
+                  <div style={{ cursor: "pointer" }} onClick={() => { const op = other||{name:otherName,id:dm.otherId}; onViewProfile?.(op); }}><Avatar profile={other||{name:otherName,id:dm.otherId}} size={44} /></div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 14, fontWeight: 700, color: "#111827", margin: 0 }}>{otherName}</p>
                     <p style={{ fontSize: 11, color: "#6b7280", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dm.lastMsg||""}</p>
