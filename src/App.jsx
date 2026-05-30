@@ -1091,7 +1091,7 @@ match /{document=**} {
               <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#6b7280", fontSize: 16, fontWeight: 700, cursor: "pointer", padding: "0 4px", flexShrink: 0 }}>✕</button>
             </div>
           )}
-          <header className="pwa-header" style={{ padding: "0 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, background: "#002c5f" }}>
+          <header className="pwa-header" style={{ padding: "13px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, background: "#002c5f" }}>
             <div>
               <div style={{ fontSize: 16, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.3px" }}>Global Connect</div>
               <div style={{ fontSize: 8, color: "rgba(255,255,255,0.55)", letterSpacing: "0.12em" }}>HMG 주재원 네트워크</div>
