@@ -311,22 +311,24 @@ export default function App() {
             // 티미팅 신청 → 문서ID를 고정(received_meetingId)해서 중복 원천 차단
             if (!old && nm.toId === uid) {
               try {
+                const now_r = new Date().toISOString();
                 await setDoc(docR("notifications", `received_${nm.id}`), {
                   toId: nm.toId, type: "received",
                   fromName: nm.fromName, fromOrg: nm.fromOrg || "",
                   message: nm.message || "", meetingId: nm.id,
-                  read: false, createdAt: new Date().toISOString(),
+                  read: false, createdAt: now_r, updatedAt: now_r,
                 });
               } catch(e) {}
             }
             // 수락 알림 → 문서ID를 고정(accepted_meetingId)해서 중복 원천 차단
             if (old && old.status !== "수락함" && nm.status === "수락함" && nm.fromId === uid) {
               try {
+                const now_a = new Date().toISOString();
                 await setDoc(docR("notifications", `accepted_${nm.id}`), {
                   toId: nm.fromId, type: "accepted",
                   fromName: nm.toName, fromOrg: nm.toOrg || "",
                   meetingId: nm.id,
-                  read: false, createdAt: new Date().toISOString(),
+                  read: false, createdAt: now_a, updatedAt: now_a,
                 });
               } catch(e) {}
             }
@@ -1519,11 +1521,16 @@ function ProfileForm({ initialData, onSave, onBack, onLogout }) {
       <div style={{ ...S.overlayBody, paddingBottom: 40 }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, marginBottom: 28 }}>
           <div style={{ position: "relative" }}>
-            <div style={{ width: 88, height: 88, borderRadius: 24, overflow: "hidden", border: "2px solid rgba(124,58,237,0.28)", background: "rgba(255,255,255,0.8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {preview ? <img src={preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ color: "rgba(245,158,11,0.4)", fontSize: 36 }}>👤</span>}
+            <div style={{ width: 88, height: 88, borderRadius: 24, overflow: "hidden", border: "2px solid #c5d5e8", background: "#f5f6f8", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {preview ? <img src={preview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ color: "#c5d5e8", fontSize: 36 }}>👤</span>}
             </div>
             <label htmlFor="editPhoto" style={{ position: "absolute", bottom: -6, right: -6, width: 30, height: 30, background: "#002c5f", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 14 }}>📷</label>
             <input ref={fileRef} id="editPhoto" type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhoto} />
+            {/* 사진 삭제 버튼 */}
+            {preview && (
+              <button onClick={() => { setPreview(null); setForm(f => ({ ...f, photoUrl: "" })); }}
+                style={{ position: "absolute", top: -6, right: -6, width: 24, height: 24, background: "#dc2626", border: "none", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", fontSize: 12, fontWeight: 700 }}>✕</button>
+            )}
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
