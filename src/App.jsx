@@ -133,21 +133,6 @@ export default function App() {
     });
   }, []);
 
-  // ── 앱 백그라운드 전환 시 activeRoomId 초기화 ──────
-  // 채팅방 열린 채로 홈화면으로 나가면 activeRoomId가 남아서 알림이 안 오는 문제 방지
-  useEffect(() => {
-    if (!uid) return;
-    const handleVisibility = async () => {
-      if (document.visibilityState === "hidden") {
-        // 앱이 백그라운드로 → activeRoomId 초기화
-        try {
-          await updateDoc(docR("profiles", uid), { activeRoomId: null });
-        } catch(e) {}
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [uid]);
   const [myProfile,  setMyProfile]  = useState(null);
   const [view,       setView]       = useState("dashboard");
   const [overlay,    setOverlay]    = useState(null);
@@ -200,6 +185,21 @@ export default function App() {
   };
 
   const uid = myProfile?.id;
+
+  // ── 앱 백그라운드 전환 시 activeRoomId 초기화 ──────
+  // 채팅방 열린 채로 홈화면으로 나가면 activeRoomId가 남아서 알림이 안 오는 문제 방지
+  useEffect(() => {
+    if (!uid) return;
+    const handleVisibility = async () => {
+      if (document.visibilityState === "hidden") {
+        try {
+          await updateDoc(docR("profiles", uid), { activeRoomId: null });
+        } catch(e) {}
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [uid]);
 
   // ── FCM 토큰 저장 (권한 허용 후 호출) ──────────────
   const saveFcmToken = async (userId) => {
