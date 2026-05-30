@@ -40,3 +40,10 @@ self.addEventListener("notificationclick", event => {
     })
   );
 });
+
+// 새 버전 즉시 활성화 (PWA 자동 업데이트)
+self.addEventListener("message", event => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});

@@ -108,6 +108,34 @@ function NavIcon({ id, active }) {
 // ══════════════════════════════════════════════════════════
 export default function App() {
   const [authStatus, setAuthStatus] = useState("loading"); // loading | unauth | auth
+
+  // ── PWA 자동 업데이트 ──────────────────────────────
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    // Service Worker 업데이트 감지 → 자동 새로고침
+    navigator.serviceWorker.getRegistration().then(reg => {
+      if (!reg) return;
+      // 이미 대기 중인 새 버전이 있으면 즉시 적용
+      if (reg.waiting) {
+        reg.waiting.postMessage({ type: "SKIP_WAITING" });
+        return;
+      }
+      reg.addEventListener("updatefound", () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener("statechange", () => {
+          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            // 새 버전 설치 완료 → 페이지 자동 새로고침
+            newWorker.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
+    });
+    // controllerchange 이벤트: 새 SW가 활성화되면 새로고침
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      window.location.reload();
+    });
+  }, []);
   const [myProfile,  setMyProfile]  = useState(null);
   const [view,       setView]       = useState("dashboard");
   const [overlay,    setOverlay]    = useState(null);
