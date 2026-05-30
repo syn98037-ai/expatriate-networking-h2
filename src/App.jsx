@@ -253,24 +253,28 @@ export default function App() {
         if (snap.exists()) {
           setMyProfile({ id: user.uid, ...snap.data() });
           setAuthStatus("auth");
-          // 알림 권한 확인 - Notification API 지원 체크 후 배너 표시
+          // 알림 권한 확인
           try {
             if (typeof Notification !== "undefined") {
               if (Notification.permission === "granted") {
-                // 이미 허용 - 바로 토큰 저장
                 saveFcmToken(user.uid);
               } else {
-                // default 또는 기타 → 배너 표시 (denied 포함, iOS 크롬은 항상 배너)
                 setShowNotisBanner(true);
               }
             } else {
-              // Notification API 없어도 배너 표시 (iOS 크롬 등)
               setShowNotisBanner(true);
             }
           } catch(e) {
-            // 오류 발생해도 배너 표시
             setShowNotisBanner(true);
           }
+          // PWA 포그라운드 복귀 시 FCM 토큰 재확인 (홈화면 앱 재실행 대응)
+          const handleVisibility = () => {
+            if (document.visibilityState === "visible" && Notification?.permission === "granted") {
+              saveFcmToken(user.uid);
+            }
+          };
+          document.addEventListener("visibilitychange", handleVisibility);
+          return () => document.removeEventListener("visibilitychange", handleVisibility);
         } else {
           setAuthStatus("needProfile");
           setMyProfile({ id: user.uid });
@@ -521,7 +525,11 @@ export default function App() {
     const isDm = roomId !== "global" && !roomId.startsWith("room") && roomId.includes("_");
     if (isDm && uid) {
       // roomId = [uid, otherId].sort().join("_") 형태
-      const otherId = roomId.replace(uid, "").replace(/^_|_$/g, "");
+      // Firebase uid는 _ 미포함이므로 split으로 안전하게 파싱
+      const rParts = roomId.split("_");
+      const otherId = rParts.length === 2
+        ? rParts.find(id => id !== uid) || ""
+        : roomId.replace(uid, "").replace(/^_|_$/g, "");
       if (otherId && otherId !== uid) {
         const now = new Date().toISOString();
         try {
@@ -542,6 +550,7 @@ export default function App() {
           const otherProfile = await getDoc(docR("profiles", otherId));
           const otherActiveRoom = otherProfile.data()?.activeRoomId;
           if (otherActiveRoom !== roomId) {
+            console.log(`채팅 알림 발송: ${otherId} (activeRoom: ${otherActiveRoom}, roomId: ${roomId})`);
             // setDoc으로 덮어쓰기 + updatedAt 갱신으로 onSnapshot 트리거 보장
             await setDoc(docR("notifications", `chat_${roomId}_${otherId}`), {
               toId: otherId,
