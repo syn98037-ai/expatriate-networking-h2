@@ -328,8 +328,24 @@ export default function App() {
           return newProfiles;
         });
       }),
-      onSnapshot(query(col("meetings")), s => {
-        setMeetings(s.docs.map(d => ({ id: d.id, ...d.data() })));
+      // meetings: 본인 관련 것만 구독 (전체 구독 대신 → 트래픽 대폭 절감)
+      onSnapshot(query(col("meetings"), where("fromId", "==", uid)), s => {
+        setMeetings(prev => {
+          const others = prev.filter(m => m.toId === uid); // 받은 것 유지
+          const mine   = s.docs.map(d => ({ id: d.id, ...d.data() }));
+          return [...mine, ...others].filter((m, i, arr) =>
+            arr.findIndex(x => x.id === m.id) === i // 중복 제거
+          );
+        });
+      }),
+      onSnapshot(query(col("meetings"), where("toId", "==", uid)), s => {
+        setMeetings(prev => {
+          const others = prev.filter(m => m.fromId === uid); // 보낸 것 유지
+          const mine   = s.docs.map(d => ({ id: d.id, ...d.data() }));
+          return [...others, ...mine].filter((m, i, arr) =>
+            arr.findIndex(x => x.id === m.id) === i // 중복 제거
+          );
+        });
       }),
       onSnapshot(query(col("posts"), orderBy("createdAt", "desc")), s => setPosts(s.docs.map(d => ({ id: d.id, ...d.data() })))),
       // 게시글 공지: 1건짜리 공지 문서 구독 (최근 20개)
