@@ -48,8 +48,20 @@ exports.sendPushNotification = onDocumentCreated(
         roomId: data.roomId || "",
         link: "https://expatriate-networking-app.vercel.app",
       },
+      // notification 필드: Android Doze/Standby 모드 돌파 + 앱 완전 종료 시 알림
+      notification: {
+        title,
+        body,
+      },
       webpush: {
         headers: { Urgency: "high" },
+        notification: {
+          title,
+          body,
+          icon: "/logo192.png",
+          badge: "/logo192.png",
+          requireInteraction: false,
+        },
         fcm_options: {
           link: "https://expatriate-networking-app.vercel.app",
         },

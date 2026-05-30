@@ -365,22 +365,28 @@ export default function App() {
             .map(d => d.data())
             .sort((a,b) => new Date(b.updatedAt||0) - new Date(a.updatedAt||0)));
         }),
-        onSnapshot(query(col("notifications"), where("toId", "==", uid)), s => {
-          const fsNotifs = s.docs.map(d => ({
-            id: "n_" + d.id, firestoreId: d.id,
-            type: d.data().type,
-            fromName: d.data().fromName || "",
-            fromOrg: d.data().fromOrg || "",
-            message: d.data().message || "",
-            roomId: d.data().roomId || "",
-            preview: d.data().preview || "",
-            tag: d.data().tag || "",
-            meetingId: d.data().meetingId || "",
-            read: d.data().read || false,
-            createdAt: d.data().updatedAt || d.data().createdAt || new Date().toISOString(),
-          })).sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
-          setNotifs(fsNotifs);
-        }),
+        onSnapshot(
+          query(col("notifications"), where("toId", "==", uid)),
+          { includeMetadataChanges: false }, // 캐시 업데이트 무시, 서버 확정 데이터만
+          s => {
+            // 캐시에서 온 데이터는 무시 (갤럭시 PWA 재연결 시 빈 캐시 문제 방지)
+            if (s.metadata.fromCache) return;
+            const fsNotifs = s.docs.map(d => ({
+              id: "n_" + d.id, firestoreId: d.id,
+              type: d.data().type,
+              fromName: d.data().fromName || "",
+              fromOrg: d.data().fromOrg || "",
+              message: d.data().message || "",
+              roomId: d.data().roomId || "",
+              preview: d.data().preview || "",
+              tag: d.data().tag || "",
+              meetingId: d.data().meetingId || "",
+              read: d.data().read || false,
+              createdAt: d.data().updatedAt || d.data().createdAt || new Date().toISOString(),
+            })).sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
+            setNotifs(fsNotifs);
+          }
+        ),
       ] : []),
     ];
   }, [authStatus, isAdmin, uid]);
@@ -522,7 +528,9 @@ export default function App() {
         try {
           const otherProfile = await getDoc(docR("profiles", otherId));
           const otherActiveRoom = otherProfile.data()?.activeRoomId;
-          if (otherActiveRoom !== roomId) {
+          // otherActiveRoom이 정확히 현재 roomId와 같을 때만 스킵
+          // undefined/null/"" 등 모두 "채팅방 안 열려있음"으로 처리
+          if (!otherActiveRoom || otherActiveRoom !== roomId) {
             // 같은 채팅방의 기존 안읽은 알림 삭제 후 새로 추가
             // → addDoc으로 새 문서 생성해야 Cloud Functions onCreate 트리거됨
             try {
