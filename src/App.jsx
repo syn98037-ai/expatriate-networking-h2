@@ -370,9 +370,8 @@ export default function App() {
             tag: d.data().tag || "",
             meetingId: d.data().meetingId || "",
             read: d.data().read || false,
-            createdAt: d.data().createdAt || new Date().toISOString(),
+            createdAt: d.data().updatedAt || d.data().createdAt || new Date().toISOString(),
           })).sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
-          // Firestore 알림으로 전체 교체 (메모리 티미팅 알림은 Firestore에도 저장되므로 중복 없음)
           setNotifs(fsNotifs);
         }),
       ] : []),
@@ -491,8 +490,8 @@ export default function App() {
 
     const isDm = roomId !== "global" && !roomId.startsWith("room") && roomId.includes("_");
     if (isDm && uid) {
-      const parts   = roomId.split("_");
-      const otherId = parts.find(id => id !== uid);
+      // roomId = [uid, otherId].sort().join("_") 형태
+      const otherId = roomId.replace(uid, "").replace(/^_|_$/g, "");
       if (otherId && otherId !== uid) {
         const now = new Date().toISOString();
         try {
@@ -513,7 +512,8 @@ export default function App() {
           const otherProfile = await getDoc(docR("profiles", otherId));
           const otherActiveRoom = otherProfile.data()?.activeRoomId;
           if (otherActiveRoom !== roomId) {
-            await addDoc(col("notifications"), {
+            // setDoc으로 덮어쓰기 + updatedAt 갱신으로 onSnapshot 트리거 보장
+            await setDoc(docR("notifications", `chat_${roomId}_${otherId}`), {
               toId: otherId,
               type: "chat",
               fromName: myProfile?.name || "알 수 없음",
@@ -521,6 +521,7 @@ export default function App() {
               preview: text.length > 30 ? text.slice(0, 30) + "..." : text,
               read: false,
               createdAt: now,
+              updatedAt: now,
             });
           }
         } catch(e) {}
