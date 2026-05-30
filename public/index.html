@@ -32,10 +32,14 @@
         height: 100dvh;
         box-sizing: border-box;
       }
-      /* PWA 설치 시 상태바 영역 - 헤더 배경을 상태바까지 확장 */
+      /* PWA safe area - 상태바/홈 인디케이터 영역 확보 */
       .pwa-header {
-        padding-top: env(safe-area-inset-top, 0px);
-        padding-top: constant(safe-area-inset-top, 0px);
+        padding-top: max(13px, env(safe-area-inset-top));
+        padding-top: max(13px, constant(safe-area-inset-top));
+      }
+      .pwa-bottom {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        padding-bottom: constant(safe-area-inset-bottom, 0px);
       }
       select option { font-family: 'Noto Sans KR', sans-serif; }
     </style>

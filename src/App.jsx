@@ -915,7 +915,7 @@ match /{document=**} {
               </div>
             )}
             {/* PC 상단 헤더 */}
-            <header className="pwa-header" style={{ padding: "0 20px 0 28px", height: 60, flexShrink: 0, display: "flex", alignItems: "center", background: "#002c5f" }}>
+            <header className="pwa-header" style={{ padding: "0 24px", height: 60, flexShrink: 0, display: "flex", alignItems: "center", background: "#002c5f" }}>
               {/* 왼쪽: 로고 + 탭 */}
               <div style={{ display: "flex", alignItems: "center", gap: 16, flex: "0 0 auto" }}>
                 <span style={{ fontSize: 16, fontWeight: 900, color: "#ffffff", flexShrink: 0, letterSpacing: "-0.3px" }}>Global Connect</span>
@@ -1091,7 +1091,7 @@ match /{document=**} {
               <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#6b7280", fontSize: 16, fontWeight: 700, cursor: "pointer", padding: "0 4px", flexShrink: 0 }}>✕</button>
             </div>
           )}
-          <header className="pwa-header" style={{ padding: "13px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, background: "#002c5f" }}>
+          <header className="pwa-header" style={{ padding: "0 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, background: "#002c5f" }}>
             <div>
               <div style={{ fontSize: 16, fontWeight: 900, color: "#ffffff", letterSpacing: "-0.3px" }}>Global Connect</div>
               <div style={{ fontSize: 8, color: "rgba(255,255,255,0.55)", letterSpacing: "0.12em" }}>HMG 주재원 네트워크</div>
@@ -1111,7 +1111,7 @@ match /{document=**} {
 
           <div style={S.screen}>{renderMain()}</div>
 
-          <nav style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#ffffff", borderTop: "1px solid #e0e3e8", display: "flex", justifyContent: "space-around", padding: "8px 2px 12px", backdropFilter: "blur(12px)" }}>
+          <nav className="pwa-bottom" style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "#ffffff", borderTop: "1px solid #e0e3e8", display: "flex", justifyContent: "space-around", padding: "8px 2px 12px", backdropFilter: "blur(12px)" }}>
             {NAV.map(n => (
               <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", padding: "0 4px" }}>
                 <div style={{ width: 32, height: 32, borderRadius: 10, background: view === n.id ? "#002c5f" : "#e8f0f8", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: view === n.id ? "0 3px 10px rgba(0,44,95,0.25)" : "none", transition: "all 0.2s", transform: view === n.id ? "scale(1.08)" : "scale(1)" }}>
