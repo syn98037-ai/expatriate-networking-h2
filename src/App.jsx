@@ -363,6 +363,30 @@ export default function App() {
         setMeetings(newMeetings);
       }),
       onSnapshot(query(col("posts"), orderBy("createdAt", "desc")), s => setPosts(s.docs.map(d => ({ id: d.id, ...d.data() })))),
+      // 게시글 공지: 1건짜리 공지 문서 구독 (최근 20개)
+      ...(uid ? [onSnapshot(query(col("postNotices"), orderBy("createdAt", "desc")), s => {
+        const notices = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        // 내가 쓴 글 제외, 아직 notif에 없는 것만 알림으로 변환
+        notices.forEach(notice => {
+          if (notice.authorId === uid) return; // 내 글 제외
+          // 이미 내 notifications에 있는지 확인 (로컬 체크)
+          setNotifs(prev => {
+            const exists = prev.some(n => n.type === "newPost" && n.postId === notice.postId);
+            if (exists) return prev;
+            return [{
+              id: `post_${notice.id}`,
+              firestoreId: null,
+              type: "newPost",
+              fromName: notice.authorName,
+              preview: notice.title,
+              tag: notice.tag || "",
+              postId: notice.postId,
+              read: false,
+              createdAt: notice.createdAt,
+            }, ...prev];
+          });
+        });
+      })] : []),
       onSnapshot(query(col("events"), orderBy("date")), s => setEvents(s.docs.map(d => ({ id: d.id, ...d.data() })))),
       onSnapshot(query(col("rooms")), s => setRooms(s.docs.map(d => ({ id: d.id, ...d.data() })))),
       onSnapshot(query(col("missions")), s => {
@@ -616,29 +640,22 @@ export default function App() {
     if (imageUrl && imageUrl.startsWith("data:")) {
       imageUrl = await uploadPhoto(imageUrl, `posts/${uid}_${Date.now()}`);
     }
-    await addDoc(col("posts"), {
+    const postRef = await addDoc(col("posts"), {
       ...postData, imageUrl, authorId: uid, authorName: myProfile?.name || "나",
       commentCount: 0, likeCount: 0, createdAt: new Date().toISOString(),
     });
-    // 나를 제외한 모든 사용자에게 새 게시글 알림
+    // ✅ 최적화: 179건 개별 write → 공지 문서 1건만 write
+    // 각 클라이언트가 로그인 시 읽지 않은 공지를 조회
     try {
-      const snap = await getDocs(col("profiles"));
-      const now = new Date().toISOString();
-      const results = await Promise.allSettled(
-        snap.docs.filter(d => d.id !== uid).map(d =>
-          addDoc(col("notifications"), {
-            toId: d.id, type: "newPost",
-            fromName: myProfile?.name || "알 수 없음",
-            preview: postData.title || "",
-            tag: postData.tag || "",
-            read: false, createdAt: now,
-          })
-        )
-      );
-      const failed = results.filter(r => r.status === "rejected").length;
-      if (failed > 0) console.warn(`게시글 알림 ${failed}건 실패`);
-      else console.log(`게시글 알림 ${results.length}건 발송`);
-    } catch(e) { console.error("게시글 알림 오류:", e); }
+      await addDoc(col("postNotices"), {
+        postId: postRef.id,
+        authorId: uid,
+        authorName: myProfile?.name || "알 수 없음",
+        title: postData.title || "",
+        tag: postData.tag || "",
+        createdAt: new Date().toISOString(),
+      });
+    } catch(e) { console.error("게시글 공지 오류:", e); }
   };
 
   // ── 티미팅 신청 ──────────────────────────────────────

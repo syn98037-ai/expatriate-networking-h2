@@ -5,6 +5,7 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
+// ── notifications 트리거 (채팅/티미팅 알림) ──
 exports.sendPushNotification = onDocumentCreated(
   "notifications/{notifId}",
   async (event) => {
@@ -79,6 +80,52 @@ exports.sendPushNotification = onDocumentCreated(
       console.error("FCM 발송 오류:", e);
     }
 
+    return null;
+  }
+);
+
+
+// ── postNotices 트리거 (게시글 공지: 1건 write → 전체 FCM 발송) ──
+exports.sendPostNotification = onDocumentCreated(
+  "postNotices/{noticeId}",
+  async (event) => {
+    const data = event.data?.data();
+    if (!data || !data.authorId) return null;
+
+    // 모든 사용자의 FCM 토큰 조회 (저자 제외)
+    const profilesSnap = await db.collection("profiles")
+      .where("fcmTokens", "!=", [])
+      .get();
+
+    const title = `📝 ${data.authorName}`;
+    const body  = data.title
+      ? (data.tag ? `[${data.tag}] ${data.title}` : data.title)
+      : "새 게시글이 등록되었습니다.";
+
+    const sendPromises = [];
+
+    profilesSnap.docs.forEach(doc => {
+      if (doc.id === data.authorId) return; // 저자 제외
+      const tokens = (doc.data().fcmTokens || []).filter(t => t && t.length > 0);
+      if (tokens.length === 0) return;
+
+      const message = {
+        data: { title, body, type: "newPost", link: "https://expatriate-networking-app.vercel.app" },
+        webpush: { headers: { Urgency: "normal" }, fcm_options: { link: "https://expatriate-networking-app.vercel.app" } },
+        tokens,
+      };
+      sendPromises.push(
+        admin.messaging().sendEachForMulticast(message).catch(e => console.error("FCM 오류:", e))
+      );
+    });
+
+    // 배치로 처리 (한꺼번에 너무 많은 요청 방지)
+    const BATCH = 10;
+    for (let i = 0; i < sendPromises.length; i += BATCH) {
+      await Promise.allSettled(sendPromises.slice(i, i + BATCH));
+    }
+
+    console.log(`게시글 FCM 발송: ${sendPromises.length}명`);
     return null;
   }
 );
