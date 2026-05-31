@@ -1688,7 +1688,7 @@ function AdminAuth({ onSuccess, onBack }) {
   );
 }
 
-function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfile, onDeleteAccount, onDeletePost, onResetAll, onClearChats, onAddPost }) {
+function AdminView({ profiles = [], posts = [], missions = {}, meetings = [], onBack, onUpdateProfile, onDeleteAccount, onDeletePost, onResetAll, onClearChats, onAddPost }) {
   const [tab, setTab]         = useState("users");
   const [editId, setEditId]   = useState(null);
   const [editForm, setEF]     = useState({});
