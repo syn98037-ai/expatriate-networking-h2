@@ -2196,7 +2196,7 @@ function BoardView({ posts, profiles, uid, onOpenPost, onNewPost }) {
             <div key={post.id} onClick={() => onOpenPost(post)} style={{ ...S.card, borderRadius: 22, cursor: "pointer", display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>{post.tag && <span style={S.amberBadge}>{post.tag}</span>}<p style={{ fontSize: 10, color: "#6b7280", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p></div>
               <div><p style={{ fontSize: 15, fontWeight: 800, color: "#111827", margin: 0, marginBottom: 6, lineHeight: 1.4 }}>{post.title}</p><p style={{ fontSize: 13, color: "#6b7280", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.6 }}>{post.content}</p></div>
-              {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 14 }} />}
+              {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", maxHeight: 240, objectFit: "contain", borderRadius: 14, background: "#f5f6f8" }} />}
               <div style={{ display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8 }}>
                 <Avatar profile={author} size={20} /><p style={{ fontSize: 11, color: "#6b7280", margin: 0 }}>{post.authorName}</p>
                 <span style={{ marginLeft: "auto", fontSize: 10, color: "#6b7280" }}>💬 {post.commentCount||0}  ❤️ {post.likeCount||0}</span>
@@ -2242,7 +2242,7 @@ function Community({ posts, profiles, rooms, dmRooms, uid, onOpenPost, onNewPost
                 <div key={post.id} onClick={() => onOpenPost(post)} style={{ ...S.card, borderRadius: 22, cursor: "pointer", display: "flex", flexDirection: "column", gap: 10 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>{post.tag && <span style={S.amberBadge}>{post.tag}</span>}<p style={{ fontSize: 10, color: "#6b7280", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p></div>
                   <div><p style={{ fontSize: 15, fontWeight: 800, color: "#111827", margin: 0, marginBottom: 6, lineHeight: 1.4 }}>{post.title}</p><p style={{ fontSize: 13, color: "#6b7280", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", lineHeight: 1.6 }}>{post.content}</p></div>
-                  {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 14 }} />}
+                  {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", maxHeight: 240, objectFit: "contain", borderRadius: 14, background: "#f5f6f8" }} />}
                   <div style={{ display: "flex", alignItems: "center", gap: 8, borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 8 }}>
                     <Avatar profile={author} size={20} /><p style={{ fontSize: 11, color: "#6b7280", margin: 0 }}>{post.authorName}</p>
                     <span style={{ marginLeft: "auto", fontSize: 10, color: "#6b7280" }}>💬 {post.commentCount||0}  ❤️ {post.likeCount||0}</span>
@@ -2373,7 +2373,7 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
         {/* 본인 글이면 수정/삭제 버튼 표시 */}
         {isAuthor && !isEditing && (
           <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
-            <button onClick={() => { setIsEditing(true); setEditForm({ title: post.title, content: post.content }); }} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid #d1d8e0", color: "#002c5f", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>수정</button>
+            <button onClick={() => { setIsEditing(true); setEditForm({ title: post.title, content: post.content, imageUrl: post.imageUrl || "" }); }} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid #d1d8e0", color: "#002c5f", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>수정</button>
             <button onClick={() => { if (window.confirm("게시글을 삭제하시겠습니까?")) onDeletePost(); }} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>삭제</button>
           </div>
         )}
@@ -2385,6 +2385,28 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
             <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0 }}>게시글 수정</p>
             <div><label style={S.lbl}>제목</label><input style={S.inp} value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} /></div>
             <div><label style={S.lbl}>내용</label><textarea style={{ ...S.inp, minHeight: 200, resize: "none" }} value={editForm.content} onChange={e => setEditForm(f => ({ ...f, content: e.target.value }))} /></div>
+            {/* 사진 수정 */}
+            <div>
+              <label style={S.lbl}>사진</label>
+              {editForm.imageUrl ? (
+                <div style={{ position: "relative" }}>
+                  <img src={editForm.imageUrl} alt="" style={{ width: "100%", borderRadius: 14, maxHeight: 200, objectFit: "contain", background: "#f5f6f8" }} />
+                  <button onClick={() => setEditForm(f => ({ ...f, imageUrl: "" }))}
+                    style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, background: "rgba(220,38,38,0.85)", border: "none", borderRadius: "50%", color: "#fff", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                </div>
+              ) : (
+                <label htmlFor="editPostImg" style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", border: "1.5px dashed #c5d5e8", borderRadius: 12, cursor: "pointer", color: "#6b7280", fontSize: 12 }}>
+                  📷 <span>사진 첨부</span>
+                </label>
+              )}
+              <input id="editPostImg" type="file" accept="image/*" style={{ display: "none" }}
+                onChange={e => {
+                  const file = e.target.files?.[0]; if (!file) return;
+                  const r = new FileReader();
+                  r.onload = ev => setEditForm(f => ({ ...f, imageUrl: ev.target.result }));
+                  r.readAsDataURL(file);
+                }} />
+            </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={doEdit} style={{ ...S.btnAmber, flex: 1, padding: 12 }}>저장</button>
               <button onClick={() => setIsEditing(false)} style={{ ...S.btnGhost, flex: 1, padding: 12 }}>취소</button>
@@ -2400,7 +2422,7 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
               <p style={{ fontSize: 10, color: "#6b7280", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p>
             </div>
             <p style={{ fontSize: 14, color: "#002c5f", lineHeight: 1.8, whiteSpace: "pre-wrap", marginBottom: 14 }}>{post.content}</p>
-            {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", borderRadius: 16, maxHeight: 260, objectFit: "cover", marginBottom: 14 }} />}
+            {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", borderRadius: 16, maxHeight: 400, objectFit: "contain", background: "#f5f6f8", marginBottom: 14 }} />}
             {/* 좋아요 / 댓글 수 */}
             <div style={{ display: "flex", gap: 14, paddingTop: 4, marginBottom: 20 }}>
               <button onClick={onToggleLike} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, padding: "8px 14px", borderRadius: 12, border: `1px solid ${isLiked ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.1)"}`, background: isLiked ? "rgba(220,38,38,0.1)" : "rgba(255,255,255,0.8)", color: isLiked ? "#f87171" : "#64748b", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", transition: "all 0.2s" }}>
