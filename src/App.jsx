@@ -1216,7 +1216,7 @@ match /{document=**} {
 
       {/* 오버레이 */}
       {overlay?.type === "profile"     && <div style={S.overlay}><ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} /></div>}
-      {overlay?.type === "adminAuth"   && <div style={{ position:"fixed", inset:0, zIndex:200 }}><AdminAuth onSuccess={() => { setIsAdmin(true); setOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} /></div>}
+      {overlay?.type === "adminAuth"   && <div style={{ position:"fixed", inset:0, zIndex:200 }}><AdminAuth onSuccess={() => { console.log("MOB onSuccess, setting admin"); setIsAdmin(true); setOverlay({ type: "admin" }); console.log("MOB overlay set"); }} onBack={() => setOverlay(null)} /></div>}
       {overlay?.type === "admin"       && <div style={{ position:"fixed", inset:0, zIndex:200, display:"flex", flexDirection:"column" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} /></div>}
       {overlay?.type === "chat"        && <div style={S.overlay}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={async () => { setOverlay(null); if (uid) { try { await updateDoc(docR("profiles", uid), { activeRoomId: null }); } catch(e) {} } }} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div>}
       {overlay?.type === "post"        && <div style={S.overlay}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div>}
@@ -1668,7 +1668,16 @@ function ProfileForm({ initialData, onSave, onBack, onLogout }) {
 // ══════════════════════════════════════════════════════════
 function AdminAuth({ onSuccess, onBack }) {
   const [pw, setPw] = useState(""); const [err, setErr] = useState(false);
-  const go = () => { if (pw === "06080910") onSuccess(); else { setErr(true); setPw(""); setTimeout(() => setErr(false), 2000); } };
+  const go = () => {
+    console.log("AdminAuth go called, pw:", pw);
+    if (pw === "06080910") {
+      console.log("Password correct, calling onSuccess");
+      onSuccess();
+      console.log("onSuccess called");
+    } else {
+      setErr(true); setPw(""); setTimeout(() => setErr(false), 2000);
+    }
+  };
   return (
     <div style={{ ...S.overlay, alignItems: "center", justifyContent: "center" }}>
       <div style={{ padding: 40, textAlign: "center", width: "100%", maxWidth: 320, display: "flex", flexDirection: "column", gap: 24, alignItems: "center" }}>
