@@ -329,24 +329,26 @@ export default function App() {
         });
       }),
       // meetings: 본인 관련 것만 구독 (전체 구독 대신 → 트래픽 대폭 절감)
-      onSnapshot(query(col("meetings"), where("fromId", "==", uid)), s => {
-        setMeetings(prev => {
-          const others = prev.filter(m => m.toId === uid); // 받은 것 유지
-          const mine   = s.docs.map(d => ({ id: d.id, ...d.data() }));
-          return [...mine, ...others].filter((m, i, arr) =>
-            arr.findIndex(x => x.id === m.id) === i // 중복 제거
-          );
-        });
-      }),
-      onSnapshot(query(col("meetings"), where("toId", "==", uid)), s => {
-        setMeetings(prev => {
-          const others = prev.filter(m => m.fromId === uid); // 보낸 것 유지
-          const mine   = s.docs.map(d => ({ id: d.id, ...d.data() }));
-          return [...others, ...mine].filter((m, i, arr) =>
-            arr.findIndex(x => x.id === m.id) === i // 중복 제거
-          );
-        });
-      }),
+      ...(uid ? [
+        onSnapshot(query(col("meetings"), where("fromId", "==", uid)), s => {
+          setMeetings(prev => {
+            const others = prev.filter(m => m.toId === uid);
+            const mine   = s.docs.map(d => ({ id: d.id, ...d.data() }));
+            return [...mine, ...others].filter((m, i, arr) =>
+              arr.findIndex(x => x.id === m.id) === i
+            );
+          });
+        }),
+        onSnapshot(query(col("meetings"), where("toId", "==", uid)), s => {
+          setMeetings(prev => {
+            const others = prev.filter(m => m.fromId === uid);
+            const mine   = s.docs.map(d => ({ id: d.id, ...d.data() }));
+            return [...others, ...mine].filter((m, i, arr) =>
+              arr.findIndex(x => x.id === m.id) === i
+            );
+          });
+        }),
+      ] : []),
       onSnapshot(query(col("posts"), orderBy("createdAt", "desc")), s => setPosts(s.docs.map(d => ({ id: d.id, ...d.data() })))),
       // 게시글 공지: 1건짜리 공지 문서 구독 (최근 20개)
       ...(uid ? [onSnapshot(query(col("postNotices"), orderBy("createdAt", "desc")), s => {
@@ -393,9 +395,9 @@ export default function App() {
             .map(d => d.data())
             .sort((a,b) => new Date(b.updatedAt||0) - new Date(a.updatedAt||0)));
         }),
-        onSnapshot(
+        ...(uid ? [onSnapshot(
           query(col("notifications"), where("toId", "==", uid)),
-          { includeMetadataChanges: false }, // 캐시 업데이트 무시, 서버 확정 데이터만
+          { includeMetadataChanges: false },
           s => {
             // 캐시에서 온 데이터는 무시 (갤럭시 PWA 재연결 시 빈 캐시 문제 방지)
             if (s.metadata.fromCache) return;
@@ -414,7 +416,7 @@ export default function App() {
             })).sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0));
             setNotifs(fsNotifs);
           }
-        ),
+        )] : []),
       ] : []),
     ];
   }, [authStatus, isAdmin, uid]);
