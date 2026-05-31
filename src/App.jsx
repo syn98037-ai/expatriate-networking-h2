@@ -2625,7 +2625,23 @@ const SCHEDULE_DATA = [
     sessions: [
       { time: "09:30 – 10:30", title: "HR 리더특강",            venue: "1F 대강당",          instructor: "글로벌HR실",             color: "#002c5f" },
       { time: "10:30 – 14:00", title: "주재원 역할 및 행동 이해", venue: "1F 대강당",          instructor: "KOTRA아카데미",           color: "#002c5f" },
-      { time: "14:00 – 15:30", title: "부임 국가의 이해",         venue: "분반 강의장",        instructor: "KOTRA아카데미",           color: "#002c5f" },
+      { time: "14:00 – 15:30", title: "부임 국가의 이해",         venue: "분반 강의장",        instructor: "KOTRA아카데미",           color: "#002c5f",
+        sections: [
+          { room: "301호",    groups: ["인도 북부"] },
+          { room: "302호",    groups: ["인도 남부"] },
+          { room: "304호",    groups: ["중국"] },
+          { room: "401호",    groups: ["인도 남부"] },
+          { room: "402호",    groups: ["인도 북부"] },
+          { room: "403호",    groups: ["독일"] },
+          { room: "404호",    groups: ["미국 서부"] },
+          { room: "405호",    groups: ["멕시코"] },
+          { room: "407호",    groups: ["미국 남부"] },
+          { room: "501호",    groups: ["미국 루이지애나1"] },
+          { room: "502호",    groups: ["미국 루이지애나2"] },
+          { room: "포럼관A",  groups: ["미국 동북부", "싱가포르", "체코", "튀르키예"] },
+          { room: "포럼관B",  groups: ["말레이시아", "브라질", "슬로바키아", "이집트", "인도네시아", "일본", "카자흐스탄", "프랑스", "호주"] },
+        ]
+      },
       { time: "15:30 – 16:30", title: "안전 문화 교육",           venue: "1F 대강당",          instructor: "안전기획실",              color: "#002c5f" },
       { time: "16:30 – 17:30", title: "보안 교육",               venue: "1F 대강당",          instructor: "그룹보안기획팀",          color: "#002c5f" },
     ],
@@ -2635,14 +2651,43 @@ const SCHEDULE_DATA = [
     sessions: [
       { time: "08:00 – 11:00", title: "윤리경영 (Do-Better)",    venue: "1F 대강당",          instructor: "티움컨설팅 / 감사기획팀", color: "#002c5f" },
       { time: "11:00 – 12:00", title: "준법 교육",               venue: "1F 대강당",          instructor: "준법지원1팀",             color: "#002c5f" },
-      { time: "13:00 – 17:00", title: "역할 전환 워크숍",          venue: "분반 강의장",        instructor: "선배주재원",              color: "#002c5f" },
+      { time: "13:00 – 17:00", title: "역할 전환 워크숍",          venue: "분반 강의장",        instructor: "선배주재원",              color: "#002c5f",
+        sections: [
+          { room: "301호",    groups: ["유럽"] },
+          { room: "302호",    groups: ["아중동"] },
+          { room: "306호",    groups: ["아태"] },
+          { room: "401호",    groups: ["중국"] },
+          { room: "402호",    groups: ["북미A"] },
+          { room: "407호",    groups: ["중남미"] },
+          { room: "포럼관A",  groups: ["북미B"] },
+          { room: "포럼관B",  groups: ["인도"] },
+        ]
+      },
     ],
   },
   {
     day: "Day 3",
     sessions: [
       { time: "08:00 – 12:00", title: "글로벌 비즈니스 매너",     venue: "1F 대강당 / 비젼홀", instructor: "코멘트",                  color: "#002c5f" },
-      { time: "13:00 – 16:00", title: "선배주재원 간담회",         venue: "분반 강의장",        instructor: "선배주재원",              color: "#002c5f" },
+      { time: "13:00 – 16:00", title: "선배주재원 간담회",         venue: "분반 강의장",        instructor: "선배주재원",              color: "#002c5f",
+        sections: [
+          { room: "303호",        groups: ["미국G"] },
+          { room: "503호",        groups: ["인도E"] },
+          { room: "504호",        groups: ["튀르키예"] },
+          { room: "505호",        groups: ["미국A"] },
+          { room: "506호",        groups: ["인도B"] },
+          { room: "507A호",       groups: ["인도C"] },
+          { room: "507B호",       groups: ["멕시코"] },
+          { room: "508A호",       groups: ["독일"] },
+          { room: "508B호",       groups: ["미국B"] },
+          { room: "509호",        groups: ["중국C"] },
+          { room: "510호",        groups: ["중국A"] },
+          { room: "계단식 세미나실", groups: ["호주", "프랑스", "말레이시아", "미국F", "이집트", "중국B"] },
+          { room: "대강당",        groups: ["카자흐스탄"] },
+          { room: "포럼관A",       groups: ["미국C"] },
+          { room: "포럼관B",       groups: ["인도F", "인도G", "중국F", "슬로바키아", "일본", "인도네시아", "미국H", "브라질", "UAE", "싱가포르", "체코", "인도D", "중국E", "미국E", "중국D", "미국D", "인도A"] },
+        ]
+      },
     ],
   },
 ];
@@ -2650,6 +2695,7 @@ const SCHEDULE_DATA = [
 function ScheduleView() {
   const [activeDay, setActiveDay] = useState(0);
   const [activeTab, setActiveTab] = useState("schedule"); // schedule | videos
+  const [sectionPopup, setSectionPopup] = useState(null); // { title, sections }
   const day = SCHEDULE_DATA[activeDay];
 
   const VIDEOS = [
@@ -2736,10 +2782,18 @@ function ScheduleView() {
                   <span style={{ fontSize: 11, fontWeight: 700, color: s.color }}>{s.time}</span>
                 </div>
                 {/* 장소 */}
-                <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,0.8)", border: "1px solid #e0e3e8", borderRadius: 8, padding: "3px 10px" }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: "#6b7280" }}>{s.venue}</span>
-                </div>
+                {s.sections ? (
+                  <button onClick={() => setSectionPopup({ title: s.title, sections: s.sections })}
+                    style={{ display: "flex", alignItems: "center", gap: 5, background: "#002c5f", border: "none", borderRadius: 8, padding: "3px 10px", cursor: "pointer" }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#ffffff" }}>분반 강의장 확인 →</span>
+                  </button>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,0.8)", border: "1px solid #e0e3e8", borderRadius: 8, padding: "3px 10px" }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "#6b7280" }}>{s.venue}</span>
+                  </div>
+                )}
                 {/* 강사 */}
                 {s.instructor && (
                   <div style={{ display: "flex", alignItems: "center", gap: 5, background: "#f5f6f8", border: "1px solid #e0e3e8", borderRadius: 8, padding: "3px 10px" }}>
@@ -2752,6 +2806,48 @@ function ScheduleView() {
           </div>
         ))}
       </div>}
+      {/* 분반 강의장 팝업 - 독립 state, 기존 overlay 시스템과 무관 */}
+      {sectionPopup && (
+        <div onClick={() => setSectionPopup(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#ffffff", borderRadius: 20, width: "100%", maxWidth: 480, maxHeight: "80vh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            {/* 헤더 */}
+            <div style={{ background: "#002c5f", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", margin: "0 0 2px", letterSpacing: "0.08em" }}>분반 강의장 안내</p>
+                <p style={{ fontSize: 15, fontWeight: 800, color: "#ffffff", margin: 0 }}>{sectionPopup.title}</p>
+              </div>
+              <button onClick={() => setSectionPopup(null)}
+                style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "#ffffff", width: 30, height: 30, borderRadius: "50%", cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+            </div>
+            {/* 표 */}
+            <div style={{ overflowY: "auto", flex: 1 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ background: "#f5f6f8", position: "sticky", top: 0 }}>
+                    <th style={{ padding: "10px 16px", fontSize: 12, fontWeight: 700, color: "#002c5f", textAlign: "left", borderBottom: "2px solid #e0e3e8", width: "40%" }}>강의장</th>
+                    <th style={{ padding: "10px 16px", fontSize: 12, fontWeight: 700, color: "#002c5f", textAlign: "left", borderBottom: "2px solid #e0e3e8" }}>분반</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sectionPopup.sections.map((sec, idx) => (
+                    <tr key={idx} style={{ borderBottom: "1px solid #f0f0f0", background: idx % 2 === 0 ? "#ffffff" : "#fafbfc" }}>
+                      <td style={{ padding: "10px 16px", fontSize: 13, fontWeight: 700, color: "#002c5f", whiteSpace: "nowrap" }}>{sec.room}</td>
+                      <td style={{ padding: "10px 16px", fontSize: 13, color: "#374151", lineHeight: 1.6 }}>{sec.groups.join(", ")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* 하단 닫기 */}
+            <div style={{ padding: "12px 20px", borderTop: "1px solid #e0e3e8", textAlign: "center" }}>
+              <button onClick={() => setSectionPopup(null)}
+                style={{ background: "#002c5f", border: "none", color: "#ffffff", padding: "10px 32px", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>닫기</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
