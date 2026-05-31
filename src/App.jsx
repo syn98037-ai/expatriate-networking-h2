@@ -1873,6 +1873,51 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
             ))}
           </div>
         )}
+        {/* 공지 작성 탭 */}
+        {tab === "notice" && (
+          <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ background: "#e8f0f8", borderRadius: 12, padding: "12px 16px" }}>
+              <p style={{ fontSize: 12, color: "#002c5f", fontWeight: 700, margin: "0 0 4px" }}>📢 공지 작성</p>
+              <p style={{ fontSize: 11, color: "#6b7280", margin: 0 }}>작성자는 <strong>인재개발원</strong>으로 표시됩니다.</p>
+            </div>
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", margin: "0 0 8px" }}>태그</p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {["공지","안내","일정","기타"].map(t => (
+                  <button key={t} onClick={() => setNTG(t)}
+                    style={{ padding: "6px 16px", borderRadius: 20, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer",
+                      background: noticeTag === t ? "#002c5f" : "#f3f4f6",
+                      color: noticeTag === t ? "#ffffff" : "#6b7280" }}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", margin: "0 0 6px" }}>제목</p>
+              <input value={noticeTitle} onChange={e => setNT(e.target.value)}
+                placeholder="공지 제목을 입력하세요"
+                style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #e0e3e8",
+                  fontSize: 13, fontFamily: "'Noto Sans KR', sans-serif", outline: "none", boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", margin: "0 0 6px" }}>내용</p>
+              <textarea value={noticeBody} onChange={e => setNB(e.target.value)}
+                placeholder="공지 내용을 입력하세요"
+                rows={8}
+                style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #e0e3e8",
+                  fontSize: 13, fontFamily: "'Noto Sans KR', sans-serif", outline: "none",
+                  resize: "vertical", boxSizing: "border-box" }} />
+            </div>
+            <button onClick={sendNotice} disabled={noticeSending}
+              style={{ width: "100%", padding: "14px", background: "#002c5f", border: "none",
+                color: "#ffffff", fontSize: 14, fontWeight: 700, borderRadius: 14,
+                cursor: noticeSending ? "not-allowed" : "pointer", opacity: noticeSending ? 0.6 : 1,
+                fontFamily: "'Noto Sans KR', sans-serif" }}>
+              {noticeSending ? "게시 중..." : "📢 공지 게시하기"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
