@@ -2514,7 +2514,7 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
   };
 
   const missions = [
-    { id:"m1", num:"01", title:"티미팅 발송", desc:"다른 주재원 동료에게 티미팅을 신청해보세요. (2회)", target:2, current:m1Count, done:m1Done, color:"#002c5f",
+    { id:"m1", num:"01", title:"티미팅 발송", desc:"다른 주재원 동료에게 티미팅을 신청해보세요. (2회) 상대방이 수락했을 경우 인정!", target:2, current:m1Count, done:m1Done, color:"#002c5f",
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="12" y1="7" x2="12" y2="13"/></svg> },
     { id:"m2", num:"02", title:"티미팅 인증샷", desc:"티미팅을 진행한 후 인증샷을 남겨주세요. (2회)", target:2, current:m2Photos.length, done:m2Done, color:"#00aad2", photos:m2Photos, photoKey:"m2Photos",
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> },
