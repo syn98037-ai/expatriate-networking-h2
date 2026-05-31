@@ -1,19 +1,4 @@
 {
-  "indexes": [
-    {
-      "collectionGroup": "meetings",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "fromId", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "meetings",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "toId", "order": "ASCENDING" }
-      ]
-    }
-  ],
+  "indexes": [],
   "fieldOverrides": []
 }
