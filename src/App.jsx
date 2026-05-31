@@ -648,8 +648,7 @@ export default function App() {
       imageUrl = await uploadPhoto(imageUrl, `posts/${uid}_${Date.now()}`);
     }
     const postRef = await addDoc(col("posts"), {
-      ...postData, imageUrl, authorId: uid || "admin",
-      authorName: postData.authorName || myProfile?.name || "나",
+      ...postData, imageUrl, authorId: uid, authorName: myProfile?.name || "나",
       commentCount: 0, likeCount: 0, createdAt: new Date().toISOString(),
     });
     // ✅ 최적화: 179건 개별 write → 공지 문서 1건만 write
@@ -1218,7 +1217,7 @@ match /{document=**} {
       {/* 오버레이 */}
       {overlay?.type === "profile"     && <div style={S.overlay}><ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} /></div>}
       {overlay?.type === "adminAuth"   && <div style={S.overlay}><AdminAuth onSuccess={() => { setIsAdmin(true); openOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} /></div>}
-      {overlay?.type === "admin"       && <div style={S.overlay}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} onAddPost={addPost} /></div>}
+      {overlay?.type === "admin"       && <div style={S.overlay}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} /></div>}
       {overlay?.type === "chat"        && <div style={S.overlay}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={async () => { setOverlay(null); if (uid) { try { await updateDoc(docR("profiles", uid), { activeRoomId: null }); } catch(e) {} } }} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div>}
       {overlay?.type === "post"        && <div style={S.overlay}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div>}
       {overlay?.type === "newPost"     && <div style={S.overlay}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
@@ -1571,55 +1570,6 @@ function AuthView({ onLogin, onRegister, onAdmin }) {
         <div style={{ borderTop: "1px solid #e0e3e8", paddingTop: 16, textAlign: "center" }}>
           <button onClick={onAdmin} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 11, letterSpacing: "0.08em" }}>관리자 로그인</button>
         </div>
-      {/* 공지 작성 탭 */}
-      {tab === "notice" && (
-        <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 14, overflowY: "auto" }}>
-          <div style={{ background: "#e8f0f8", borderRadius: 12, padding: "12px 16px" }}>
-            <p style={{ fontSize: 12, color: "#002c5f", fontWeight: 700, margin: "0 0 4px" }}>📢 공지 작성</p>
-            <p style={{ fontSize: 11, color: "#6b7280", margin: 0 }}>작성자는 <b>인재개발원</b>으로 표시됩니다.</p>
-          </div>
-          {/* 태그 */}
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", margin: "0 0 8px" }}>태그</p>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {["공지","안내","일정","기타"].map(t => (
-                <button key={t} onClick={() => setNTG(t)}
-                  style={{ padding: "6px 16px", borderRadius: 20, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer",
-                    background: noticeTag === t ? "#002c5f" : "#f3f4f6",
-                    color: noticeTag === t ? "#ffffff" : "#6b7280" }}>
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-          {/* 제목 */}
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", margin: "0 0 6px" }}>제목</p>
-            <input value={noticeTitle} onChange={e => setNT(e.target.value)}
-              placeholder="공지 제목을 입력하세요"
-              style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #e0e3e8",
-                fontSize: 13, fontFamily: "'Noto Sans KR', sans-serif", outline: "none", boxSizing: "border-box" }} />
-          </div>
-          {/* 내용 */}
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", margin: "0 0 6px" }}>내용</p>
-            <textarea value={noticeBody} onChange={e => setNB(e.target.value)}
-              placeholder="공지 내용을 입력하세요"
-              rows={8}
-              style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #e0e3e8",
-                fontSize: 13, fontFamily: "'Noto Sans KR', sans-serif", outline: "none",
-                resize: "vertical", boxSizing: "border-box" }} />
-          </div>
-          {/* 게시 버튼 */}
-          <button onClick={sendNotice} disabled={noticeSending}
-            style={{ width: "100%", padding: "14px", background: "#002c5f", border: "none",
-              color: "#ffffff", fontSize: 14, fontWeight: 700, borderRadius: 14,
-              cursor: noticeSending ? "not-allowed" : "pointer", opacity: noticeSending ? 0.6 : 1,
-              fontFamily: "'Noto Sans KR', sans-serif" }}>
-            {noticeSending ? "게시 중..." : "📢 공지 게시하기"}
-          </button>
-        </div>
-      )}
       </div>
     </div>
   );
@@ -1735,34 +1685,11 @@ function AdminAuth({ onSuccess, onBack }) {
   );
 }
 
-function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfile, onDeleteAccount, onDeletePost, onResetAll, onClearChats, onAddPost }) {
-  const [tab, setTab]         = useState("users");
-  const [editId, setEditId]   = useState(null);
-  const [editForm, setEF]     = useState({});
-  const [saving, setSaving]   = useState(false);
-  const [noticeTitle, setNT]  = useState("");
-  const [noticeBody, setNB]   = useState("");
-  const [noticeTag, setNTG]   = useState("공지");
-  const [noticeSending, setNS] = useState(false);
-
-  const sendNotice = async () => {
-    if (!noticeTitle.trim() || !noticeBody.trim()) return alert("제목과 내용을 입력해주세요.");
-    setNS(true);
-    try {
-      await onAddPost({
-        title: noticeTitle.trim(),
-        content: noticeBody.trim(),
-        tag: noticeTag,
-        authorName: "인재개발원",  // 작성자 고정
-        imageUrl: "",
-      });
-      setNT(""); setNB(""); setNTG("공지");
-      alert("공지가 게시됐습니다!");
-    } catch(e) {
-      alert("오류가 발생했습니다.");
-    }
-    setNS(false);
-  };
+function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfile, onDeleteAccount, onDeletePost, onResetAll, onClearChats }) {
+  const [tab, setTab]       = useState("users");
+  const [editId, setEditId] = useState(null);
+  const [editForm, setEF]   = useState({});
+  const [saving, setSaving] = useState(false);
 
   const startEdit = p => { setEditId(p.id); setEF({ city: p.city||"", country: p.country||"", concern: p.concern||CONCERNS[0] }); };
   const saveEdit  = async () => { setSaving(true); await onUpdateProfile(editId, editForm); setEditId(null); setSaving(false); };
@@ -1778,7 +1705,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
       </div>
       <div style={{ padding: "12px 16px 0", flexShrink: 0 }}>
         <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.8)", padding: 4, borderRadius: 14, border: "1px solid #e0e3e8", marginBottom: 10 }}>
-          {[["users","사용자 관리"],["missions","미션 현황"],["posts","게시글 현황"],["notice","공지 작성"]].map(([id, label]) => (
+          {[["users","사용자 관리"],["missions","미션 현황"],["posts","게시글 현황"]].map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: "8px 4px", borderRadius: 10, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: tab === id ? "#002c5f" : "transparent", color: tab === id ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{label}</button>
           ))}
         </div>
