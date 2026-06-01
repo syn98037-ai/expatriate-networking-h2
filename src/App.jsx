@@ -270,16 +270,11 @@ export default function App() {
             const mtgSnap = await getDocs(
               query(col("meetings"), where("fromId", "==", user.uid))
             );
-            console.log("my uid:", user.uid);
-            console.log("meetings total:", mtgSnap.docs.length);
-            console.log("meetings data:", mtgSnap.docs.map(d => ({id: d.id, status: d.data().status, fromId: d.data().fromId})));
             const acceptedCnt = Math.min(
               mtgSnap.docs.filter(d => d.data().status === "수락함").length,
               2
             );
-            console.log("acceptedCnt:", acceptedCnt);
             await setDoc(docR("missions", user.uid), { m1Count: acceptedCnt }, { merge: true });
-            console.log("m1Count synced:", acceptedCnt);
           } catch(e) { console.error("m1Count sync error:", e); }
           try {
             if (typeof Notification !== "undefined") {
