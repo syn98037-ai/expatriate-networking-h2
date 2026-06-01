@@ -62,7 +62,7 @@ service cloud.firestore {
 
     match /missions/{userId} {
       allow read: if true;
-      allow write: if isOwner(userId);
+      allow write: if isLoggedIn();  // 로그인한 사람이면 누구나 쓸 수 있게 변경
       allow delete: if true;
     }
 
