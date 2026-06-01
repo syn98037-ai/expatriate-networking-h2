@@ -2392,6 +2392,18 @@ function Community({ posts, profiles, rooms, dmRooms, uid, onOpenPost, onNewPost
   );
 }
 
+// URL을 감지해서 클릭 가능한 링크로 변환
+function renderContentWithLinks(text) {
+  if (!text) return null;
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  return parts.map((part, i) =>
+    /^https?:\/\//.test(part)
+      ? <a key={i} href={part} target="_blank" rel="noopener noreferrer"
+          style={{ color: "#00aad2", textDecoration: "underline", wordBreak: "break-all" }}>{part}</a>
+      : <span key={i}>{part}</span>
+  );
+}
+
 function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment, onToggleLike, onEditPost, onDeletePost, onDeleteComment, onBack, db }) {
   const [livePost,  setLivePost]  = useState(initialPost);
   const [comments,  setComments]  = useState([]);
@@ -2478,7 +2490,7 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
               <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>{post.authorName}</p>
               <p style={{ fontSize: 10, color: "#6b7280", margin: 0, marginLeft: "auto" }}>{timeAgo(post.createdAt)}</p>
             </div>
-            <p style={{ fontSize: 14, color: "#002c5f", lineHeight: 1.8, whiteSpace: "pre-wrap", marginBottom: 14 }}>{post.content}</p>
+            <p style={{ fontSize: 14, color: "#002c5f", lineHeight: 1.8, whiteSpace: "pre-wrap", marginBottom: 14 }}>{renderContentWithLinks(post.content)}</p>
             {post.imageUrl && <img src={post.imageUrl} alt="" style={{ width: "100%", borderRadius: 16, maxHeight: 400, objectFit: "contain", background: "#f5f6f8", marginBottom: 14 }} />}
             {/* 좋아요 / 댓글 수 */}
             <div style={{ display: "flex", gap: 14, paddingTop: 4, marginBottom: 20 }}>
