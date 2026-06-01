@@ -2509,6 +2509,7 @@ function NewPost({ onSubmit, onBack }) {
 }
 
 function MissionView({ myMissions, sentCount, uid, onUpdate }) {
+  const [showM1Guide, setShowM1Guide] = useState(false);
   const m1Count  = Math.min(sentCount, 2);
   const m1Done   = m1Count >= 2;
   const m2Photos = myMissions.m2Photos || [];
@@ -2567,7 +2568,9 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
         )}
       </div>
       {missions.map(m => (
-        <div key={m.id} style={{ ...S.card, borderRadius: 24, border: `1px solid ${m.disabled ? "#ffffff" : m.done ? `${m.color}30` : "rgba(255,255,255,0.07)"}`, background: m.disabled ? "rgba(255,255,255,0.02)" : m.done ? `${m.color}08` : "#ffffff", opacity: m.disabled ? 0.45 : 1, position: "relative", overflow: "hidden" }}>
+        <div key={m.id}
+          onClick={m.id === "m1" && !m.done && !m.disabled ? () => setShowM1Guide(true) : undefined}
+          style={{ ...S.card, borderRadius: 24, border: `1px solid ${m.disabled ? "#ffffff" : m.done ? `${m.color}30` : "rgba(255,255,255,0.07)"}`, background: m.disabled ? "rgba(255,255,255,0.02)" : m.done ? `${m.color}08` : "#ffffff", opacity: m.disabled ? 0.45 : 1, position: "relative", overflow: "hidden", cursor: m.id === "m1" && !m.done && !m.disabled ? "pointer" : "default" }}>
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 14 }}>
             <div style={{ width: 52, height: 52, borderRadius: 16, background: m.disabled ? "rgba(255,255,255,0.8)" : `${m.color}14`, border: `1px solid ${m.disabled ? "rgba(255,255,255,0.08)" : m.color+"30"}`, display: "flex", alignItems: "center", justifyContent: "center", color: m.disabled ? "#4b5563" : m.color, flexShrink: 0 }}>{m.icon}</div>
             <div style={{ flex: 1 }}>
@@ -2635,10 +2638,23 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
           )}
         </div>
       ))}
+      {/* 미션01 안내 팝업 */}
+      {showM1Guide && (
+        <div onClick={() => setShowM1Guide(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#ffffff", borderRadius: 24, width: "100%", maxWidth: 340, padding: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <div style={{ width: 60, height: 60, borderRadius: 20, background: "#e8f0f8", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>☕</div>
+            <p style={{ fontSize: 16, fontWeight: 800, color: "#002c5f", margin: 0, textAlign: "center" }}>티미팅 발송</p>
+            <p style={{ fontSize: 14, color: "#374151", margin: 0, textAlign: "center", lineHeight: 1.7 }}>교류하고 싶은 동료를 찾아<br/>티미팅을 신청하세요.</p>
+            <button onClick={() => setShowM1Guide(false)}
+              style={{ width: "100%", padding: "12px", background: "#002c5f", border: "none", color: "#ffffff", fontSize: 14, fontWeight: 700, borderRadius: 14, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>확인</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
 
 /* ════════ 시간표 ════════ */
 const SCHEDULE_DATA = [
@@ -2649,11 +2665,9 @@ const SCHEDULE_DATA = [
       { time: "10:30 – 14:00", title: "주재원 역할 및 행동 이해", venue: "1F 대강당",          instructor: "KOTRA아카데미",           color: "#002c5f" },
       { time: "14:00 – 15:30", title: "부임 국가의 이해",         venue: "분반 강의장",        instructor: "KOTRA아카데미",           color: "#002c5f",
         sections: [
-          { room: "301호",    groups: ["인도 북부"] },
-          { room: "302호",    groups: ["인도 남부"] },
-          { room: "304호",    groups: ["중국"] },
-          { room: "401호",    groups: ["인도 남부"] },
-          { room: "402호",    groups: ["인도 북부"] },
+          { room: "304호",    groups: ["인도 북부"] },
+          { room: "401호",    groups: ["중국"] },
+          { room: "402호",    groups: ["인도 남부"] },
           { room: "403호",    groups: ["독일"] },
           { room: "404호",    groups: ["미국 서부"] },
           { room: "405호",    groups: ["멕시코"] },
@@ -2679,9 +2693,9 @@ const SCHEDULE_DATA = [
           { room: "302호",    groups: ["아중동"] },
           { room: "306호",    groups: ["아태"] },
           { room: "401호",    groups: ["중국"] },
-          { room: "402호",    groups: ["북미A"] },
+          { room: "402호",    groups: ["북미"] },
           { room: "407호",    groups: ["중남미"] },
-          { room: "포럼관A",  groups: ["북미B"] },
+          { room: "포럼관A",  groups: ["루이지애나"] },
           { room: "포럼관B",  groups: ["인도"] },
         ]
       },
@@ -2690,7 +2704,7 @@ const SCHEDULE_DATA = [
   {
     day: "Day 3",
     sessions: [
-      { time: "08:00 – 12:00", title: "글로벌 비즈니스 매너",     venue: "1F 대강당 / 비젼홀", instructor: "코멘트",                  color: "#002c5f" },
+      { time: "08:00 – 12:00", title: "글로벌 비즈니스 매너",     venue: "1F 대강당 / 비전홀", instructor: "코멘트",                  color: "#002c5f" },
       { time: "13:00 – 16:00", title: "선배주재원 간담회",         venue: "분반 강의장",        instructor: "선배주재원",              color: "#002c5f",
         sections: [
           { room: "303호",        groups: ["미국G"] },
@@ -2848,15 +2862,15 @@ function ScheduleView() {
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ background: "#f5f6f8", position: "sticky", top: 0 }}>
-                    <th style={{ padding: "10px 16px", fontSize: 12, fontWeight: 700, color: "#002c5f", textAlign: "left", borderBottom: "2px solid #e0e3e8", width: "40%" }}>강의장</th>
                     <th style={{ padding: "10px 16px", fontSize: 12, fontWeight: 700, color: "#002c5f", textAlign: "left", borderBottom: "2px solid #e0e3e8" }}>분반</th>
+                    <th style={{ padding: "10px 16px", fontSize: 12, fontWeight: 700, color: "#002c5f", textAlign: "left", borderBottom: "2px solid #e0e3e8", width: "35%" }}>강의장</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sectionPopup.sections.map((sec, idx) => (
                     <tr key={idx} style={{ borderBottom: "1px solid #f0f0f0", background: idx % 2 === 0 ? "#ffffff" : "#fafbfc" }}>
-                      <td style={{ padding: "10px 16px", fontSize: 13, fontWeight: 700, color: "#002c5f", whiteSpace: "nowrap" }}>{sec.room}</td>
                       <td style={{ padding: "10px 16px", fontSize: 13, color: "#374151", lineHeight: 1.6 }}>{sec.groups.join(", ")}</td>
+                      <td style={{ padding: "10px 16px", fontSize: 13, fontWeight: 700, color: "#002c5f", whiteSpace: "nowrap" }}>{sec.room}</td>
                     </tr>
                   ))}
                 </tbody>
