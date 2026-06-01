@@ -434,7 +434,7 @@ export default function App() {
 
   // profiles + adminOverrides 합성 → 매칭에 반영, 삭제된 ID 제외
   const mergedProfiles = profiles
-    .filter(p => !deletedIds.has(p.id))
+    .filter(p => !deletedIds.has(p.id) && !p.isStaff)  // isStaff: true 계정 제외
     .map(p => {
       const ov = adminOverrides[p.id];
       if (!ov) return p;
