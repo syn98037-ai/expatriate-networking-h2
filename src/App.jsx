@@ -265,17 +265,14 @@ export default function App() {
         if (snap.exists()) {
           setMyProfile({ id: user.uid, ...snap.data() });
           setAuthStatus("auth");
-          // 기존 티미팅 수락 데이터를 missions m1Count에 동기화
+          // 티미팅 수락 카운트를 missions에 저장 (프로필뷰/관리자에서 확인용)
           try {
-            const { getDocs: gd, query: q2, collection: col2, where: w2 } = await import("firebase/firestore");
             const mtgSnap = await getDocs(
-              query(col("meetings"), where("fromId", "==", user.uid))
+              query(col("meetings"), where("fromId", "==", user.uid), where("status", "==", "수락함"))
             );
-            const acceptedCnt = mtgSnap.docs.filter(d => d.data().status === "수락함").length;
-            if (acceptedCnt > 0) {
-              await setDoc(docR("missions", user.uid), { m1Count: Math.min(acceptedCnt, 2) }, { merge: true });
-            }
-          } catch(e) {}
+            const acceptedCnt = Math.min(mtgSnap.docs.length, 2);
+            await setDoc(docR("missions", user.uid), { m1Count: acceptedCnt }, { merge: true });
+          } catch(e) { console.error("m1Count sync error:", e); }
           try {
             if (typeof Notification !== "undefined") {
               if (Notification.permission === "granted") {
