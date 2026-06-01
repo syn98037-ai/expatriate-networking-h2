@@ -268,10 +268,14 @@ export default function App() {
           // 티미팅 수락 카운트를 missions에 저장 (프로필뷰/관리자에서 확인용)
           try {
             const mtgSnap = await getDocs(
-              query(col("meetings"), where("fromId", "==", user.uid), where("status", "==", "수락함"))
+              query(col("meetings"), where("fromId", "==", user.uid))
             );
-            const acceptedCnt = Math.min(mtgSnap.docs.length, 2);
+            const acceptedCnt = Math.min(
+              mtgSnap.docs.filter(d => d.data().status === "수락함").length,
+              2
+            );
             await setDoc(docR("missions", user.uid), { m1Count: acceptedCnt }, { merge: true });
+            console.log("m1Count synced:", acceptedCnt);
           } catch(e) { console.error("m1Count sync error:", e); }
           try {
             if (typeof Notification !== "undefined") {
