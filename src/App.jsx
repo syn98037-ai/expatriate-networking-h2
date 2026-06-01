@@ -265,6 +265,17 @@ export default function App() {
         if (snap.exists()) {
           setMyProfile({ id: user.uid, ...snap.data() });
           setAuthStatus("auth");
+          // 기존 티미팅 수락 데이터를 missions m1Count에 동기화
+          try {
+            const { getDocs: gd, query: q2, collection: col2, where: w2 } = await import("firebase/firestore");
+            const mtgSnap = await getDocs(
+              query(col("meetings"), where("fromId", "==", user.uid))
+            );
+            const acceptedCnt = mtgSnap.docs.filter(d => d.data().status === "수락함").length;
+            if (acceptedCnt > 0) {
+              await setDoc(docR("missions", user.uid), { m1Count: Math.min(acceptedCnt, 2) }, { merge: true });
+            }
+          } catch(e) {}
           try {
             if (typeof Notification !== "undefined") {
               if (Notification.permission === "granted") {
@@ -704,11 +715,11 @@ export default function App() {
   const updateMtg = async (id, status) => {
     await updateDoc(docR("meetings", id), { status });
 
-    // 수락 시 신청자에게 알림 직접 생성
     if (status === "수락함") {
-      try {
-        const mtg = meetings.find(m => m.id === id);
-        if (mtg) {
+      const mtg = meetings.find(m => m.id === id);
+      if (mtg) {
+        // 신청자에게 알림
+        try {
           await addDoc(col("notifications"), {
             toId: mtg.fromId,
             type: "accepted",
@@ -718,8 +729,15 @@ export default function App() {
             read: false,
             createdAt: new Date().toISOString(),
           });
-        }
-      } catch(e) { console.error("티미팅 수락 알림 오류:", e); }
+        } catch(e) { console.error("티미팅 수락 알림 오류:", e); }
+
+        // 신청자의 missions에 m1Count 업데이트 (다른 사람 프로필에서 볼 수 있도록)
+        try {
+          const fromMtgs = meetings.filter(m => m.fromId === mtg.fromId && m.status === "수락함");
+          const newCount = fromMtgs.length + 1; // 현재 수락 포함
+          await setDoc(docR("missions", mtg.fromId), { m1Count: Math.min(newCount, 2) }, { merge: true });
+        } catch(e) { console.error("미션 카운트 업데이트 오류:", e); }
+      }
     }
   };
 
@@ -1797,8 +1815,8 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
             <p style={{ fontSize: 12, color: "#6b7280", marginBottom: 4 }}>전체 미션 현황</p>
             {profiles.map(p => {
               const ms     = missions[p.id] || {};
-              // 티미팅 발송: missions의 m1Count 대신 실제 meetings에서 계산
-              const sentCnt = (meetings || []).filter(m => m.fromId === p.id).length;
+              // 티미팅 발송: missions에 저장된 m1Count 사용
+              const sentCnt = ms.m1Count || 0;
               const m1done = sentCnt >= 2;
               const m2done = (ms.m2Photos || []).length >= 2;
               const allDone = m1done && m2done;
@@ -1950,8 +1968,8 @@ function Directory({ profiles, uid, onRequest, onChat, onViewProfile }) {
 function ProfileView({ profile, missions = {}, meetings = [], onBack, onRequest, onChat }) {
   // 미션 현황 계산
   const pMissions = missions[profile.id] || {};
-  // m1: 내가 보낸 티미팅 중 상대방이 수락한 것
-  const m1Count = (meetings || []).filter(m => m.fromId === profile.id && m.status === "수락함").length;
+  // m1: missions 컬렉션에 저장된 카운트 사용 (다른 사람과의 meetings도 포함)
+  const m1Count = pMissions.m1Count || 0;
   // m2: 인증샷 개수
   const m2Count = (pMissions.m2Photos || []).length;
   const m1Done  = m1Count >= 2;
