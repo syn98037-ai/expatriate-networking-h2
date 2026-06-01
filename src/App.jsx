@@ -1131,7 +1131,7 @@ match /{document=**} {
         {overlay?.type === "chat"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:480,height:"75vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div></div>}
         {overlay?.type === "post"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"80vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div></div>}
         {overlay?.type === "newPost"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div></div>}
-        {overlay?.type === "profileView" && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,height:"70vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type:"sendReq", data:overlay.data })} onChat={async () => { const id = overlay.data.id; const name = overlay.data.name; setOverlay(null); await openChat(roomFor(id), name); }} /></div></div>}
+        {overlay?.type === "profileView" && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,height:"70vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><ProfileView profile={overlay.data} missions={missions} meetings={meetings} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type:"sendReq", data:overlay.data })} onChat={async () => { const id = overlay.data.id; const name = overlay.data.name; setOverlay(null); await openChat(roomFor(id), name); }} /></div></div>}
         {overlay?.type === "sendReq"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:150 }}><SendReqModal target={overlay.data} onSend={(msg) => { sendReq(overlay.data, msg); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
 
         {/* PC 알림 패널 - 오른쪽 슬라이드 */}
@@ -1223,7 +1223,7 @@ match /{document=**} {
       {overlay?.type === "chat"        && <div style={S.overlay}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={async () => { setOverlay(null); if (uid) { try { await updateDoc(docR("profiles", uid), { activeRoomId: null }); } catch(e) {} } }} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div>}
       {overlay?.type === "post"        && <div style={S.overlay}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div>}
       {overlay?.type === "newPost"     && <div style={S.overlay}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
-      {overlay?.type === "profileView" && <div style={S.overlay}><ProfileView profile={overlay.data} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type: "sendReq", data: overlay.data })} onChat={async () => { const id = overlay.data.id; const name = overlay.data.name; setOverlay(null); await openChat(roomFor(id), name); }} /></div>}
+      {overlay?.type === "profileView" && <div style={S.overlay}><ProfileView profile={overlay.data} missions={missions} meetings={meetings} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type: "sendReq", data: overlay.data })} onChat={async () => { const id = overlay.data.id; const name = overlay.data.name; setOverlay(null); await openChat(roomFor(id), name); }} /></div>}
       {overlay?.type === "sendReq"     && <div style={S.overlay}><SendReqModal target={overlay.data} onSend={(msg) => { sendReq(overlay.data, msg); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
 
       {/* 알림 패널 - 모바일: 절대 위치 오버레이 */}
@@ -1947,7 +1947,23 @@ function Directory({ profiles, uid, onRequest, onChat, onViewProfile }) {
   );
 }
 
-function ProfileView({ profile, onBack, onRequest, onChat }) {
+function ProfileView({ profile, missions = {}, meetings = [], onBack, onRequest, onChat }) {
+  // 미션 현황 계산
+  const pMissions = missions[profile.id] || {};
+  // m1: 내가 보낸 티미팅 중 상대방이 수락한 것
+  const m1Count = (meetings || []).filter(m => m.fromId === profile.id && m.status === "수락함").length;
+  // m2: 인증샷 개수
+  const m2Count = (pMissions.m2Photos || []).length;
+  const m1Done  = m1Count >= 2;
+  const m2Done  = m2Count >= 2;
+  const total   = (m1Done ? 1 : 0) + (m2Done ? 1 : 0);
+
+  const missionStatus = total === 2
+    ? { label: "미션 완료", color: "#059669", bg: "#d1fae5", icon: "🎉" }
+    : total === 1
+    ? { label: "미션 진행중", color: "#d97706", bg: "#fef3c7", icon: "⏳" }
+    : { label: "미션 진행중", color: "#6b7280", bg: "#f3f4f6", icon: "⏳" };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#ffffff", overflow: "hidden" }}>
       <div style={S.overlayHeader}>
@@ -1973,6 +1989,29 @@ function ProfileView({ profile, onBack, onRequest, onChat }) {
               <p style={{ fontSize: 14, color: "#002c5f", margin: 0, lineHeight: 1.5 }}>{value}</p>
             </div>
           ))}
+          {/* 미션 현황 */}
+          <div style={{ ...S.card, borderRadius: 16, background: missionStatus.bg, border: `1px solid ${missionStatus.color}30` }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: missionStatus.color, margin: 0 }}>🏆 네트워킹 미션 현황</p>
+              <span style={{ fontSize: 11, fontWeight: 700, color: missionStatus.color, background: "#ffffff", padding: "2px 10px", borderRadius: 20 }}>
+                {missionStatus.icon} {missionStatus.label} ({total}/2)
+              </span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {[
+                { label: "티미팅 발송", current: m1Count, target: 2, done: m1Done },
+                { label: "티미팅 인증샷", current: m2Count, target: 2, done: m2Done },
+              ].map(m => (
+                <div key={m.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 11, color: missionStatus.color, width: 80, flexShrink: 0 }}>{m.label}</span>
+                  <div style={{ flex: 1, height: 6, background: "rgba(0,0,0,0.08)", borderRadius: 3, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${Math.min((m.current/m.target)*100,100)}%`, background: m.done ? "#059669" : missionStatus.color, borderRadius: 3, transition: "width 0.4s" }} />
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: missionStatus.color, minWidth: 28, textAlign: "right" }}>{m.current}/{m.target}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2718,10 +2757,10 @@ const SCHEDULE_DATA = [
           { room: "503호",         groups: ["인도E"] },
           { room: "510호",         groups: ["중국A"] },
           { room: "509호",         groups: ["중국C"] },
-          { room: "대강당",         groups: ["카자흐스탄"] },
+          { room: "대강당",         groups: ["이집트", "카자흐스탄"] },
           { room: "504호",         groups: ["튀르키예"] },
           { room: "포럼관B",        groups: ["UAE", "미국D", "미국E", "미국H", "브라질", "슬로바키아", "싱가포르", "인도A", "인도D", "인도F", "인도G", "인도네시아", "일본", "중국D", "중국E", "중국F", "체코"] },
-          { room: "계단식 세미나실", groups: ["말레이시아", "미국F", "이집트", "중국B", "프랑스", "호주"] },
+          { room: "계단식 세미나실", groups: ["말레이시아", "미국F", "중국B", "프랑스", "호주"] },
         ]
       },
     ],
