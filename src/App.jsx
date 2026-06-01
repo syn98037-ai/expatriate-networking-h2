@@ -270,6 +270,7 @@ export default function App() {
             const mtgSnap = await getDocs(
               query(col("meetings"), where("fromId", "==", user.uid))
             );
+            console.log("my uid:", user.uid);
             console.log("meetings total:", mtgSnap.docs.length);
             console.log("meetings data:", mtgSnap.docs.map(d => ({id: d.id, status: d.data().status, fromId: d.data().fromId})));
             const acceptedCnt = Math.min(
