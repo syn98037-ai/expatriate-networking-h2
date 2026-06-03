@@ -1438,7 +1438,7 @@ function AuthView({ onLogin, onRegister, onAdmin, loginError = "" }) {
   const doLogin = async () => {
     setLocalErr(""); setLoading(true);
     if (!uname.trim() || !pw) { setLocalErr("아이디와 비밀번호를 입력해주세요."); setLoading(false); return; }
-    const err = await onLogin(uname.trim().toLowerCase(), pw);
+    const err = await onLogin(uname.trim(), pw);
     if (err) setLocalErr(err);
     setLoading(false);
   };
