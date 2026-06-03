@@ -108,6 +108,7 @@ function NavIcon({ id, active }) {
 // ══════════════════════════════════════════════════════════
 export default function App() {
   const [authStatus, setAuthStatus] = useState("loading"); // loading | unauth | auth
+  const [loginError, setLoginError] = useState(""); // 로그인 오류 메시지
 
   // ── PWA 자동 업데이트 ──────────────────────────────
   useEffect(() => {
@@ -492,11 +493,15 @@ export default function App() {
   // ── 로그인 ───────────────────────────────────────────
   const handleLogin = async (username, password) => {
     try {
+      setLoginError("");
       const email = `${username}@globalconnect.hmg`;
       await signInWithEmailAndPassword(auth, email, password);
+      setLoginError("");
       return null;
     } catch {
-      return "아이디 또는 비밀번호가 잘못되었습니다.";
+      const msg = "아이디 또는 비밀번호가 잘못되었습니다.";
+      setLoginError(msg);
+      return msg;
     }
   };
 
@@ -1013,7 +1018,7 @@ match /{document=**} {
         {(authStatus === "unauth" || authStatus === "needProfile") && (
           <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#020617 0%,#0a1628 100%)" }}>
             <div style={{ width: 420, height: "90vh", maxHeight: 780, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid #e0e3e8", borderRadius: 28, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 40px 80px rgba(0,0,0,0.6)" }}>
-              <AuthView onLogin={handleLogin} onRegister={handleRegister} onAdmin={() => openOverlay({ type: "adminAuth" })} />
+              <AuthView onLogin={handleLogin} onRegister={handleRegister} onAdmin={() => openOverlay({ type: "adminAuth" })} loginError={loginError} />
             </div>
           </div>
         )}
@@ -1189,6 +1194,7 @@ match /{document=**} {
           onLogin={handleLogin}
           onRegister={handleRegister}
           onAdmin={() => openOverlay({ type: "adminAuth" })}
+          loginError={loginError}
           needProfile={authStatus === "needProfile"}
           onSaveProfile={saveProfile}
           myProfile={myProfile}
@@ -1383,13 +1389,16 @@ function NotifPanel({ notifs, onClose, onRead, onReadAll, onGoMeetings, onGoChat
 // ══════════════════════════════════════════════════════════
 //  로그인 / 회원가입
 // ══════════════════════════════════════════════════════════
-function AuthView({ onLogin, onRegister, onAdmin }) {
+function AuthView({ onLogin, onRegister, onAdmin, loginError = "" }) {
   const [mode,   setMode]   = useState("login");
   const [step,   setStep]   = useState(1);
   const [uname,  setUname]  = useState("");
   const [pw,     setPw]     = useState("");
   const [pw2,    setPw2]    = useState("");
-  const [errMsg, setErrMsg] = useState("");
+  const [errMsg, setErrMsg] = useState(loginError);
+
+  // App 레벨 loginError가 바뀌면 errMsg 업데이트 (리마운트 시에도 유지)
+  useEffect(() => { if (loginError) setErrMsg(loginError); }, [loginError]);
   const [loading, setLoading] = useState(false);
   const [prof, setProf] = useState({ name:"", org:"", country:"", city:"", concern: CONCERNS[0], interest:"", personality:"사교적인", targetPartner:"", photoUrl:"" });
   const [preview, setPreview] = useState(null);
