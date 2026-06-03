@@ -629,8 +629,10 @@ export default function App() {
 
   // ── 게시글 수정 ──────────────────────────────────────
   const editPost = async (postId, updates) => {
-    const payload = { title: updates.title, content: updates.content, updatedAt: new Date().toISOString() };
-    if (updates.imageUrl) {
+    const payload = { title: updates.title, content: updates.content, tag: updates.tag || "", updatedAt: new Date().toISOString() };
+    if (updates.imageUrl === "") {
+      payload.imageUrl = "";  // 사진 삭제
+    } else if (updates.imageUrl) {
       if (updates.imageUrl.startsWith("data:")) {
         payload.imageUrl = await uploadPhoto(updates.imageUrl, `posts/${uid}_${Date.now()}`);
       } else {
@@ -2442,7 +2444,7 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
         {/* 본인 글이면 수정/삭제 버튼 표시 */}
         {isAuthor && !isEditing && (
           <div style={{ display: "flex", gap: 6, marginLeft: 8 }}>
-            <button onClick={() => { setIsEditing(true); setEditForm({ title: post.title, content: post.content, imageUrl: post.imageUrl || "" }); }} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid #d1d8e0", color: "#002c5f", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>수정</button>
+            <button onClick={() => { setIsEditing(true); setEditForm({ title: post.title, content: post.content, imageUrl: post.imageUrl || "", tag: post.tag || "" }); }} style={{ background: "rgba(245,158,11,0.1)", border: "1px solid #d1d8e0", color: "#002c5f", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>수정</button>
             <button onClick={() => { if (window.confirm("게시글을 삭제하시겠습니까?")) onDeletePost(); }} style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>삭제</button>
           </div>
         )}
@@ -2452,6 +2454,17 @@ function PostDetail({ post: initialPost, profiles, uid, myProfile, onAddComment,
           /* 수정 모드 */
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0 }}>게시글 수정</p>
+            <div>
+              <label style={S.lbl}>태그</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {POST_TAGS.map(t => (
+                  <button key={t} onClick={() => setEditForm(f => ({ ...f, tag: t }))}
+                    style={{ padding: "5px 14px", borderRadius: 20, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer",
+                      background: editForm.tag === t ? "#002c5f" : "#f3f4f6",
+                      color: editForm.tag === t ? "#ffffff" : "#6b7280" }}>{t}</button>
+                ))}
+              </div>
+            </div>
             <div><label style={S.lbl}>제목</label><input style={S.inp} value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} /></div>
             <div><label style={S.lbl}>내용</label><textarea style={{ ...S.inp, minHeight: 200, resize: "none" }} value={editForm.content} onChange={e => setEditForm(f => ({ ...f, content: e.target.value }))} /></div>
             {/* 사진 수정 */}
