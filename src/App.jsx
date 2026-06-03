@@ -109,6 +109,8 @@ function NavIcon({ id, active }) {
 export default function App() {
   const [authStatus, setAuthStatus] = useState("loading"); // loading | unauth | auth
   const [loginError, setLoginError] = useState(""); // 로그인 오류 메시지
+  const [rejectModal, setRejectModal] = useState(null); // { meetingId }
+  const [rejectMsg,   setRejectMsg]   = useState("");
 
   // ── PWA 자동 업데이트 ──────────────────────────────
   useEffect(() => {
@@ -991,7 +993,7 @@ match /{document=**} {
       case "dashboard":  return <Dashboard profiles={mergedProfiles} myProfile={mergedProfiles.find(p => p.id === uid) || myProfile} uid={uid} onRequest={p => openOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} onViewProfile={p => openOverlay({ type: "profileView", data: p })} />;
       case "directory":  return <Directory profiles={mergedProfiles} uid={uid} onRequest={p => openOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} onViewProfile={p => openOverlay({ type: "profileView", data: p })} />;
       case "board":      return <BoardView posts={posts} profiles={mergedProfiles} uid={uid} onOpenPost={p => openOverlay({ type: "post", data: p })} onNewPost={() => openOverlay({ type: "newPost" })} />;
-      case "meetings":   return <Meetings meetings={meetings} profiles={mergedProfiles} rooms={rooms} dmRooms={dmRooms} uid={uid} onUpdate={updateMtg} onChat={m => { const oid = m.fromId === uid ? m.toId : m.fromId; openChat(roomFor(oid), m.fromId === uid ? m.toName : m.fromName); }} onOpenChat={(id,name) => openChat(id,name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} onViewProfile={p => openOverlay({ type: "profileView", data: p })} />;
+      case "meetings":   return <Meetings meetings={meetings} profiles={mergedProfiles} rooms={rooms} dmRooms={dmRooms} uid={uid} onUpdate={updateMtg} onReject={id => { setRejectModal({ meetingId: id }); setRejectMsg(""); }} onChat={m => { const oid = m.fromId === uid ? m.toId : m.fromId; openChat(roomFor(oid), m.fromId === uid ? m.toName : m.fromName); }} onOpenChat={(id,name) => openChat(id,name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} onViewProfile={p => openOverlay({ type: "profileView", data: p })} />;
       case "missions":   return <MissionView myMissions={myMissions} sentCount={sentCount} uid={uid} onUpdate={updateMission} />;
 
       case "schedule":   return <ScheduleView />;
@@ -1248,6 +1250,27 @@ match /{document=**} {
 
       {/* 오버레이 */}
       {overlay?.type === "profile"     && <div style={S.overlay}><ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} /></div>}
+      {/* 거절 메시지 모달 */}
+      {rejectModal && (
+        <div onClick={() => setRejectModal(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#ffffff", borderRadius: 24, width: "100%", maxWidth: 340, padding: 24, display: "flex", flexDirection: "column", gap: 14, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <p style={{ fontSize: 15, fontWeight: 800, color: "#111827", margin: 0 }}>거절 메시지</p>
+            <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>거절 이유를 남기면 상대방에게 표시돼요. (선택)</p>
+            <textarea value={rejectMsg} onChange={e => setRejectMsg(e.target.value)}
+              placeholder="예) 일정이 맞지 않아서요 :)"
+              rows={3}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 12, border: "1.5px solid #e0e3e8", fontSize: 13, fontFamily: "'Noto Sans KR', sans-serif", outline: "none", resize: "none", boxSizing: "border-box" }} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => { updateMtg(rejectModal.meetingId, "거절함", rejectMsg); setRejectModal(null); setRejectMsg(""); }}
+                style={{ flex: 1, padding: "11px", background: "#ef4444", border: "none", color: "#fff", fontSize: 13, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>거절하기</button>
+              <button onClick={() => setRejectModal(null)}
+                style={{ flex: 1, padding: "11px", background: "#f3f4f6", border: "none", color: "#374151", fontSize: 13, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>취소</button>
+            </div>
+          </div>
+        </div>
+      )}
       {overlay?.type === "adminAuth"   && <div style={{ position:"fixed", inset:0, zIndex:200 }}><AdminAuth onSuccess={() => { console.log("MOB onSuccess, setting admin"); setIsAdmin(true); setOverlay({ type: "admin" }); console.log("MOB overlay set"); }} onBack={() => setOverlay(null)} /></div>}
       {overlay?.type === "admin"       && <div style={{ position:"fixed", inset:0, zIndex:200, display:"flex", flexDirection:"column" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} /></div>}
       {overlay?.type === "chat"        && <div style={S.overlay}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={async () => { setOverlay(null); if (uid) { try { await updateDoc(docR("profiles", uid), { activeRoomId: null }); } catch(e) {} } }} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div>}
@@ -1395,10 +1418,10 @@ function AuthView({ onLogin, onRegister, onAdmin, loginError = "" }) {
   const [uname,  setUname]  = useState("");
   const [pw,     setPw]     = useState("");
   const [pw2,    setPw2]    = useState("");
-  const [errMsg, setErrMsg] = useState(loginError);
+  const [localErr, setLocalErr] = useState("");
 
-  // App 레벨 loginError가 바뀌면 errMsg 업데이트 (리마운트 시에도 유지)
-  useEffect(() => { if (loginError) setErrMsg(loginError); }, [loginError]);
+  // loginError(App 레벨)와 localErr(컴포넌트 레벨) 중 있는 것 표시
+  const errMsg = localErr || loginError;
   const [loading, setLoading] = useState(false);
   const [prof, setProf] = useState({ name:"", org:"", country:"", city:"", concern: CONCERNS[0], interest:"", personality:"사교적인", targetPartner:"", photoUrl:"" });
   const [preview, setPreview] = useState(null);
@@ -1407,19 +1430,19 @@ function AuthView({ onLogin, onRegister, onAdmin, loginError = "" }) {
   const [showPrivacy,   setShowPrivacy]   = useState(false);
 
   const doLogin = async () => {
-    setErrMsg(""); setLoading(true);
-    if (!uname.trim() || !pw) { setErrMsg("아이디와 비밀번호를 입력해주세요."); setLoading(false); return; }
+    setLocalErr(""); setLoading(true);
+    if (!uname.trim() || !pw) { setLocalErr("아이디와 비밀번호를 입력해주세요."); setLoading(false); return; }
     const err = await onLogin(uname.trim(), pw);
-    if (err) setErrMsg(err);
+    if (err) setLocalErr(err);
     setLoading(false);
   };
 
   const doNext = async () => {
-    setErrMsg("");
-    if (!uname.trim())              return setErrMsg("아이디를 입력해주세요.");
-    if (uname.trim().length < 4)   return setErrMsg("아이디는 4자 이상이어야 합니다.");
-    if (pw.length < 6)             return setErrMsg("비밀번호는 6자 이상이어야 합니다.");
-    if (pw !== pw2)                return setErrMsg("비밀번호가 일치하지 않습니다.");
+    setLocalErr("");
+    if (!uname.trim())              return setLocalErr("아이디를 입력해주세요.");
+    if (uname.trim().length < 4)   return setLocalErr("아이디는 4자 이상이어야 합니다.");
+    if (pw.length < 6)             return setLocalErr("비밀번호는 6자 이상이어야 합니다.");
+    if (pw !== pw2)                return setLocalErr("비밀번호가 일치하지 않습니다.");
     setLoading(true);
     try {
       // deletedAccounts 확인 (삭제된 계정이면 재가입 허용)
@@ -1436,7 +1459,7 @@ function AuthView({ onLogin, onRegister, onAdmin, loginError = "" }) {
       );
       if (!profileSnap.empty) {
         setLoading(false);
-        return setErrMsg("이미 사용 중인 아이디입니다.");
+        return setLocalErr("이미 사용 중인 아이디입니다.");
       }
       setLoading(false);
       setStep(2);
@@ -1449,14 +1472,14 @@ function AuthView({ onLogin, onRegister, onAdmin, loginError = "" }) {
   };
 
   const doRegister = async () => {
-    setErrMsg("");
-    if (!prof.name.trim())    return setErrMsg("이름을 입력해주세요.");
-    if (!prof.country.trim()) return setErrMsg("부임 국가를 입력해주세요.");
-    if (!prof.city.trim())    return setErrMsg("부임 도시를 입력해주세요.");
-    if (!privacyAgreed)       return setErrMsg("개인정보 수집·이용에 동의해주세요.");
+    setLocalErr("");
+    if (!prof.name.trim())    return setLocalErr("이름을 입력해주세요.");
+    if (!prof.country.trim()) return setLocalErr("부임 국가를 입력해주세요.");
+    if (!prof.city.trim())    return setLocalErr("부임 도시를 입력해주세요.");
+    if (!privacyAgreed)       return setLocalErr("개인정보 수집·이용에 동의해주세요.");
     setLoading(true);
     const err = await onRegister(uname.trim(), pw, prof);
-    if (err) setErrMsg(err);
+    if (err) setLocalErr(err);
     setLoading(false);
   };
 
@@ -1490,7 +1513,7 @@ function AuthView({ onLogin, onRegister, onAdmin, loginError = "" }) {
       <div style={{ padding: "0 24px", position: "relative" }}>
         <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.8)", padding: 4, borderRadius: 16, border: "1px solid #e0e3e8" }}>
           {[["login","로그인"],["register","회원가입"]].map(([id, label]) => (
-            <button key={id} onClick={() => { setMode(id); setStep(1); setErrMsg(""); }} style={{ flex: 1, padding: 10, borderRadius: 12, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: mode === id ? "#002c5f" : "transparent", color: mode === id ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{label}</button>
+            <button key={id} onClick={() => { setMode(id); setStep(1); setLocalErr(""); }} style={{ flex: 1, padding: 10, borderRadius: 12, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: mode === id ? "#002c5f" : "transparent", color: mode === id ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{label}</button>
           ))}
         </div>
       </div>
@@ -1506,7 +1529,7 @@ function AuthView({ onLogin, onRegister, onAdmin, loginError = "" }) {
             <button onClick={doLogin} disabled={loading} style={{ ...S.btnAmber, width: "100%", padding: 16, fontSize: 15, borderRadius: 18, opacity: loading ? 0.6 : 1 }}>
               {loading ? "로그인 중..." : "로그인"}
             </button>
-            <p style={{ textAlign: "center", fontSize: 12, color: "#6b7280", margin: 0 }}>아직 계정이 없으신가요? <button onClick={() => { setMode("register"); setErrMsg(""); }} style={{ background: "none", border: "none", color: "#002c5f", fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", fontSize: 12 }}>회원가입</button></p>
+            <p style={{ textAlign: "center", fontSize: 12, color: "#6b7280", margin: 0 }}>아직 계정이 없으신가요? <button onClick={() => { setMode("register"); setLocalErr(""); }} style={{ background: "none", border: "none", color: "#002c5f", fontWeight: 700, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", fontSize: 12 }}>회원가입</button></p>
           </>
         )}
 
@@ -2161,9 +2184,7 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
   );
 }
 
-function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, onOpenChat, onCreateRoom, onLeaveRoom, onInviteToRoom, onViewProfile }) {
-  const [rejectModal, setRejectModal] = useState(null); // { meetingId }
-  const [rejectMsg, setRejectMsg]     = useState("");
+function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onReject, onChat, onOpenChat, onCreateRoom, onLeaveRoom, onInviteToRoom, onViewProfile }) {
   const [tab, setTab] = useState("received");
   const received = meetings.filter(m => m.toId   === uid);
   const sent     = meetings.filter(m => m.fromId === uid);
@@ -2195,7 +2216,7 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
                 <p style={{ fontSize: 13, color: "#002c5f", margin: 0, lineHeight: 1.5 }}>"{m.message}"</p>
               </div>
             )}
-            {m.status === "대기중" && <div style={{ display: "flex", gap: 8 }}><button onClick={() => onUpdate(m.id, "수락함")} style={{ ...S.btnAmber, flex: 1, padding: 10 }}>수락</button><button onClick={() => { setRejectModal({ meetingId: m.id }); setRejectMsg(""); }} style={{ ...S.btnGhost, flex: 1, padding: 10 }}>거절</button></div>}
+            {m.status === "대기중" && <div style={{ display: "flex", gap: 8 }}><button onClick={() => onUpdate(m.id, "수락함")} style={{ ...S.btnAmber, flex: 1, padding: 10 }}>수락</button><button onClick={() => onReject(m.id)} style={{ ...S.btnGhost, flex: 1, padding: 10 }}>거절</button></div>}
             {m.status === "수락함" && <button onClick={() => onChat(m)} style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#002c5f", fontWeight: 700, borderRadius: 12, padding: 10, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", fontSize: 12, width: "100%" }}>💬 채팅 시작하기</button>}
           </div>
         );
@@ -2607,30 +2628,7 @@ function NewPost({ onSubmit, onBack }) {
           </div>
         </div>
       </div>
-      {/* 거절 메시지 모달 - 독립 로컬 state */}
-      {rejectModal && (
-        <div onClick={() => setRejectModal(null)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <div onClick={e => e.stopPropagation()}
-            style={{ background: "#ffffff", borderRadius: 24, width: "100%", maxWidth: 340, padding: 24, display: "flex", flexDirection: "column", gap: 14, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
-            <p style={{ fontSize: 15, fontWeight: 800, color: "#111827", margin: 0 }}>거절 메시지</p>
-            <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>거절 이유를 남기면 상대방에게 표시돼요. (선택)</p>
-            <textarea
-              value={rejectMsg}
-              onChange={e => setRejectMsg(e.target.value)}
-              placeholder="예) 일정이 맞지 않아서요 :)"
-              rows={3}
-              style={{ width: "100%", padding: "10px 14px", borderRadius: 12, border: "1.5px solid #e0e3e8", fontSize: 13, fontFamily: "'Noto Sans KR', sans-serif", outline: "none", resize: "none", boxSizing: "border-box" }}
-            />
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => { onUpdate(rejectModal.meetingId, "거절함", rejectMsg); setRejectModal(null); setRejectMsg(""); }}
-                style={{ flex: 1, padding: "11px", background: "#ef4444", border: "none", color: "#fff", fontSize: 13, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>거절하기</button>
-              <button onClick={() => setRejectModal(null)}
-                style={{ flex: 1, padding: "11px", background: "#f3f4f6", border: "none", color: "#374151", fontSize: 13, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>취소</button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
