@@ -714,8 +714,12 @@ export default function App() {
   };
 
   // ── 티미팅 상태 변경 ─────────────────────────────────
-  const updateMtg = async (id, status) => {
-    await updateDoc(docR("meetings", id), { status });
+  const updateMtg = async (id, status, rejectMessage = "") => {
+    const updateData = { status };
+    if (status === "거절함" && rejectMessage.trim()) {
+      updateData.rejectMessage = rejectMessage.trim();
+    }
+    await updateDoc(docR("meetings", id), updateData);
 
     if (status === "수락함") {
       const mtg = meetings.find(m => m.id === id);
@@ -2149,6 +2153,8 @@ function ChatRoom({ roomId, name, myProfile, uid, profiles, chats, setChats, onS
 }
 
 function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, onOpenChat, onCreateRoom, onLeaveRoom, onInviteToRoom, onViewProfile }) {
+  const [rejectModal, setRejectModal] = useState(null); // { meetingId }
+  const [rejectMsg, setRejectMsg]     = useState("");
   const [tab, setTab] = useState("received");
   const received = meetings.filter(m => m.toId   === uid);
   const sent     = meetings.filter(m => m.fromId === uid);
@@ -2180,7 +2186,7 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
                 <p style={{ fontSize: 13, color: "#002c5f", margin: 0, lineHeight: 1.5 }}>"{m.message}"</p>
               </div>
             )}
-            {m.status === "대기중" && <div style={{ display: "flex", gap: 8 }}><button onClick={() => onUpdate(m.id, "수락함")} style={{ ...S.btnAmber, flex: 1, padding: 10 }}>수락</button><button onClick={() => onUpdate(m.id, "거절함")} style={{ ...S.btnGhost, flex: 1, padding: 10 }}>거절</button></div>}
+            {m.status === "대기중" && <div style={{ display: "flex", gap: 8 }}><button onClick={() => onUpdate(m.id, "수락함")} style={{ ...S.btnAmber, flex: 1, padding: 10 }}>수락</button><button onClick={() => { setRejectModal({ meetingId: m.id }); setRejectMsg(""); }} style={{ ...S.btnGhost, flex: 1, padding: 10 }}>거절</button></div>}
             {m.status === "수락함" && <button onClick={() => onChat(m)} style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(34,197,94,0.2)", color: "#002c5f", fontWeight: 700, borderRadius: 12, padding: 10, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", fontSize: 12, width: "100%" }}>💬 채팅 시작하기</button>}
           </div>
         );
@@ -2195,6 +2201,12 @@ function Meetings({ meetings, profiles, rooms, dmRooms, uid, onUpdate, onChat, o
               {m.status === "수락함" && <button onClick={() => onChat(m)} style={{ padding: 6, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 8, cursor: "pointer", fontSize: 14 }}>💬</button>}
               <span style={stBadge(m.status)}>{m.status}</span>
             </div>
+            {m.status === "거절함" && m.rejectMessage && (
+              <div style={{ marginTop: 8, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 10, padding: "8px 12px" }}>
+                <p style={{ fontSize: 11, color: "#c0392b", margin: "0 0 2px", fontWeight: 700 }}>거절 메시지</p>
+                <p style={{ fontSize: 12, color: "#374151", margin: 0, lineHeight: 1.5 }}>"{m.rejectMessage}"</p>
+              </div>
+            )}
           </div>
         );
       }))}
@@ -2586,6 +2598,30 @@ function NewPost({ onSubmit, onBack }) {
           </div>
         </div>
       </div>
+      {/* 거절 메시지 모달 - 독립 로컬 state */}
+      {rejectModal && (
+        <div onClick={() => setRejectModal(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: "#ffffff", borderRadius: 24, width: "100%", maxWidth: 340, padding: 24, display: "flex", flexDirection: "column", gap: 14, boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+            <p style={{ fontSize: 15, fontWeight: 800, color: "#111827", margin: 0 }}>거절 메시지</p>
+            <p style={{ fontSize: 12, color: "#6b7280", margin: 0 }}>거절 이유를 남기면 상대방에게 표시돼요. (선택)</p>
+            <textarea
+              value={rejectMsg}
+              onChange={e => setRejectMsg(e.target.value)}
+              placeholder="예) 일정이 맞지 않아서요 :)"
+              rows={3}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 12, border: "1.5px solid #e0e3e8", fontSize: 13, fontFamily: "'Noto Sans KR', sans-serif", outline: "none", resize: "none", boxSizing: "border-box" }}
+            />
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => { onUpdate(rejectModal.meetingId, "거절함", rejectMsg); setRejectModal(null); setRejectMsg(""); }}
+                style={{ flex: 1, padding: "11px", background: "#ef4444", border: "none", color: "#fff", fontSize: 13, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>거절하기</button>
+              <button onClick={() => setRejectModal(null)}
+                style={{ flex: 1, padding: "11px", background: "#f3f4f6", border: "none", color: "#374151", fontSize: 13, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>취소</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
