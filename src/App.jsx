@@ -471,7 +471,7 @@ export default function App() {
         try { await deleteDoc(docR("deletedAccounts", username)); } catch(e) {}
       } else {
         // 일반 신규 가입
-        const email = `${username}@globalconnect.hmg`;
+        const email = `${username.toLowerCase()}@globalconnect.hmg`;
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         id = cred.user.uid;
       }
@@ -496,7 +496,13 @@ export default function App() {
   const handleLogin = async (username, password) => {
     try {
       setLoginError("");
-      const email = `${username}@globalconnect.hmg`;
+      // 1. Firestore에서 username 대소문자 정확히 일치 확인 (Firebase Auth는 대소문자 무시하므로)
+      const profileSnap = await getDocs(query(col("profiles"), where("username", "==", username.trim())));
+      if (profileSnap.empty) {
+        throw new Error("username mismatch");
+      }
+      // 2. Firebase Auth 로그인 (소문자 이메일 사용)
+      const email = `${username.trim().toLowerCase()}@globalconnect.hmg`;
       await signInWithEmailAndPassword(auth, email, password);
       setLoginError("");
       return null;
@@ -1432,15 +1438,16 @@ function AuthView({ onLogin, onRegister, onAdmin, loginError = "" }) {
   const doLogin = async () => {
     setLocalErr(""); setLoading(true);
     if (!uname.trim() || !pw) { setLocalErr("아이디와 비밀번호를 입력해주세요."); setLoading(false); return; }
-    const err = await onLogin(uname.trim(), pw);
+    const err = await onLogin(uname.trim().toLowerCase(), pw);
     if (err) setLocalErr(err);
     setLoading(false);
   };
 
   const doNext = async () => {
     setLocalErr("");
-    if (!uname.trim())              return setLocalErr("아이디를 입력해주세요.");
-    if (uname.trim().length < 4)   return setLocalErr("아이디는 4자 이상이어야 합니다.");
+    const unameClean = uname.trim().toLowerCase();
+    if (!unameClean)              return setLocalErr("아이디를 입력해주세요.");
+    if (unameClean.length < 4)   return setLocalErr("아이디는 4자 이상이어야 합니다.");
     if (pw.length < 6)             return setLocalErr("비밀번호는 6자 이상이어야 합니다.");
     if (pw !== pw2)                return setLocalErr("비밀번호가 일치하지 않습니다.");
     setLoading(true);
