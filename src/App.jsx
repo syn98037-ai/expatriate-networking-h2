@@ -368,7 +368,15 @@ export default function App() {
       // 시간표 리스너 - schedule 컬렉션에서 로드
       onSnapshot(query(col("schedule"), orderBy("order", "asc")), s => {
         if (!s.empty) {
-          setScheduleData(s.docs.map(d => ({ id: d.id, ...d.data() })));
+          setScheduleData(s.docs.map(d => {
+            const data = d.data();
+            // sections JSON 문자열 파싱
+            const sessions = (data.sessions || []).map(s => ({
+              ...s,
+              sections: s.sections ? JSON.parse(s.sections) : undefined,
+            }));
+            return { id: d.id, ...data, sessions };
+          }));
         } else {
           setScheduleData(null); // 없으면 기본값 사용
         }
@@ -654,9 +662,17 @@ export default function App() {
     // 기존 schedule 문서 전체 삭제 후 새로 저장
     const snap = await getDocs(col("schedule"));
     for (const d of snap.docs) await deleteDoc(d.ref);
-    // 새 데이터 저장
+    // sessions 내 중첩 배열(sections)을 JSON 문자열로 변환 후 저장
     for (let i = 0; i < days.length; i++) {
-      await setDoc(docR("schedule", `day${i+1}`), { ...days[i], order: i });
+      const sessions = (days[i].sessions || []).map(s => ({
+        ...s,
+        sections: s.sections ? JSON.stringify(s.sections) : null,
+      }));
+      await setDoc(docR("schedule", `day${i+1}`), {
+        day: days[i].day,
+        order: i,
+        sessions,
+      });
     }
   };
 
