@@ -1498,7 +1498,7 @@ function AuthView({ onLogin, onRegister, onAdmin, loginError = "" }) {
           <button onClick={onAdmin} style={{ background: "none", border: "none", color: "#9ca3af", cursor: "pointer", fontSize: 11, letterSpacing: "0.08em" }}>관리자 로그인</button>
         </div>
         <div style={{ borderTop: "1px solid #e0e3e8", paddingTop: 20, textAlign: "center" }}>
-          <img src="/hmg-logo.png" alt="Hyundai Motor Group" style={{ height: 32, opacity: 0.55, objectFit: "contain" }} />
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#c5c5c5", letterSpacing: "0.18em" }}>HYUNDAI MOTOR GROUP</p>
         </div>
       </div>
     </div>
