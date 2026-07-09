@@ -156,6 +156,7 @@ export default function App() {
   const meetingsLoadedRef = useRef(false); // 첫 로드 완료 여부
   const [isAdmin,    setIsAdmin]    = useState(false);
   const [isMobile,   setIsMobile]   = useState(typeof window !== "undefined" ? window.innerWidth < 768 : true);
+  const [scheduleData, setScheduleData] = useState(null); // Firestore에서 로드된 시간표
 
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 768);
@@ -364,6 +365,14 @@ export default function App() {
         }),
       ] : []),
       onSnapshot(query(col("posts"), orderBy("createdAt", "desc")), s => setPosts(s.docs.map(d => ({ id: d.id, ...d.data() })))),
+      // 시간표 리스너 - schedule 컬렉션에서 로드
+      onSnapshot(query(col("schedule"), orderBy("order", "asc")), s => {
+        if (!s.empty) {
+          setScheduleData(s.docs.map(d => ({ id: d.id, ...d.data() })));
+        } else {
+          setScheduleData(null); // 없으면 기본값 사용
+        }
+      }),
       // 게시글 공지: 1건짜리 공지 문서 구독 (최근 20개)
       ...(uid ? [onSnapshot(query(col("postNotices"), orderBy("createdAt", "desc")), s => {
         const notices = s.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -638,6 +647,17 @@ export default function App() {
       likedBy: newLikedBy,
       likeCount: newLikedBy.length,
     });
+  };
+
+  // ── 시간표 저장 ──────────────────────────────────────
+  const saveSchedule = async (days) => {
+    // 기존 schedule 문서 전체 삭제 후 새로 저장
+    const snap = await getDocs(col("schedule"));
+    for (const d of snap.docs) await deleteDoc(d.ref);
+    // 새 데이터 저장
+    for (let i = 0; i < days.length; i++) {
+      await setDoc(docR("schedule", `day${i+1}`), { ...days[i], order: i });
+    }
   };
 
   // ── 게시글 수정 ──────────────────────────────────────
@@ -1002,7 +1022,7 @@ match /{document=**} {
       case "meetings":   return <Meetings meetings={meetings} profiles={mergedProfiles} rooms={rooms} dmRooms={dmRooms} uid={uid} onUpdate={updateMtg} onReject={id => { setRejectModal({ meetingId: id }); setRejectMsg(""); }} onChat={m => { const oid = m.fromId === uid ? m.toId : m.fromId; openChat(roomFor(oid), m.fromId === uid ? m.toName : m.fromName); }} onOpenChat={(id,name) => openChat(id,name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} onViewProfile={p => openOverlay({ type: "profileView", data: p })} />;
       case "missions":   return <MissionView myMissions={myMissions} sentCount={sentCount} uid={uid} onUpdate={updateMission} />;
 
-      case "schedule":   return <ScheduleView />;
+      case "schedule":   return <ScheduleView scheduleData={scheduleData} />;
       default: return null;
     }
   };
@@ -1016,184 +1036,10 @@ match /{document=**} {
     </div>
   );
 
-  // PC 레이아웃
-  if (!isMobile) {
-    return (
-      <div style={{ width: "100vw", height: "100dvh", background: "#f5f6f8", color: "#111827", fontFamily: "'Noto Sans KR', Inter, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <style>{`::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-track{background:#f5f6f8} ::-webkit-scrollbar-thumb{background:rgba(0,44,95,0.2);border-radius:3px} *{box-sizing:border-box;} select option{background:#fff;color:#111827;}`}</style>
-
-        {/* PC 미인증 */}
-        {(authStatus === "unauth" || authStatus === "needProfile") && (
-          <div style={{ position: "fixed", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg,#020617 0%,#0a1628 100%)" }}>
-            <div style={{ width: 420, height: "90vh", maxHeight: 780, flexShrink: 0, background: "rgba(255,255,255,0.03)", border: "1px solid #e0e3e8", borderRadius: 28, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 40px 80px rgba(0,0,0,0.6)" }}>
-              <AuthView onLogin={handleLogin} onRegister={handleRegister} onAdmin={() => openOverlay({ type: "adminAuth" })} loginError={loginError} />
-            </div>
-          </div>
-        )}
-
-        {/* PC 메인 */}
-        {authStatus === "auth" && (
-          <>
-            {/* PC 알림 허용 배너 */}
-            {showNotisBanner && (
-              <div style={{ background: "#f3f4f6", borderBottom: "1px solid #d1d5db", padding: "8px 24px", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-                <span style={{ fontSize: 16 }}>🔔</span>
-                <p style={{ fontSize: 12, color: "#374151", margin: 0, flex: 1 }}>티미팅·채팅 알림을 받으시겠습니까?</p>
-                <button onClick={requestNotifPermission} style={{ background: "#374151", border: "none", color: "#ffffff", fontSize: 11, fontWeight: 700, padding: "6px 14px", borderRadius: 8, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>허용</button>
-                <button onClick={() => setShowNotisBanner(false)} style={{ background: "none", border: "none", color: "#6b7280", fontSize: 16, cursor: "pointer" }}>✕</button>
-              </div>
-            )}
-            {/* PC 상단 헤더 */}
-            <header className="pwa-header" style={{ padding: "0 24px", height: 60, flexShrink: 0, display: "flex", alignItems: "center", background: "#002c5f" }}>
-              {/* 왼쪽: 로고 + 탭 */}
-              <div style={{ display: "flex", alignItems: "center", gap: 16, flex: "0 0 auto" }}>
-                <span style={{ fontSize: 16, fontWeight: 900, color: "#ffffff", flexShrink: 0, letterSpacing: "-0.3px" }}>Global Connect</span>
-                <nav style={{ display: "flex", gap: 1 }}>
-                  {NAV.map(n => (
-                    <button key={n.id} onClick={() => setView(n.id)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 9px", borderRadius: 9, background: view === n.id ? "#e8f0f8" : "none", border: view === n.id ? "1px solid rgba(0,44,95,0.25)" : "1px solid transparent", color: view === n.id ? "#002c5f" : "#6b7280", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", fontSize: 12, fontWeight: 600, transition: "all 0.2s", whiteSpace: "nowrap" }}>
-                      <NavIcon id={n.id} active={view === n.id} />
-                      <span>{n.label}</span>
-                    </button>
-                  ))}
-                </nav>
-              </div>
-              {/* 오른쪽: 알림 벨 + 프로필 + 로그아웃 */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, marginLeft: "auto" }}>
-                <div onClick={() => openNotifs()} style={{ position: "relative", cursor: "pointer", width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.1)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", flexShrink: 0 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                  {notifs.filter(n => !n.read).length > 0 && (
-                    <div style={{ position: "absolute", top: -3, right: -3, width: 15, height: 15, background: "#f87171", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 900, color: "#111827", border: "2px solid #002c5f" }}>
-                      {notifs.filter(n => !n.read).length > 9 ? "9+" : notifs.filter(n => !n.read).length}
-                    </div>
-                  )}
-                </div>
-                <div onClick={() => openOverlay({ type: "profile" })} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 7, padding: "4px 10px", borderRadius: 10, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", flexShrink: 0 }}>
-                  <Avatar profile={myProfile} size={26} />
-                  <p style={{ fontSize: 12, fontWeight: 700, color: "#002c5f", margin: 0, whiteSpace: "nowrap" }}>{myProfile?.name}</p>
-                </div>
-                <button onClick={handleLogout} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", color: "#ffffff", fontSize: 11, fontWeight: 700, padding: "6px 11px", borderRadius: 9, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", whiteSpace: "nowrap", flexShrink: 0 }}>로그아웃</button>
-              </div>
-            </header>
-
-            {/* PC 본문 - 3컬럼, 헤더 아래 꽉 채움 */}
-            <div style={{ position: "absolute", top: 60, left: 0, right: 0, bottom: 0, display: "flex", gap: 0, overflow: "hidden", background: "#f5f6f8" }}>
-              {/* 왼쪽 사이드바 */}
-              <aside style={{ width: 280, flexShrink: 0, overflowY: "auto", borderRight: "1px solid #e0e3e8", padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14, background: "rgba(255,255,255,0.7)" }}>
-                {/* 내 프로필 카드 */}
-                <div style={{ background: "#ffffff", border: "1px solid #e0e3e8", borderRadius: 18, padding: 16 }}>
-                  <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
-                    <Avatar profile={myProfile} size={48} />
-                    <div>
-                      <p style={{ fontSize: 14, fontWeight: 800, color: "#111827", margin: 0 }}>{myProfile?.name}</p>
-                      <p style={{ fontSize: 11, color: "#002c5f", fontWeight: 600, marginTop: 2 }}>{myProfile?.org}</p>
-                      <p style={{ fontSize: 11, color: "#002c5f", marginTop: 2, fontWeight: 600 }}>{myProfile?.city} · {myProfile?.country}</p>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-                    <span style={{ background: "#e8f0f8", border: "1px solid rgba(124,58,237,0.2)", color: "#002c5f", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.concern}</span>
-                    {myProfile?.interest && <span style={{ background: "rgba(255,255,255,0.8)", border: "1px solid #e0e3e8", color: "#6b7280", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 10 }}>{myProfile?.interest}</span>}
-                  </div>
-                  <button onClick={() => openOverlay({ type: "profile" })} style={{ width: "100%", padding: "8px", background: "#f5f6f8", border: "1px solid #d1d8e0", color: "#002c5f", fontSize: 12, fontWeight: 700, borderRadius: 10, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>✏️ 프로필 수정</button>
-                </div>
-                {/* 미션 요약 */}
-                <div style={{ background: "linear-gradient(135deg,#002c5f 0%,#004080 50%,#00648c 100%)", border: "none", borderRadius: 18, padding: 16, boxShadow: "0 4px 12px rgba(0,44,95,0.2)" }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.9)", margin: "0 0 12px", letterSpacing: "0.08em" }}>네트워킹 미션</p>
-                  {[
-                    ["티미팅 발송", Math.min(meetings.filter(m => m.fromId === uid).length, 2), 2],
-                    ["티미팅 인증샷", Math.min((missions[uid]?.m2Photos||[]).length, 2), 2],
-
-                  ].map(([label, cur, tot]) => (
-                    <div key={label} style={{ marginBottom: 10 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.75)" }}>{label}</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: cur >= tot ? "#6ee7b7" : "rgba(255,255,255,0.95)" }}>{cur}/{tot}</span>
-                      </div>
-                      <div style={{ height: 4, background: "rgba(255,255,255,0.2)", borderRadius: 2, overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${Math.min((cur/tot)*100,100)}%`, background: cur >= tot ? "#6ee7b7" : "#00aad2", borderRadius: 2, transition: "width 0.4s" }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* 수락된 티미팅 */}
-                <div style={{ background: "#ffffff", border: "1px solid #e0e3e8", borderRadius: 18, padding: 16 }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "#002c5f", margin: "0 0 10px", letterSpacing: "0.08em" }}>수락된 티미팅</p>
-                  {meetings.filter(m => (m.fromId===uid||m.toId===uid) && m.status==="수락함").length === 0
-                    ? <p style={{ fontSize: 12, color: "#6b7280", fontStyle: "italic" }}>아직 없어요.</p>
-                    : meetings.filter(m => (m.fromId===uid||m.toId===uid) && m.status==="수락함").map(m => (
-                      <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "8px 10px", background: "rgba(16,185,129,0.06)", borderRadius: 12, border: "1px solid rgba(16,185,129,0.12)" }}>
-                        <span style={{ color: "#002c5f", fontSize: 14 }}>✓</span>
-                        <div><p style={{ fontSize: 12, fontWeight: 700, color: "#002c5f", margin: 0 }}>{m.fromId===uid?m.toName:m.fromName}</p><p style={{ fontSize: 10, color: "#6b7280" }}>{m.fromId===uid?m.toOrg:m.fromOrg}</p></div>
-                      </div>
-                    ))
-                  }
-                </div>
-              </aside>
-
-              {/* 가운데 메인 콘텐츠 */}
-              <main style={{ flex: 1, overflowY: "auto", minWidth: 0, borderRight: "1px solid #e0e3e8", background: "transparent" }}>
-                {renderMain()}
-              </main>
-
-              {/* 오른쪽 사이드바 - 최근 게시글 */}
-              <aside style={{ width: 260, flexShrink: 0, overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column", gap: 14, background: "rgba(255,255,255,0.7)" }}>
-                <div style={{ background: "#ffffff", border: "1px solid #e0e3e8", borderRadius: 18, padding: 16 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: "#002c5f", margin: 0, letterSpacing: "0.08em" }}>최근 게시글</p>
-                    <button onClick={() => setView("community")} style={{ background: "none", border: "none", color: "#6b7280", fontSize: 11, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>더보기</button>
-                  </div>
-                  {posts.length === 0
-                    ? <p style={{ fontSize: 12, color: "#6b7280", fontStyle: "italic" }}>게시글이 없어요.</p>
-                    : posts.slice(0, 6).map(post => (
-                      <div key={post.id} onClick={() => openOverlay({ type: "post", data: post })} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", cursor: "pointer" }}>
-                        <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 4 }}>
-                          <span style={{ background: "#e8f0f8", color: "#002c5f", fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 6 }}>{post.tag}</span>
-                          <span style={{ fontSize: 9, color: "#6b7280" }}>{timeAgo(post.createdAt)}</span>
-                        </div>
-                        <p style={{ fontSize: 12, fontWeight: 700, color: "#002c5f", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{post.title}</p>
-                        <p style={{ fontSize: 10, color: "#6b7280", marginTop: 2 }}>{post.authorName} · 댓글 {post.commentCount||0}</p>
-                      </div>
-                    ))
-                  }
-                </div>
-              </aside>
-            </div>
-          </>
-        )}
-
-        {/* 오버레이 (PC에서도 동일) */}
-        {overlay?.type === "profile"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:480,maxHeight:"90vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><ProfileForm initialData={myProfile} onSave={saveProfile} onBack={() => setOverlay(null)} onLogout={handleLogout} /></div></div>}
-        {overlay?.type === "adminAuth"   && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,background:"#020617",borderRadius:24,overflow:"hidden",border:"1px solid #e0e3e8" }}><AdminAuth onSuccess={() => { setIsAdmin(true); setOverlay({ type: "admin" }); }} onBack={() => setOverlay(null)} /></div></div>}
-        {overlay?.type === "admin"       && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:640,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} /></div></div>}
-        {overlay?.type === "chat"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:480,height:"75vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={() => setOverlay(null)} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div></div>}
-        {overlay?.type === "post"        && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"80vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div></div>}
-        {overlay?.type === "newPost"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:560,height:"85vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div></div>}
-        {overlay?.type === "profileView" && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:100 }}><div style={{ width:420,height:"70vh",background:"#020617",borderRadius:24,overflow:"hidden",display:"flex",flexDirection:"column",border:"1px solid #e0e3e8" }}><ProfileView profile={overlay.data} missions={missions} meetings={meetings} onBack={() => setOverlay(null)} onRequest={() => openOverlay({ type:"sendReq", data:overlay.data })} onChat={async () => { const id = overlay.data.id; const name = overlay.data.name; setOverlay(null); await openChat(roomFor(id), name); }} /></div></div>}
-        {overlay?.type === "sendReq"     && <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:150 }}><SendReqModal target={overlay.data} onSend={(msg) => { sendReq(overlay.data, msg); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
-
-        {/* PC 알림 패널 - 오른쪽 슬라이드 */}
-        {showNotifs && (
-          <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"stretch",justifyContent:"flex-end",zIndex:200 }} onClick={(e) => { if(e.target===e.currentTarget) setShowNotifs(false); }}>
-            <div style={{ width:400,background:"#020617",borderLeft:"1px solid #e0e3e8",display:"flex",flexDirection:"column" }}>
-              <NotifPanel notifs={notifs} onClose={() => setShowNotifs(false)} onRead={async (id) => {
-              const n = notifs.find(x => x.id === id);
-              if (n?.firestoreId) { try { await updateDoc(docR("notifications", n.firestoreId), { read: true }); } catch(e) {} }
-              setNotifs(prev => prev.map(x => x.id === id ? { ...x, read: true } : x));
-            }} onReadAll={async () => {
-              const promises = notifs.filter(n => !n.read && n.firestoreId).map(n => updateDoc(docR("notifications", n.firestoreId), { read: true }).catch(()=>{}));
-              await Promise.all(promises);
-              setNotifs(prev => prev.map(n => ({ ...n, read: true })));
-            }} onGoMeetings={() => { setShowNotifs(false); setView("meetings"); }} onGoChat={(roomId, name) => { setShowNotifs(false); openChat(roomId, name); }} onGoBoard={() => { setShowNotifs(false); setView("board"); }} />
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
 
   // ── 모바일 레이아웃 ──────────────────────────────────
   return (
-    <div style={{ width: "100%", maxWidth: 420, margin: "0 auto", height: "100dvh", display: "flex", flexDirection: "column", background: "#f5f6f8", color: "#002c5f", fontFamily: "'Noto Sans KR', Inter, sans-serif", position: "relative", overflow: "hidden" }}>
+    <div style={{ width: "100%", maxWidth: 480, margin: "0 auto", height: "100dvh", display: "flex", flexDirection: "column", background: "#f5f6f8", color: "#002c5f", fontFamily: "'Noto Sans KR', Inter, sans-serif", position: "relative", overflow: "hidden" }}>
       <style>{`@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css'); ::-webkit-scrollbar{display:none;} *{box-sizing:border-box;} select option{background:#020617;} html,body,#root{height:100%;height:100dvh;overflow:hidden;}`}</style>
 
       {/* 미인증 → 로그인/회원가입 */}
@@ -1278,7 +1124,7 @@ match /{document=**} {
         </div>
       )}
       {overlay?.type === "adminAuth"   && <div style={{ position:"fixed", inset:0, zIndex:200 }}><AdminAuth onSuccess={() => { console.log("MOB onSuccess, setting admin"); setIsAdmin(true); setOverlay({ type: "admin" }); console.log("MOB overlay set"); }} onBack={() => setOverlay(null)} /></div>}
-      {overlay?.type === "admin"       && <div style={{ position:"fixed", inset:0, zIndex:200, display:"flex", flexDirection:"column" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} /></div>}
+      {overlay?.type === "admin"       && <div style={{ position:"fixed", inset:0, zIndex:200, display:"flex", flexDirection:"column" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} scheduleData={scheduleData} onSaveSchedule={saveSchedule} /></div>}
       {overlay?.type === "chat"        && <div style={S.overlay}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={async () => { setOverlay(null); if (uid) { try { await updateDoc(docR("profiles", uid), { activeRoomId: null }); } catch(e) {} } }} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div>}
       {overlay?.type === "post"        && <div style={S.overlay}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div>}
       {overlay?.type === "newPost"     && <div style={S.overlay}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
@@ -1759,11 +1605,78 @@ function AdminAuth({ onSuccess, onBack }) {
   );
 }
 
-function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfile, onDeleteAccount, onDeletePost, onResetAll, onClearChats }) {
+function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfile, onDeleteAccount, onDeletePost, onResetAll, onClearChats, scheduleData, onSaveSchedule }) {
   const [tab, setTab]       = useState("users");
   const [editId, setEditId] = useState(null);
   const [editForm, setEF]   = useState({});
   const [saving, setSaving] = useState(false);
+
+  // 시간표 수정용 로컬 state
+  const defaultSchedule = scheduleData || [
+    { day: "Day 1", order: 0, sessions: [] },
+    { day: "Day 2", order: 1, sessions: [] },
+    { day: "Day 3", order: 2, sessions: [] },
+  ];
+  const [editSchedule, setEditSchedule] = useState(null); // 편집 중인 시간표
+  const [schedDay, setSchedDay]         = useState(0);    // 편집 중인 day index
+  const [schedSaving, setSchedSaving]   = useState(false);
+
+  // 시간표 편집 시작
+  const startEditSchedule = () => {
+    setEditSchedule(JSON.parse(JSON.stringify(defaultSchedule)));
+  };
+
+  // 세션 필드 업데이트
+  const updateSession = (dayIdx, sessIdx, field, value) => {
+    setEditSchedule(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      next[dayIdx].sessions[sessIdx][field] = value;
+      return next;
+    });
+  };
+
+  // 세션 추가
+  const addSession = (dayIdx) => {
+    setEditSchedule(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      next[dayIdx].sessions.push({ time: "", title: "", venue: "", instructor: "", color: "#002c5f" });
+      return next;
+    });
+  };
+
+  // 세션 삭제
+  const removeSession = (dayIdx, sessIdx) => {
+    setEditSchedule(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      next[dayIdx].sessions.splice(sessIdx, 1);
+      return next;
+    });
+  };
+
+  // 세션 순서 이동
+  const moveSession = (dayIdx, sessIdx, dir) => {
+    setEditSchedule(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      const sessions = next[dayIdx].sessions;
+      const target = sessIdx + dir;
+      if (target < 0 || target >= sessions.length) return prev;
+      [sessions[sessIdx], sessions[target]] = [sessions[target], sessions[sessIdx]];
+      return next;
+    });
+  };
+
+  // 저장
+  const saveSchedule = async () => {
+    setSchedSaving(true);
+    try {
+      await onSaveSchedule(editSchedule);
+      setEditSchedule(null);
+      alert("✅ 시간표가 저장되었습니다.");
+    } catch(e) {
+      alert("저장 중 오류가 발생했습니다.");
+    }
+    setSchedSaving(false);
+  };
 
   const startEdit = p => { setEditId(p.id); setEF({ city: p.city||"", country: p.country||"", concern: p.concern||CONCERNS[0] }); };
   const saveEdit  = async () => { setSaving(true); await onUpdateProfile(editId, editForm); setEditId(null); setSaving(false); };
@@ -1779,7 +1692,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
       </div>
       <div style={{ padding: "12px 16px 0", flexShrink: 0 }}>
         <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.8)", padding: 4, borderRadius: 14, border: "1px solid #e0e3e8", marginBottom: 10 }}>
-          {[["users","사용자 관리"],["missions","미션 현황"],["posts","게시글 현황"]].map(([id, label]) => (
+          {[["users","사용자 관리"],["missions","미션 현황"],["posts","게시글 현황"],["schedule","시간표 수정"]].map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: "8px 4px", borderRadius: 10, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: tab === id ? "#002c5f" : "transparent", color: tab === id ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{label}</button>
           ))}
         </div>
@@ -1921,6 +1834,79 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                 <p style={{ fontSize: 11, color: "#6b7280", margin: 0 }}>작성자: {post.authorName} · 댓글 {post.commentCount || 0} · 공감 {post.likeCount || 0}</p>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* 시간표 수정 탭 */}
+        {tab === "schedule" && (
+          <div style={{ padding: 16, overflowY: "auto", flex: 1 }}>
+            {!editSchedule ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ background: "#e8f0f8", borderRadius: 12, padding: "12px 16px" }}>
+                  <p style={{ fontSize: 12, color: "#002c5f", fontWeight: 700, margin: "0 0 4px" }}>📅 시간표 수정</p>
+                  <p style={{ fontSize: 11, color: "#6b7280", margin: 0 }}>수정 후 저장하면 교육생 화면에 즉시 반영됩니다.</p>
+                </div>
+                {/* 현재 시간표 미리보기 */}
+                {defaultSchedule.map((d, di) => (
+                  <div key={di} style={{ ...S.card, borderRadius: 14 }}>
+                    <p style={{ fontSize: 13, fontWeight: 800, color: "#002c5f", margin: "0 0 8px" }}>{d.day}</p>
+                    {(d.sessions || []).map((s, si) => (
+                      <div key={si} style={{ fontSize: 11, color: "#374151", padding: "4px 0", borderBottom: "1px solid #f0f0f0" }}>
+                        <span style={{ color: "#6b7280", marginRight: 8 }}>{s.time}</span>{s.title}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+                <button onClick={startEditSchedule}
+                  style={{ width: "100%", padding: 14, background: "#002c5f", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, borderRadius: 14, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>
+                  ✏️ 시간표 수정하기
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {/* Day 탭 */}
+                <div style={{ display: "flex", gap: 8 }}>
+                  {editSchedule.map((d, di) => (
+                    <button key={di} onClick={() => setSchedDay(di)}
+                      style={{ flex: 1, padding: "8px 0", background: schedDay === di ? "#002c5f" : "#f3f4f6", color: schedDay === di ? "#fff" : "#6b7280", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                      {d.day}
+                    </button>
+                  ))}
+                </div>
+                {/* 세션 목록 */}
+                {(editSchedule[schedDay].sessions || []).map((s, si) => (
+                  <div key={si} style={{ background: "#ffffff", border: "1px solid #e0e3e8", borderRadius: 14, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "#002c5f" }}>모듈 {si + 1}</span>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button onClick={() => moveSession(schedDay, si, -1)} style={{ padding: "3px 8px", background: "#f3f4f6", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>▲</button>
+                        <button onClick={() => moveSession(schedDay, si, 1)}  style={{ padding: "3px 8px", background: "#f3f4f6", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>▼</button>
+                        <button onClick={() => removeSession(schedDay, si)}   style={{ padding: "3px 8px", background: "rgba(220,38,38,0.1)", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 12, color: "#dc2626" }}>✕</button>
+                      </div>
+                    </div>
+                    {[["time","시간 (예: 09:30 – 10:30)"],["title","모듈명"],["venue","장소"],["instructor","강사/담당"]].map(([field, placeholder]) => (
+                      <input key={field} value={s[field] || ""} onChange={e => updateSession(schedDay, si, field, e.target.value)}
+                        placeholder={placeholder}
+                        style={{ width: "100%", padding: "8px 12px", border: "1.5px solid #e0e3e8", borderRadius: 10, fontSize: 12, fontFamily: "'Noto Sans KR', sans-serif", outline: "none", boxSizing: "border-box" }} />
+                    ))}
+                  </div>
+                ))}
+                <button onClick={() => addSession(schedDay)}
+                  style={{ width: "100%", padding: 12, background: "#f3f4f6", border: "1.5px dashed #c5d5e8", color: "#002c5f", fontSize: 13, fontWeight: 700, borderRadius: 14, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>
+                  + 모듈 추가
+                </button>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={saveSchedule} disabled={schedSaving}
+                    style={{ flex: 2, padding: 14, background: "#002c5f", border: "none", color: "#fff", fontSize: 14, fontWeight: 700, borderRadius: 14, cursor: schedSaving ? "not-allowed" : "pointer", opacity: schedSaving ? 0.6 : 1, fontFamily: "'Noto Sans KR', sans-serif" }}>
+                    {schedSaving ? "저장 중..." : "💾 저장하기"}
+                  </button>
+                  <button onClick={() => setEditSchedule(null)}
+                    style={{ flex: 1, padding: 14, background: "#f3f4f6", border: "none", color: "#374151", fontSize: 14, fontWeight: 700, borderRadius: 14, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>
+                    취소
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -2860,11 +2846,13 @@ const SCHEDULE_DATA = [
   },
 ];
 
-function ScheduleView() {
+function ScheduleView({ scheduleData }) {
   const [activeDay, setActiveDay] = useState(0);
   const [activeTab, setActiveTab] = useState("schedule"); // schedule | videos
   const [sectionPopup, setSectionPopup] = useState(null); // { title, sections }
-  const day = SCHEDULE_DATA[activeDay];
+  // Firestore 데이터 있으면 사용, 없으면 하드코딩 기본값 사용
+  const data = scheduleData || SCHEDULE_DATA;
+  const day = data[activeDay];
 
   const VIDEOS = [
     { title: "마북캠퍼스 생활 안내 | 현대자동차그룹 인재개발원", id: "Ix1fP0Y3hEs" },
@@ -2899,7 +2887,7 @@ function ScheduleView() {
 
       {/* 탭 선택 */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {SCHEDULE_DATA.map((d, i) => (
+        {data.map((d, i) => (
           <button key={i} onClick={() => { setActiveTab("schedule"); setActiveDay(i); }}
             style={{ padding: "8px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: activeTab === "schedule" && activeDay === i ? "#002c5f" : "#ffffff", color: activeTab === "schedule" && activeDay === i ? "#ffffff" : "#6b7280", boxShadow: "0 1px 4px rgba(0,44,95,0.1)", transition: "all 0.2s" }}>{d.day}
           </button>
