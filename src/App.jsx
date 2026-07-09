@@ -1681,6 +1681,82 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
     });
   };
 
+  // Day 추가
+  const addDay = () => {
+    setEditSchedule(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      next.push({ day: `Day ${next.length + 1}`, order: next.length, sessions: [] });
+      return next;
+    });
+    setSchedDay(editSchedule.length); // 새 Day로 이동
+  };
+
+  // Day 삭제
+  const removeDay = (dayIdx) => {
+    if (editSchedule.length <= 1) return alert("최소 1개의 Day는 있어야 합니다.");
+    if (!window.confirm(`${editSchedule[dayIdx].day}를 삭제하시겠습니까?`)) return;
+    setEditSchedule(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      next.splice(dayIdx, 1);
+      // order 재정렬
+      next.forEach((d, i) => { d.order = i; d.day = `Day ${i + 1}`; });
+      return next;
+    });
+    setSchedDay(Math.max(0, dayIdx - 1));
+  };
+
+  // 분반 추가
+  const addSection = (dayIdx, sessIdx) => {
+    setEditSchedule(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      const sess = next[dayIdx].sessions[sessIdx];
+      if (!sess.sections) sess.sections = [];
+      sess.sections.push({ room: "", groups: [""] });
+      return next;
+    });
+  };
+
+  // 분반 삭제
+  const removeSection = (dayIdx, sessIdx, secIdx) => {
+    setEditSchedule(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      next[dayIdx].sessions[sessIdx].sections.splice(secIdx, 1);
+      return next;
+    });
+  };
+
+  // 분반 필드 업데이트
+  const updateSection = (dayIdx, sessIdx, secIdx, field, value) => {
+    setEditSchedule(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      next[dayIdx].sessions[sessIdx].sections[secIdx][field] = value;
+      return next;
+    });
+  };
+
+  // 분반 groups 업데이트 (쉼표 구분 입력)
+  const updateSectionGroups = (dayIdx, sessIdx, secIdx, value) => {
+    setEditSchedule(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      next[dayIdx].sessions[sessIdx].sections[secIdx].groups = value.split(",").map(g => g.trim()).filter(Boolean);
+      return next;
+    });
+  };
+
+  // 분반 토글
+  const toggleSections = (dayIdx, sessIdx) => {
+    setEditSchedule(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      const sess = next[dayIdx].sessions[sessIdx];
+      if (sess.sections) {
+        delete sess.sections;
+      } else {
+        sess.sections = [{ room: "", groups: [""] }];
+      }
+      return next;
+    });
+  };
+
   // 저장
   const saveSchedule = async () => {
     setSchedSaving(true);
@@ -1880,33 +1956,84 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {/* Day 탭 */}
-                <div style={{ display: "flex", gap: 8 }}>
+                {/* Day 탭 + 추가/삭제 */}
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {editSchedule.map((d, di) => (
-                    <button key={di} onClick={() => setSchedDay(di)}
-                      style={{ flex: 1, padding: "8px 0", background: schedDay === di ? "#002c5f" : "#f3f4f6", color: schedDay === di ? "#fff" : "#6b7280", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-                      {d.day}
-                    </button>
+                    <div key={di} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <button onClick={() => setSchedDay(di)}
+                        style={{ padding: "8px 14px", background: schedDay === di ? "#002c5f" : "#f3f4f6", color: schedDay === di ? "#fff" : "#6b7280", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                        {d.day}
+                      </button>
+                      {editSchedule.length > 1 && (
+                        <button onClick={() => removeDay(di)}
+                          style={{ padding: "4px 7px", background: "rgba(220,38,38,0.1)", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 11, color: "#dc2626" }}>✕</button>
+                      )}
+                    </div>
                   ))}
+                  <button onClick={addDay}
+                    style={{ padding: "8px 14px", background: "#e8f0f8", border: "1.5px dashed #c5d5e8", color: "#002c5f", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                    + Day 추가
+                  </button>
                 </div>
+
                 {/* 세션 목록 */}
-                {(editSchedule[schedDay].sessions || []).map((s, si) => (
+                {(editSchedule[schedDay]?.sessions || []).map((s, si) => (
                   <div key={si} style={{ background: "#ffffff", border: "1px solid #e0e3e8", borderRadius: 14, padding: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+                    {/* 모듈 헤더 */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: "#002c5f" }}>모듈 {si + 1}</span>
                       <div style={{ display: "flex", gap: 6 }}>
                         <button onClick={() => moveSession(schedDay, si, -1)} style={{ padding: "3px 8px", background: "#f3f4f6", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>▲</button>
-                        <button onClick={() => moveSession(schedDay, si, 1)}  style={{ padding: "3px 8px", background: "#f3f4f6", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>▼</button>
+                        <button onClick={() => moveSession(schedDay, si,  1)} style={{ padding: "3px 8px", background: "#f3f4f6", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>▼</button>
                         <button onClick={() => removeSession(schedDay, si)}   style={{ padding: "3px 8px", background: "rgba(220,38,38,0.1)", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 12, color: "#dc2626" }}>✕</button>
                       </div>
                     </div>
+
+                    {/* 기본 입력 */}
                     {[["time","시간 (예: 09:30 – 10:30)"],["title","모듈명"],["venue","장소"],["instructor","강사/담당"]].map(([field, placeholder]) => (
                       <input key={field} value={s[field] || ""} onChange={e => updateSession(schedDay, si, field, e.target.value)}
                         placeholder={placeholder}
                         style={{ width: "100%", padding: "8px 12px", border: "1.5px solid #e0e3e8", borderRadius: 10, fontSize: 12, fontFamily: "'Noto Sans KR', sans-serif", outline: "none", boxSizing: "border-box" }} />
                     ))}
+
+                    {/* 분반 체크박스 */}
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 12, color: "#374151", fontWeight: 600 }}>
+                      <input type="checkbox" checked={!!s.sections} onChange={() => toggleSections(schedDay, si)}
+                        style={{ width: 16, height: 16, accentColor: "#002c5f" }} />
+                      분반 있음
+                    </label>
+
+                    {/* 분반 입력 폼 */}
+                    {s.sections && (
+                      <div style={{ background: "#f8fafc", border: "1px solid #e0e3e8", borderRadius: 10, padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: "#002c5f", margin: 0 }}>분반 강의장 정보</p>
+                        {/* 표 헤더 */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 6, alignItems: "center" }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: "#6b7280" }}>분반 (쉼표로 구분)</span>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: "#6b7280" }}>강의장</span>
+                          <span />
+                        </div>
+                        {(s.sections || []).map((sec, secIdx) => (
+                          <div key={secIdx} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 6, alignItems: "center" }}>
+                            <input value={(sec.groups || []).join(", ")} onChange={e => updateSectionGroups(schedDay, si, secIdx, e.target.value)}
+                              placeholder="독일, 멕시코"
+                              style={{ padding: "6px 10px", border: "1.5px solid #e0e3e8", borderRadius: 8, fontSize: 11, fontFamily: "'Noto Sans KR', sans-serif", outline: "none" }} />
+                            <input value={sec.room || ""} onChange={e => updateSection(schedDay, si, secIdx, "room", e.target.value)}
+                              placeholder="403호"
+                              style={{ padding: "6px 10px", border: "1.5px solid #e0e3e8", borderRadius: 8, fontSize: 11, fontFamily: "'Noto Sans KR', sans-serif", outline: "none" }} />
+                            <button onClick={() => removeSection(schedDay, si, secIdx)}
+                              style={{ padding: "5px 8px", background: "rgba(220,38,38,0.1)", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 11, color: "#dc2626" }}>✕</button>
+                          </div>
+                        ))}
+                        <button onClick={() => addSection(schedDay, si)}
+                          style={{ padding: "6px 0", background: "none", border: "1.5px dashed #c5d5e8", color: "#002c5f", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                          + 분반 추가
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
+
                 <button onClick={() => addSession(schedDay)}
                   style={{ width: "100%", padding: 12, background: "#f3f4f6", border: "1.5px dashed #c5d5e8", color: "#002c5f", fontSize: 13, fontWeight: 700, borderRadius: 14, cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>
                   + 모듈 추가
