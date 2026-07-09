@@ -1,10 +1,10 @@
 const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyBZvqaC4t6wcrsoW7Qyllucg72gFry1e2c",
-  authDomain:        "expatriate-networking-app.firebaseapp.com",
-  projectId:         "expatriate-networking-app",
-  storageBucket:     "expatriate-networking-app.firebasestorage.app",
-  messagingSenderId: "661643710726",
-  appId:             "1:661643710726:web:02c86e75e96e90b62f4e87",
+  apiKey:            "AIzaSyDVk8nQegF52OFbnwxX6TFiqJvG5bTydrk",
+  authDomain:        "expatriate-networking-h2.firebaseapp.com",
+  projectId:         "expatriate-networking-h2",
+  storageBucket:     "expatriate-networking-h2.firebasestorage.app",
+  messagingSenderId: "638123467555",
+  appId:             "1:638123467555:web:e219aa7c283448cb32a296",
 };
 
 importScripts("https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js");
@@ -27,7 +27,7 @@ messaging.onBackgroundMessage(payload => {
     body:    body || "",
     icon:    "/logo192.png",
     badge:   "/logo192.png",
-    data:    { url: link || "https://expatriate-networking-app.vercel.app" },
+    data:    { url: link || "https://expatriate-networking-h2.vercel.app" },
     vibrate: [200, 100, 200],
   });
 });
@@ -35,12 +35,12 @@ messaging.onBackgroundMessage(payload => {
 // 알림 클릭 시 앱으로 이동
 self.addEventListener("notificationclick", event => {
   event.notification.close();
-  const url = event.notification.data?.url || "https://expatriate-networking-app.vercel.app";
+  const url = event.notification.data?.url || "https://expatriate-networking-h2.vercel.app";
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then(clientList => {
       // 이미 열린 앱 창이 있으면 포커스
       for (const client of clientList) {
-        if (client.url.includes("expatriate-networking-app") && "focus" in client) {
+        if (client.url.includes("expatriate-networking-h2") && "focus" in client) {
           return client.focus();
         }
       }
