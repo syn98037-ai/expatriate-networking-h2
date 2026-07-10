@@ -14,6 +14,7 @@ import {
 } from "firebase/storage";
 import { auth, db, storage, messaging, VAPID_KEY, getToken, onMessage } from "./firebase";
 import { CONCERNS, POST_TAGS, gradFor, timeAgo, S, stBadge } from "./constants";
+import * as XLSX from "xlsx";
 
 // ─── 국가/도시 목록 ─────────────────────────────────
 const COUNTRIES_LIST = [
@@ -57,6 +58,24 @@ const HMG_ORGS = [
   "현대케피코",
 ];
 
+// ─── 위즈덤 라이브러리: 카테고리 / 정보출처 ─────────────
+const WISDOM_CATEGORIES = [
+  { id: "housing",    label: "주거",         icon: "🏠" },
+  { id: "school",     label: "교육(국제학교)", icon: "🏫" },
+  { id: "car",        label: "차량",         icon: "🚗" },
+  { id: "hospital",   label: "병원",         icon: "🏥" },
+  { id: "shopping",   label: "쇼핑",         icon: "🛒" },
+  { id: "finance",    label: "금융",         icon: "💰" },
+  { id: "phone",      label: "휴대폰/인터넷", icon: "📱" },
+  { id: "restaurant", label: "식당",         icon: "🍽" },
+  { id: "family",     label: "가족생활",      icon: "👨‍👩‍👧" },
+  { id: "trip",       label: "출장",         icon: "✈" },
+  { id: "admin",      label: "행정(비자 등)", icon: "📑" },
+  { id: "country",    label: "국가별",       icon: "🌎" },
+];
+
+const WISDOM_SOURCES = ["선배주재원 경험", "교육생 경험", "회사 안내자료", "외부 공식기관"];
+
 // ─── Firestore 컬렉션 헬퍼 ──────────────────────────────
 const col  = (...segs) => collection(db, ...segs);
 const docR = (...segs) => doc(db, ...segs);
@@ -72,6 +91,34 @@ async function uploadPhotoGlobal(base64, path) {
     console.warn("upload failed, using base64 fallback:", e.message);
     return base64; // Storage 규칙 오류 시 base64 그대로 사용
   }
+}
+
+// ─── 위즈덤 라이브러리: 엑셀 다운로드 ────────────────────
+function exportWisdomExcel(tips) {
+  const rows = tips.map(t => {
+    const cat = WISDOM_CATEGORIES.find(c => c.id === t.category);
+    return {
+      "카테고리": cat ? cat.label : (t.category || ""),
+      "제목": t.title || "",
+      "내용": t.content || "",
+      "국가": t.country || "",
+      "정보출처": t.source || "",
+      "태그": (t.tags || []).join(", "),
+      "작성자": t.authorName || "",
+      "도움이 되었어요": t.helpfulCount || 0,
+      "운영진 확인": t.verified ? "Y" : "N",
+      "작성일": t.createdAt ? t.createdAt.slice(0, 10) : "",
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [
+    { wch: 14 }, { wch: 24 }, { wch: 50 }, { wch: 10 }, { wch: 14 },
+    { wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 },
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "위즈덤 라이브러리");
+  const dateStr = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `위즈덤라이브러리_${dateStr}.xlsx`);
 }
 
 // ─── 아바타 ─────────────────────────────────────────────
@@ -100,6 +147,7 @@ function NavIcon({ id, active }) {
   if (id === "missions")   return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>;
   if (id === "calendar")   return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>;
   if (id === "schedule")   return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>;
+  if (id === "wisdom")     return <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"/><line x1="9" y1="21" x2="15" y2="21"/><line x1="10" y1="18" x2="14" y2="18"/></svg>;
   return null;
 }
 
@@ -143,6 +191,7 @@ export default function App() {
   const [deletedIds, setDeletedIds] = useState(new Set()); // 관리자가 삭제한 ID 목록
   const [meetings,   setMeetings]   = useState([]);
   const [posts,      setPosts]      = useState([]);
+  const [wisdomTips, setWisdomTips] = useState([]);
   const [events,     setEvents]     = useState([]);
   const [chats,      setChats]      = useState({});
   const [comments,   setComments]   = useState({});
@@ -365,6 +414,8 @@ export default function App() {
         }),
       ] : []),
       onSnapshot(query(col("posts"), orderBy("createdAt", "desc")), s => setPosts(s.docs.map(d => ({ id: d.id, ...d.data() })))),
+      // 위즈덤 라이브러리: 생활 TIP (기수와 무관하게 영구 보존 — adminResetAll 대상에서 제외됨)
+      onSnapshot(query(col("wisdomTips"), orderBy("createdAt", "desc")), s => setWisdomTips(s.docs.map(d => ({ id: d.id, ...d.data() })))),
       // 시간표 리스너 - schedule 컬렉션에서 로드
       onSnapshot(query(col("schedule"), orderBy("order", "asc")), s => {
         if (!s.empty) {
@@ -729,6 +780,59 @@ export default function App() {
     } catch(e) { console.error("게시글 공지 오류:", e); }
   };
 
+  // ── 위즈덤 라이브러리: TIP 작성 ─────────────────────
+  // 작성자는 uid 참조가 아니라 이름 스냅샷으로 저장 (계정이 기수마다 삭제돼도 TIP은 영구 보존)
+  const addWisdomTip = async (tipData) => {
+    await addDoc(col("wisdomTips"), {
+      ...tipData,
+      authorName: myProfile?.name || "익명",
+      helpfulCount: 0,
+      helpfulBy: [],
+      verified: false,
+      createdAt: new Date().toISOString(),
+    });
+    // 미션4(생활 TIP 공유) 완료 처리
+    try { await updateMission("m4Count", 1); } catch(e) {}
+  };
+
+  // ── 위즈덤 라이브러리: 도움이 되었어요 토글 ──────────
+  const toggleHelpful = async (tipId) => {
+    const tip = wisdomTips.find(t => t.id === tipId);
+    if (!tip || !uid) return;
+    const already = (tip.helpfulBy || []).includes(uid);
+    const nextBy = already ? (tip.helpfulBy || []).filter(id => id !== uid) : [...(tip.helpfulBy || []), uid];
+    try {
+      await updateDoc(docR("wisdomTips", tipId), {
+        helpfulBy: nextBy,
+        helpfulCount: nextBy.length,
+      });
+    } catch(e) { console.error("도움이 되었어요 업데이트 오류:", e); }
+  };
+
+  // ── 관리자: 위즈덤 TIP 운영진 확인 배지 토글 ────────
+  const adminToggleWisdomVerified = async (tipId, value) => {
+    try { await updateDoc(docR("wisdomTips", tipId), { verified: value }); } catch(e) {}
+  };
+
+  // ── 관리자: 위즈덤 TIP 삭제 ──────────────────────────
+  const adminDeleteWisdomTip = async (tipId) => {
+    try { await deleteDoc(docR("wisdomTips", tipId)); } catch(e) {}
+  };
+
+  // ── 관리자: 위즈덤 라이브러리만 초기화 (전체 초기화와 별개) ──
+  const adminResetWisdom = async () => {
+    try {
+      const snap = await getDocs(col("wisdomTips"));
+      for (const d of snap.docs) {
+        try { await deleteDoc(d.ref); } catch(e) {}
+      }
+      setWisdomTips([]);
+      alert("✅ 위즈덤 라이브러리 데이터가 초기화되었습니다.");
+    } catch(e) {
+      alert("초기화 중 오류가 발생했습니다: " + e.message);
+    }
+  };
+
   // ── 티미팅 신청 ──────────────────────────────────────
   const sendReq = async (target, message = "") => {
     // 중복 신청 방지
@@ -1028,6 +1132,7 @@ match /{document=**} {
     { id: "missions",  label: "미션"    },
     { id: "schedule",  label: "시간표"  },
     { id: "board",     label: "게시판"  },
+    { id: "wisdom",    label: "위즈덤"  },
   ];
 
   const renderMain = () => {
@@ -1036,9 +1141,10 @@ match /{document=**} {
       case "directory":  return <Directory profiles={mergedProfiles} uid={uid} onRequest={p => openOverlay({ type: "sendReq", data: p })} onChat={p => openChat(roomFor(p.id), p.name)} onViewProfile={p => openOverlay({ type: "profileView", data: p })} />;
       case "board":      return <BoardView posts={posts} profiles={mergedProfiles} uid={uid} onOpenPost={p => openOverlay({ type: "post", data: p })} onNewPost={() => openOverlay({ type: "newPost" })} />;
       case "meetings":   return <Meetings meetings={meetings} profiles={mergedProfiles} rooms={rooms} dmRooms={dmRooms} uid={uid} onUpdate={updateMtg} onReject={id => { setRejectModal({ meetingId: id }); setRejectMsg(""); }} onChat={m => { const oid = m.fromId === uid ? m.toId : m.fromId; openChat(roomFor(oid), m.fromId === uid ? m.toName : m.fromName); }} onOpenChat={(id,name) => openChat(id,name)} onCreateRoom={createRoom} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} onViewProfile={p => openOverlay({ type: "profileView", data: p })} />;
-      case "missions":   return <MissionView myMissions={myMissions} sentCount={sentCount} uid={uid} onUpdate={updateMission} />;
+      case "missions":   return <MissionView myMissions={myMissions} sentCount={sentCount} uid={uid} onUpdate={updateMission} onGoWisdom={() => setView("wisdom")} />;
 
       case "schedule":   return <ScheduleView scheduleData={scheduleData} />;
+      case "wisdom":     return <WisdomView tips={wisdomTips} uid={uid} myProfile={myProfile} onAddTip={addWisdomTip} onToggleHelpful={toggleHelpful} />;
       default: return null;
     }
   };
@@ -1140,7 +1246,7 @@ match /{document=**} {
         </div>
       )}
       {overlay?.type === "adminAuth"   && <div style={{ position:"fixed", inset:0, zIndex:200 }}><AdminAuth onSuccess={() => { console.log("MOB onSuccess, setting admin"); setIsAdmin(true); setOverlay({ type: "admin" }); console.log("MOB overlay set"); }} onBack={() => setOverlay(null)} /></div>}
-      {overlay?.type === "admin"       && <div style={{ position:"fixed", inset:0, zIndex:200, display:"flex", flexDirection:"column" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} scheduleData={scheduleData} onSaveSchedule={saveSchedule} /></div>}
+      {overlay?.type === "admin"       && <div style={{ position:"fixed", inset:0, zIndex:200, display:"flex", flexDirection:"column" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} wisdomTips={wisdomTips} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} scheduleData={scheduleData} onSaveSchedule={saveSchedule} onToggleWisdomVerified={adminToggleWisdomVerified} onDeleteWisdomTip={adminDeleteWisdomTip} onResetWisdom={adminResetWisdom} /></div>}
       {overlay?.type === "chat"        && <div style={S.overlay}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={async () => { setOverlay(null); if (uid) { try { await updateDoc(docR("profiles", uid), { activeRoomId: null }); } catch(e) {} } }} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div>}
       {overlay?.type === "post"        && <div style={S.overlay}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div>}
       {overlay?.type === "newPost"     && <div style={S.overlay}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
@@ -1624,7 +1730,7 @@ function AdminAuth({ onSuccess, onBack }) {
   );
 }
 
-function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfile, onDeleteAccount, onDeletePost, onResetAll, onClearChats, scheduleData, onSaveSchedule }) {
+function AdminView({ profiles, posts, missions, meetings, wisdomTips = [], onBack, onUpdateProfile, onDeleteAccount, onDeletePost, onResetAll, onClearChats, scheduleData, onSaveSchedule, onToggleWisdomVerified, onDeleteWisdomTip, onResetWisdom }) {
   const [tab, setTab]       = useState("users");
   const [editId, setEditId] = useState(null);
   const [editForm, setEF]   = useState({});
@@ -1787,7 +1893,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
       </div>
       <div style={{ padding: "12px 16px 0", flexShrink: 0 }}>
         <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.8)", padding: 4, borderRadius: 14, border: "1px solid #e0e3e8", marginBottom: 10 }}>
-          {[["users","사용자 관리"],["missions","미션 현황"],["posts","게시글 현황"],["schedule","시간표 수정"]].map(([id, label]) => (
+          {[["users","사용자 관리"],["missions","미션 현황"],["posts","게시글 현황"],["wisdom","위즈덤"],["schedule","시간표 수정"]].map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} style={{ flex: 1, padding: "8px 4px", borderRadius: 10, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif", background: tab === id ? "#002c5f" : "transparent", color: tab === id ? "#ffffff" : "#6b7280", transition: "all 0.2s" }}>{label}</button>
           ))}
         </div>
@@ -1873,7 +1979,8 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
               const m1done = sentCnt >= 2;
               const m2done = (ms.m2Photos || []).length >= 2;
               const m3done = (ms.m3Photos || []).length >= 1;
-              const allDone = m1done && m2done && m3done;
+              const m4done = (ms.m4Count || 0) >= 1;
+              const allDone = m1done && m2done && m3done && m4done;
               return (
                 <div key={p.id} style={{ ...S.card, borderRadius: 18 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
@@ -1886,6 +1993,7 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                       ["티미팅 발송", sentCnt+"/2", m1done, null],
                       ["티미팅 인증", (ms.m2Photos||[]).length+"/2", m2done, ms.m2Photos||[]],
                       ["캠퍼스 미션", (ms.m3Photos||[]).length+"/1", m3done, ms.m3Photos||[]],
+                      ["생활 TIP 공유", (ms.m4Count||0)+"/1", m4done, null],
                     ].map(([label, count, done, photos]) => (
                       <div key={label} style={{ flex: 1, background: done ? "rgba(16,185,129,0.08)" : "#ffffff", border: `1px solid ${done ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.07)"}`, borderRadius: 10, padding: "8px 4px", textAlign: "center" }}>
                         <p style={{ fontSize: 9, color: done ? "#059669" : "#64748b", fontWeight: 700, margin: 0 }}>{done ? "✓ " : ""}{label}</p>
@@ -1945,6 +2053,56 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                 <p style={{ fontSize: 11, color: "#6b7280", margin: 0 }}>작성자: {post.authorName} · 댓글 {post.commentCount || 0} · 공감 {post.likeCount || 0}</p>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* 위즈덤 라이브러리 탭 */}
+        {tab === "wisdom" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <p style={{ fontSize: 12, color: "#6b7280", flex: 1, margin: 0 }}>전체 생활 TIP <strong style={{ color: "#002c5f" }}>{wisdomTips.length}건</strong></p>
+              <button onClick={() => exportWisdomExcel(wisdomTips)} style={{ ...S.btnGhost, padding: "6px 12px", fontSize: 11, borderRadius: 8 }}>📊 엑셀 다운로드</button>
+            </div>
+            <button
+              onClick={() => {
+                if (window.confirm("⚠️ 위즈덤 라이브러리 초기화\n\n등록된 모든 생활 TIP이 영구 삭제됩니다.\n(사용자·미션·게시글 등 다른 데이터는 유지됩니다)\n\n계속하시겠습니까?")) {
+                  onResetWisdom();
+                }
+              }}
+              style={{ width: "100%", padding: "10px", background: "rgba(220,38,38,0.07)", border: "1px solid rgba(239,68,68,0.25)", color: "#c0392b", fontSize: 12, fontWeight: 700, borderRadius: 12, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}
+            >
+              🗑 위즈덤 라이브러리만 초기화
+            </button>
+            {wisdomTips.length === 0 && <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic", textAlign: "center", padding: 20 }}>아직 등록된 TIP이 없습니다.</p>}
+            {wisdomTips.map(tip => {
+              const cat = WISDOM_CATEGORIES.find(c => c.id === tip.category);
+              return (
+                <div key={tip.id} style={{ ...S.card, borderRadius: 18 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                    <span style={{ ...S.amberBadge, fontSize: 9 }}>{cat ? `${cat.icon} ${cat.label}` : tip.category}</span>
+                    <span style={{ fontSize: 10, color: "#6b7280" }}>{tip.country}</span>
+                    {tip.verified && <span style={{ background: "rgba(16,185,129,0.1)", color: "#059669", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 8 }}>✅ 운영진 확인</span>}
+                    <p style={{ fontSize: 10, color: "#6b7280", margin: "0 0 0 auto" }}>{timeAgo(tip.createdAt)}</p>
+                  </div>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 4 }}>{tip.title}</p>
+                  <p style={{ fontSize: 12, color: "#374151", margin: "0 0 8px", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{tip.content}</p>
+                  <p style={{ fontSize: 10, color: "#6b7280", marginBottom: 8 }}>
+                    작성자: {tip.authorName} · 출처: {tip.source} · 도움돼요 {tip.helpfulCount || 0}건
+                    {(tip.tags || []).length > 0 ? ` · ${(tip.tags || []).map(t => "#" + t).join(" ")}` : ""}
+                  </p>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => onToggleWisdomVerified(tip.id, !tip.verified)}
+                      style={{ flex: 1, background: tip.verified ? "rgba(107,114,128,0.08)" : "rgba(16,185,129,0.08)", border: `1px solid ${tip.verified ? "#d1d8e0" : "rgba(34,197,94,0.25)"}`, color: tip.verified ? "#6b7280" : "#059669", fontSize: 11, fontWeight: 700, padding: "6px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>
+                      {tip.verified ? "확인 취소" : "✅ 운영진 확인"}
+                    </button>
+                    <button onClick={() => { if (window.confirm(`"${tip.title}" TIP을 삭제하시겠습니까?`)) onDeleteWisdomTip(tip.id); }}
+                      style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "6px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -2167,12 +2325,15 @@ function ProfileView({ profile, missions = {}, meetings = [], onBack, onRequest,
   const m2Count = (pMissions.m2Photos || []).length;
   // m3: 캠퍼스 미션 인증샷 개수
   const m3Count = (pMissions.m3Photos || []).length;
+  // m4: 생활 TIP 공유 여부
+  const m4Count = pMissions.m4Count || 0;
   const m1Done  = m1Count >= 2;
   const m2Done  = m2Count >= 2;
   const m3Done  = m3Count >= 1;
-  const total   = (m1Done ? 1 : 0) + (m2Done ? 1 : 0) + (m3Done ? 1 : 0);
+  const m4Done  = m4Count >= 1;
+  const total   = (m1Done ? 1 : 0) + (m2Done ? 1 : 0) + (m3Done ? 1 : 0) + (m4Done ? 1 : 0);
 
-  const missionStatus = total === 3
+  const missionStatus = total === 4
     ? { label: "미션 완료", color: "#059669", bg: "#d1fae5", icon: "🎉" }
     : total > 0
     ? { label: "미션 진행중", color: "#d97706", bg: "#fef3c7", icon: "⏳" }
@@ -2208,7 +2369,7 @@ function ProfileView({ profile, missions = {}, meetings = [], onBack, onRequest,
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: missionStatus.color, margin: 0 }}>🏆 네트워킹 미션 현황</p>
               <span style={{ fontSize: 11, fontWeight: 700, color: missionStatus.color, background: "#ffffff", padding: "2px 10px", borderRadius: 20 }}>
-                {missionStatus.icon} {missionStatus.label} ({total}/3)
+                {missionStatus.icon} {missionStatus.label} ({total}/4)
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -2216,6 +2377,7 @@ function ProfileView({ profile, missions = {}, meetings = [], onBack, onRequest,
                 { label: "티미팅 발송", current: m1Count, target: 2, done: m1Done },
                 { label: "티미팅 인증샷", current: m2Count, target: 2, done: m2Done },
                 { label: "캠퍼스 미션", current: m3Count, target: 1, done: m3Done },
+                { label: "생활 TIP 공유", current: m4Count, target: 1, done: m4Done },
               ].map(m => (
                 <div key={m.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 11, color: missionStatus.color, width: 80, flexShrink: 0 }}>{m.label}</span>
@@ -2792,7 +2954,7 @@ function NewPost({ onSubmit, onBack }) {
   );
 }
 
-function MissionView({ myMissions, sentCount, uid, onUpdate }) {
+function MissionView({ myMissions, sentCount, uid, onUpdate, onGoWisdom }) {
   const [showM1Guide, setShowM1Guide] = useState(false);
   const m1Count  = Math.min(sentCount, 2);
   const m1Done   = m1Count >= 2;
@@ -2800,8 +2962,10 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
   const m2Done   = m2Photos.length >= 2;
   const m3Photos = myMissions.m3Photos || [];
   const m3Done   = m3Photos.length >= 1;
+  const m4Count  = myMissions.m4Count || 0;
+  const m4Done   = m4Count >= 1;
 
-  const allDone  = m1Done && m2Done && m3Done;
+  const allDone  = m1Done && m2Done && m3Done && m4Done;
 
   const addPhoto = async (key, e) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -2829,6 +2993,8 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> },
     { id:"m3", num:"03", title:"캠퍼스 사진 스팟 명소 찾기", desc:"캠퍼스 사진 스팟 명소를 찾아 조별 인증샷을 남겨주세요.", target:1, current:m3Photos.length, done:m3Done, color:"#f59e0b", photos:m3Photos, photoKey:"m3Photos",
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> },
+    { id:"m4", num:"04", title:"생활 TIP 공유", desc:"선배주재원 간담회에서 들은 생활 TIP 하나를 위즈덤 라이브러리에 남겨주세요.", target:1, current:m4Count, done:m4Done, color:"#7c3aed",
+      icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"/><line x1="9" y1="21" x2="15" y2="21"/><line x1="10" y1="18" x2="14" y2="18"/></svg> },
   ];
 
   return (
@@ -2847,17 +3013,21 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
             <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 6 }}>미션을 완료하고 연결을 넓혀보세요</p>
             <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.2)", borderRadius: 3, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${([m1Done,m2Done,m3Done].filter(Boolean).length / 3) * 100}%`, background: "linear-gradient(90deg,#00aad2,#6ee7b7)", borderRadius: 3, transition: "width 0.6s ease" }} />
+                <div style={{ height: "100%", width: `${([m1Done,m2Done,m3Done,m4Done].filter(Boolean).length / 4) * 100}%`, background: "linear-gradient(90deg,#00aad2,#6ee7b7)", borderRadius: 3, transition: "width 0.6s ease" }} />
               </div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>{[m1Done,m2Done,m3Done].filter(Boolean).length}/3</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>{[m1Done,m2Done,m3Done,m4Done].filter(Boolean).length}/4</span>
             </div>
           </>
         )}
       </div>
       {missions.map(m => (
         <div key={m.id}
-          onClick={m.id === "m1" && !m.done && !m.disabled ? () => setShowM1Guide(true) : undefined}
-          style={{ ...S.card, borderRadius: 24, border: `1px solid ${m.disabled ? "#ffffff" : m.done ? `${m.color}30` : "rgba(255,255,255,0.07)"}`, background: m.disabled ? "rgba(255,255,255,0.02)" : m.done ? `${m.color}08` : "#ffffff", opacity: m.disabled ? 0.45 : 1, position: "relative", overflow: "hidden", cursor: m.id === "m1" && !m.done && !m.disabled ? "pointer" : "default" }}>
+          onClick={
+            m.id === "m1" && !m.done && !m.disabled ? () => setShowM1Guide(true) :
+            m.id === "m4" && !m.done && !m.disabled ? onGoWisdom :
+            undefined
+          }
+          style={{ ...S.card, borderRadius: 24, border: `1px solid ${m.disabled ? "#ffffff" : m.done ? `${m.color}30` : "rgba(255,255,255,0.07)"}`, background: m.disabled ? "rgba(255,255,255,0.02)" : m.done ? `${m.color}08` : "#ffffff", opacity: m.disabled ? 0.45 : 1, position: "relative", overflow: "hidden", cursor: (m.id === "m1" || m.id === "m4") && !m.done && !m.disabled ? "pointer" : "default" }}>
           <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 14 }}>
             <div style={{ width: 52, height: 52, borderRadius: 16, background: m.disabled ? "rgba(255,255,255,0.8)" : `${m.color}14`, border: `1px solid ${m.disabled ? "rgba(255,255,255,0.08)" : m.color+"30"}`, display: "flex", alignItems: "center", justifyContent: "center", color: m.disabled ? "#4b5563" : m.color, flexShrink: 0 }}>{m.icon}</div>
             <div style={{ flex: 1 }}>
@@ -2870,12 +3040,17 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
               <p style={{ fontSize: 12, color: "#6b7280", margin: 0, lineHeight: 1.5 }}>{m.desc}</p>
             </div>
           </div>
-          {!m.disabled && <div style={{ marginBottom: m.photos ? 12 : 0 }}>
+          {!m.disabled && <div style={{ marginBottom: m.photos ? 12 : (m.id === "m4" && !m.done ? 12 : 0) }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}><span style={{ fontSize: 10, color: "#6b7280" }}>진행 현황</span><span style={{ fontSize: 12, fontWeight: 700, color: m.done ? m.color : "#94a3b8" }}>{m.current} / {m.target}회</span></div>
             <div style={{ height: 5, background: "rgba(255,255,255,0.07)", borderRadius: 3, overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${Math.min((m.current/m.target)*100, 100)}%`, background: `linear-gradient(90deg,${m.color},${m.color}aa)`, borderRadius: 3, transition: "width 0.5s" }} />
             </div>
           </div>}
+          {m.id === "m4" && !m.disabled && !m.done && (
+            <button onClick={onGoWisdom} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px", border: `1.5px dashed ${m.color}40`, borderRadius: 14, cursor: "pointer", color: m.color, fontSize: 12, fontWeight: 700, background: "none", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>
+              📖 위즈덤 라이브러리로 이동해서 TIP 남기기 →
+            </button>
+          )}
           {m.photos !== undefined && !m.disabled && (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {/* 올라간 인증샷 목록 - 교체/삭제 버튼 포함 */}
@@ -3014,6 +3189,186 @@ const SCHEDULE_DATA = [
     ],
   },
 ];
+
+function WisdomView({ tips, uid, myProfile, onAddTip, onToggleHelpful }) {
+  const [category,   setCategory]   = useState(null);  // null = 카테고리 그리드 화면
+  const [showWrite,  setShowWrite]  = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const emptyForm = { category: WISDOM_CATEGORIES[0].id, title: "", content: "", country: "", source: WISDOM_SOURCES[0], tags: "" };
+  const [form, setForm] = useState(emptyForm);
+
+  const submit = async () => {
+    if (!form.title.trim() || !form.content.trim() || !form.country.trim()) {
+      return alert("제목·내용·국가는 필수 입력입니다.");
+    }
+    setSubmitting(true);
+    try {
+      await onAddTip({
+        category: form.category,
+        title: form.title.trim(),
+        content: form.content.trim(),
+        country: form.country.trim(),
+        source: form.source,
+        tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
+      });
+      setForm(emptyForm);
+      setShowWrite(false);
+      alert("✅ 소중한 생활 TIP 감사합니다! 위즈덤 라이브러리에 등록되었습니다.");
+    } catch(e) {
+      alert("등록 중 오류가 발생했습니다: " + e.message);
+    }
+    setSubmitting(false);
+  };
+
+  // ── 작성 화면 ────────────────────────────────────────
+  if (showWrite) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#ffffff", overflow: "hidden" }}>
+        <div style={S.overlayHeader}>
+          <button onClick={() => setShowWrite(false)} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 20, padding: 4 }}>✕</button>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", flex: 1, margin: 0 }}>생활 TIP 남기기</p>
+          <button onClick={submit} disabled={submitting} style={{ ...S.btnAmber, padding: "8px 14px", fontSize: 12, borderRadius: 10, opacity: submitting ? 0.6 : 1 }}>{submitting ? "등록 중..." : "등록"}</button>
+        </div>
+        <div style={{ ...S.overlayBody, paddingBottom: 40 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <label style={S.lbl}>카테고리</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {WISDOM_CATEGORIES.map(c => (
+                  <button key={c.id} onClick={() => setForm(f => ({ ...f, category: c.id }))}
+                    style={{ padding: "6px 12px", borderRadius: 10, fontSize: 12, fontWeight: 700, border: form.category === c.id ? "1px solid #002c5f" : "1px solid #e0e3e8", background: form.category === c.id ? "#002c5f" : "#ffffff", color: form.category === c.id ? "#ffffff" : "#9ca3af", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>
+                    {c.icon} {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label style={S.lbl}>TIP 제목</label>
+              <input style={S.inp} placeholder="예: 아이 학교는 최소 6개월 전에 알아보세요" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+            </div>
+            <div>
+              <label style={S.lbl}>내용</label>
+              <textarea style={{ ...S.inp, minHeight: 140, resize: "none" }} placeholder="구체적으로 어떤 점을 조심해야 하는지 적어주세요..." value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} />
+            </div>
+            <div>
+              <label style={S.lbl}>어느 국가인가요?</label>
+              <input style={S.inp} list="wisdomCountryList" placeholder="예: 미국" value={form.country} onChange={e => setForm(f => ({ ...f, country: e.target.value }))} />
+              <datalist id="wisdomCountryList">
+                {COUNTRIES_LIST.map(c => <option key={c} value={c} />)}
+              </datalist>
+            </div>
+            <div>
+              <label style={S.lbl}>누가 알려준 정보인가요?</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {WISDOM_SOURCES.map(s => (
+                  <button key={s} onClick={() => setForm(f => ({ ...f, source: s }))}
+                    style={{ padding: "6px 12px", borderRadius: 10, fontSize: 12, fontWeight: 700, border: form.source === s ? "1px solid #002c5f" : "1px solid #e0e3e8", background: form.source === s ? "#002c5f" : "#ffffff", color: form.source === s ? "#ffffff" : "#9ca3af", cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label style={S.lbl}>태그 (쉼표로 구분)</label>
+              <input style={S.inp} placeholder="예: 학교, 자녀, 미국" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── 카테고리별 TIP 목록 화면 ─────────────────────────
+  if (category) {
+    const cat = WISDOM_CATEGORIES.find(c => c.id === category);
+    const catTips = tips.filter(t => t.category === category).sort((a,b) => (b.helpfulCount||0) - (a.helpfulCount||0));
+    return (
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#f5f6f8", overflow: "hidden" }}>
+        <div style={S.overlayHeader}>
+          <button onClick={() => setCategory(null)} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", flex: 1, margin: 0 }}>{cat?.icon} {cat?.label}</p>
+        </div>
+        <div style={{ ...S.overlayBody, display: "flex", flexDirection: "column", gap: 10 }}>
+          {catTips.length === 0 && <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic", textAlign: "center", padding: 30 }}>아직 등록된 TIP이 없어요.<br/>첫 번째 TIP을 남겨보세요!</p>}
+          {catTips.map(tip => {
+            const iHelped = (tip.helpfulBy || []).includes(uid);
+            return (
+              <div key={tip.id} style={{ ...S.card, borderRadius: 18 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+                  {(tip.helpfulCount||0) >= 5 && <span style={{ background: "#fef3c7", color: "#d97706", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 8 }}>⭐ 추천 TIP</span>}
+                  <span style={{ ...S.amberBadge, fontSize: 9 }}>{tip.country}</span>
+                  <span style={{ fontSize: 9, color: "#9ca3af" }}>{tip.source}</span>
+                  {tip.verified && <span style={{ background: "rgba(16,185,129,0.1)", color: "#059669", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 8 }}>✅ 운영진 확인</span>}
+                </div>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "#111827", marginBottom: 6 }}>{tip.title}</p>
+                <p style={{ fontSize: 12, color: "#374151", lineHeight: 1.6, whiteSpace: "pre-wrap", marginBottom: 10 }}>{tip.content}</p>
+                {(tip.tags||[]).length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+                    {tip.tags.map(t => <span key={t} style={{ fontSize: 10, color: "#00aad2" }}>#{t}</span>)}
+                  </div>
+                )}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <p style={{ fontSize: 10, color: "#9ca3af", margin: 0 }}>{tip.authorName} · {timeAgo(tip.createdAt)}</p>
+                  <button onClick={() => onToggleHelpful(tip.id)}
+                    style={{ background: iHelped ? "#002c5f" : "#ffffff", border: iHelped ? "1px solid #002c5f" : "1.5px solid #c5d5e8", color: iHelped ? "#ffffff" : "#002c5f", fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 10, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>
+                    👍 도움이 되었어요 {tip.helpfulCount || 0}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <button onClick={() => setShowWrite(true)} style={{ position: "absolute", right: 20, bottom: 20, ...S.btnAmber, borderRadius: 999, padding: "14px 20px", boxShadow: "0 6px 20px rgba(0,44,95,0.3)" }}>✍️ TIP 남기기</button>
+      </div>
+    );
+  }
+
+  // ── 카테고리 그리드 (홈) 화면 ────────────────────────
+  const recommended = tips.filter(t => (t.helpfulCount||0) >= 5).sort((a,b) => (b.helpfulCount||0) - (a.helpfulCount||0)).slice(0, 5);
+
+  return (
+    <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ background: "linear-gradient(135deg,#002c5f 0%,#004080 50%,#00648c 100%)", borderRadius: 20, padding: 24, textAlign: "center", boxShadow: "0 6px 20px rgba(0,44,95,0.2)" }}>
+        <div style={{ fontSize: 28, marginBottom: 6 }}>📖</div>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: "#ffffff", margin: 0 }}>위즈덤 라이브러리</h2>
+        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 6 }}>선배주재원들의 생활 노하우가 쌓이는 공간</p>
+        <button onClick={() => setShowWrite(true)} style={{ marginTop: 14, background: "#ffffff", color: "#002c5f", fontWeight: 700, border: "none", borderRadius: 12, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>✍️ 생활 TIP 남기기</button>
+      </div>
+
+      {recommended.length > 0 && (
+        <div>
+          <p style={{ fontSize: 12, fontWeight: 700, color: "#002c5f", marginBottom: 10 }}>⭐ 추천 TIP</p>
+          <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
+            {recommended.map(tip => (
+              <div key={tip.id} onClick={() => setCategory(tip.category)} style={{ ...S.card, borderRadius: 16, minWidth: 220, flexShrink: 0, cursor: "pointer" }}>
+                <span style={{ ...S.amberBadge, fontSize: 9 }}>{tip.country}</span>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: "8px 0 4px" }}>{tip.title}</p>
+                <p style={{ fontSize: 10, color: "#9ca3af", margin: 0 }}>👍 {tip.helpfulCount || 0}건</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div>
+        <p style={{ fontSize: 12, fontWeight: 700, color: "#002c5f", marginBottom: 10 }}>생활 TIP 카테고리</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {WISDOM_CATEGORIES.map(c => {
+            const cnt = tips.filter(t => t.category === c.id).length;
+            return (
+              <button key={c.id} onClick={() => setCategory(c.id)}
+                style={{ ...S.card, borderRadius: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "18px 8px", cursor: "pointer", border: "1px solid #e0e3e8", background: "#ffffff" }}>
+                <span style={{ fontSize: 26 }}>{c.icon}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#111827" }}>{c.label}</span>
+                <span style={{ fontSize: 10, color: "#9ca3af" }}>{cnt}건</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ScheduleView({ scheduleData }) {
   const [activeDay, setActiveDay] = useState(0);
