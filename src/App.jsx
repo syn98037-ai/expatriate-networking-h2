@@ -106,14 +106,13 @@ function exportWisdomExcel(tips) {
       "태그": (t.tags || []).join(", "),
       "작성자": t.authorName || "",
       "도움이 되었어요": t.helpfulCount || 0,
-      "운영진 확인": t.verified ? "Y" : "N",
       "작성일": t.createdAt ? t.createdAt.slice(0, 10) : "",
     };
   });
   const ws = XLSX.utils.json_to_sheet(rows);
   ws["!cols"] = [
     { wch: 14 }, { wch: 24 }, { wch: 50 }, { wch: 10 }, { wch: 14 },
-    { wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 },
+    { wch: 20 }, { wch: 12 }, { wch: 10 }, { wch: 12 },
   ];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "위즈덤 라이브러리");
@@ -325,7 +324,7 @@ export default function App() {
             );
             const acceptedCnt = Math.min(
               mtgSnap.docs.filter(d => d.data().status === "수락함").length,
-              2
+              1
             );
             await setDoc(docR("missions", user.uid), { m1Count: acceptedCnt }, { merge: true });
           } catch(e) { console.error("m1Count sync error:", e); }
@@ -790,7 +789,6 @@ export default function App() {
       authorName: myProfile?.name || "익명",
       helpfulCount: 0,
       helpfulBy: [],
-      verified: false,
       createdAt: new Date().toISOString(),
     });
     // 미션4(생활 TIP 공유) 완료 처리
@@ -814,11 +812,6 @@ export default function App() {
         helpfulCount: nextBy.length,
       });
     } catch(e) { console.error("도움이 되었어요 업데이트 오류:", e); }
-  };
-
-  // ── 관리자: 위즈덤 TIP 운영진 확인 배지 토글 ────────
-  const adminToggleWisdomVerified = async (tipId, value) => {
-    try { await updateDoc(docR("wisdomTips", tipId), { verified: value }); } catch(e) {}
   };
 
   // ── 위즈덤 TIP 삭제 (관리자 전체 삭제 / 작성자 본인 삭제 공용) ──
@@ -901,7 +894,7 @@ export default function App() {
         try {
           const fromMtgs = meetings.filter(m => m.fromId === mtg.fromId && m.status === "수락함");
           const newCount = fromMtgs.length + 1; // 현재 수락 포함
-          await setDoc(docR("missions", mtg.fromId), { m1Count: Math.min(newCount, 2) }, { merge: true });
+          await setDoc(docR("missions", mtg.fromId), { m1Count: Math.min(newCount, 1) }, { merge: true });
         } catch(e) { console.error("미션 카운트 업데이트 오류:", e); }
       }
     }
@@ -1253,7 +1246,7 @@ match /{document=**} {
         </div>
       )}
       {overlay?.type === "adminAuth"   && <div style={{ position:"fixed", inset:0, zIndex:200 }}><AdminAuth onSuccess={() => { console.log("MOB onSuccess, setting admin"); setIsAdmin(true); setOverlay({ type: "admin" }); console.log("MOB overlay set"); }} onBack={() => setOverlay(null)} /></div>}
-      {overlay?.type === "admin"       && <div style={{ position:"fixed", inset:0, zIndex:200, display:"flex", flexDirection:"column" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} wisdomTips={wisdomTips} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} scheduleData={scheduleData} onSaveSchedule={saveSchedule} onToggleWisdomVerified={adminToggleWisdomVerified} onDeleteWisdomTip={deleteWisdomTip} onResetWisdom={adminResetWisdom} /></div>}
+      {overlay?.type === "admin"       && <div style={{ position:"fixed", inset:0, zIndex:200, display:"flex", flexDirection:"column" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} wisdomTips={wisdomTips} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} scheduleData={scheduleData} onSaveSchedule={saveSchedule} onDeleteWisdomTip={deleteWisdomTip} onResetWisdom={adminResetWisdom} /></div>}
       {overlay?.type === "chat"        && <div style={S.overlay}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={async () => { setOverlay(null); if (uid) { try { await updateDoc(docR("profiles", uid), { activeRoomId: null }); } catch(e) {} } }} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div>}
       {overlay?.type === "post"        && <div style={S.overlay}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div>}
       {overlay?.type === "newPost"     && <div style={S.overlay}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
@@ -1737,7 +1730,7 @@ function AdminAuth({ onSuccess, onBack }) {
   );
 }
 
-function AdminView({ profiles, posts, missions, meetings, wisdomTips = [], onBack, onUpdateProfile, onDeleteAccount, onDeletePost, onResetAll, onClearChats, scheduleData, onSaveSchedule, onToggleWisdomVerified, onDeleteWisdomTip, onResetWisdom }) {
+function AdminView({ profiles, posts, missions, meetings, wisdomTips = [], onBack, onUpdateProfile, onDeleteAccount, onDeletePost, onResetAll, onClearChats, scheduleData, onSaveSchedule, onDeleteWisdomTip, onResetWisdom }) {
   const [tab, setTab]       = useState("users");
   const [editId, setEditId] = useState(null);
   const [editForm, setEF]   = useState({});
@@ -1983,8 +1976,8 @@ function AdminView({ profiles, posts, missions, meetings, wisdomTips = [], onBac
               const ms     = missions[p.id] || {};
               // 티미팅 발송: missions에 저장된 m1Count 사용
               const sentCnt = ms.m1Count || 0;
-              const m1done = sentCnt >= 2;
-              const m2done = (ms.m2Photos || []).length >= 2;
+              const m1done = sentCnt >= 1;
+              const m2done = (ms.m2Photos || []).length >= 1;
               const m3done = (ms.m3Photos || []).length >= 1;
               const m4done = (ms.m4Count || 0) >= 1;
               const allDone = m1done && m2done && m3done && m4done;
@@ -1997,8 +1990,8 @@ function AdminView({ profiles, posts, missions, meetings, wisdomTips = [], onBac
                   </div>
                   <div style={{ display: "flex", gap: 6, marginBottom: ((ms.m2Photos||[]).length > 0 || (ms.m3Photos||[]).length > 0) ? 10 : 0 }}>
                     {[
-                      ["티미팅 발송", sentCnt+"/2", m1done, null],
-                      ["티미팅 인증", (ms.m2Photos||[]).length+"/2", m2done, ms.m2Photos||[]],
+                      ["티미팅 발송", sentCnt+"/1", m1done, null],
+                      ["티미팅 인증", (ms.m2Photos||[]).length+"/1", m2done, ms.m2Photos||[]],
                       ["캠퍼스 미션", (ms.m3Photos||[]).length+"/1", m3done, ms.m3Photos||[]],
                       ["생활 TIP 공유", (ms.m4Count||0)+"/1", m4done, null],
                     ].map(([label, count, done, photos]) => (
@@ -2088,7 +2081,6 @@ function AdminView({ profiles, posts, missions, meetings, wisdomTips = [], onBac
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
                     <span style={{ ...S.amberBadge, fontSize: 9 }}>{cat ? `${cat.icon} ${cat.label}` : tip.category}</span>
                     <span style={{ fontSize: 10, color: "#6b7280" }}>{tip.country}</span>
-                    {tip.verified && <span style={{ background: "rgba(16,185,129,0.1)", color: "#059669", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 8 }}>✅ 운영진 확인</span>}
                     <p style={{ fontSize: 10, color: "#6b7280", margin: "0 0 0 auto" }}>{timeAgo(tip.createdAt)}</p>
                   </div>
                   <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 4 }}>{tip.title}</p>
@@ -2097,16 +2089,10 @@ function AdminView({ profiles, posts, missions, meetings, wisdomTips = [], onBac
                     작성자: {tip.authorName} · 출처: {tip.source} · 도움돼요 {tip.helpfulCount || 0}건
                     {(tip.tags || []).length > 0 ? ` · ${(tip.tags || []).map(t => "#" + t).join(" ")}` : ""}
                   </p>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => onToggleWisdomVerified(tip.id, !tip.verified)}
-                      style={{ flex: 1, background: tip.verified ? "rgba(107,114,128,0.08)" : "rgba(16,185,129,0.08)", border: `1px solid ${tip.verified ? "#d1d8e0" : "rgba(34,197,94,0.25)"}`, color: tip.verified ? "#6b7280" : "#059669", fontSize: 11, fontWeight: 700, padding: "6px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>
-                      {tip.verified ? "확인 취소" : "✅ 운영진 확인"}
-                    </button>
-                    <button onClick={() => { if (window.confirm(`"${tip.title}" TIP을 삭제하시겠습니까?`)) onDeleteWisdomTip(tip.id); }}
-                      style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "6px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>
-                      삭제
-                    </button>
-                  </div>
+                  <button onClick={() => { if (window.confirm(`"${tip.title}" TIP을 삭제하시겠습니까?`)) onDeleteWisdomTip(tip.id); }}
+                    style={{ width: "100%", background: "rgba(220,38,38,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "6px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>
+                    삭제
+                  </button>
                 </div>
               );
             })}
@@ -2334,8 +2320,8 @@ function ProfileView({ profile, missions = {}, meetings = [], onBack, onRequest,
   const m3Count = (pMissions.m3Photos || []).length;
   // m4: 생활 TIP 공유 여부
   const m4Count = pMissions.m4Count || 0;
-  const m1Done  = m1Count >= 2;
-  const m2Done  = m2Count >= 2;
+  const m1Done  = m1Count >= 1;
+  const m2Done  = m2Count >= 1;
   const m3Done  = m3Count >= 1;
   const m4Done  = m4Count >= 1;
   const total   = (m1Done ? 1 : 0) + (m2Done ? 1 : 0) + (m3Done ? 1 : 0) + (m4Done ? 1 : 0);
@@ -2381,8 +2367,8 @@ function ProfileView({ profile, missions = {}, meetings = [], onBack, onRequest,
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {[
-                { label: "티미팅 발송", current: m1Count, target: 2, done: m1Done },
-                { label: "티미팅 인증샷", current: m2Count, target: 2, done: m2Done },
+                { label: "티미팅 발송", current: m1Count, target: 1, done: m1Done },
+                { label: "티미팅 인증샷", current: m2Count, target: 1, done: m2Done },
                 { label: "캠퍼스 미션", current: m3Count, target: 1, done: m3Done },
                 { label: "생활 TIP 공유", current: m4Count, target: 1, done: m4Done },
               ].map(m => (
@@ -2963,10 +2949,10 @@ function NewPost({ onSubmit, onBack }) {
 
 function MissionView({ myMissions, sentCount, uid, onUpdate, onGoWisdom }) {
   const [showM1Guide, setShowM1Guide] = useState(false);
-  const m1Count  = Math.min(sentCount, 2);
-  const m1Done   = m1Count >= 2;
+  const m1Count  = Math.min(sentCount, 1);
+  const m1Done   = m1Count >= 1;
   const m2Photos = myMissions.m2Photos || [];
-  const m2Done   = m2Photos.length >= 2;
+  const m2Done   = m2Photos.length >= 1;
   const m3Photos = myMissions.m3Photos || [];
   const m3Done   = m3Photos.length >= 1;
   const m4Count  = myMissions.m4Count || 0;
@@ -2994,9 +2980,9 @@ function MissionView({ myMissions, sentCount, uid, onUpdate, onGoWisdom }) {
   };
 
   const missions = [
-    { id:"m1", num:"01", title:"티미팅 발송", desc:"다른 주재원 동료에게 티미팅을 신청해보세요. (2회) 상대방이 수락했을 경우 인정!", target:2, current:m1Count, done:m1Done, color:"#002c5f",
+    { id:"m1", num:"01", title:"티미팅 발송", desc:"다른 주재원 동료에게 티미팅을 신청해보세요. 상대방이 수락했을 경우 인정!", target:1, current:m1Count, done:m1Done, color:"#002c5f",
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="12" y1="7" x2="12" y2="13"/></svg> },
-    { id:"m2", num:"02", title:"티미팅 인증샷", desc:"티미팅을 진행한 후 인증샷을 남겨주세요. (2회)", target:2, current:m2Photos.length, done:m2Done, color:"#00aad2", photos:m2Photos, photoKey:"m2Photos",
+    { id:"m2", num:"02", title:"티미팅 인증샷", desc:"티미팅을 진행한 후 인증샷을 남겨주세요.", target:1, current:m2Photos.length, done:m2Done, color:"#00aad2", photos:m2Photos, photoKey:"m2Photos",
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> },
     { id:"m3", num:"03", title:"캠퍼스 사진 스팟 명소 찾기", desc:"캠퍼스 사진 스팟 명소를 찾아 조별 인증샷을 남겨주세요.", target:1, current:m3Photos.length, done:m3Done, color:"#f59e0b", photos:m3Photos, photoKey:"m3Photos",
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> },
@@ -3376,7 +3362,6 @@ function WisdomView({ tips, uid, myProfile, onAddTip, onToggleHelpful, onUpdateT
                   {(tip.helpfulCount||0) >= 5 && <span style={{ background: "#fef3c7", color: "#d97706", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 8 }}>⭐ 추천 TIP</span>}
                   <span style={{ ...S.amberBadge, fontSize: 9 }}>{tip.country}</span>
                   <span style={{ fontSize: 9, color: "#9ca3af" }}>{tip.source}</span>
-                  {tip.verified && <span style={{ background: "rgba(16,185,129,0.1)", color: "#059669", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 8 }}>✅ 운영진 확인</span>}
                   {isMine && <span style={{ background: "rgba(124,58,237,0.1)", color: "#7c3aed", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 8, marginLeft: "auto" }}>내 글</span>}
                 </div>
                 <p style={{ fontSize: 14, fontWeight: 700, color: "#111827", marginBottom: 6 }}>{tip.title}</p>
