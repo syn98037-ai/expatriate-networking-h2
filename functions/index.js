@@ -46,7 +46,7 @@ exports.sendPushNotification = onDocumentCreated(
         body,
         type: data.type || "",
         roomId: data.roomId || "",
-        link: "https://expatriate-networking-app.vercel.app",
+        link: "https://expatriate-networking-h2.vercel.app",
       },
       // notification 필드: Android Doze/Standby 모드 돌파 + 앱 완전 종료 시 알림
       notification: {
@@ -63,7 +63,7 @@ exports.sendPushNotification = onDocumentCreated(
           requireInteraction: false,
         },
         fcm_options: {
-          link: "https://expatriate-networking-app.vercel.app",
+          link: "https://expatriate-networking-h2.vercel.app",
         },
       },
       tokens,
@@ -122,8 +122,8 @@ exports.sendPostNotification = onDocumentCreated(
       if (tokens.length === 0) return;
 
       const message = {
-        data: { title, body, type: "newPost", link: "https://expatriate-networking-app.vercel.app" },
-        webpush: { headers: { Urgency: "normal" }, fcm_options: { link: "https://expatriate-networking-app.vercel.app" } },
+        data: { title, body, type: "newPost", link: "https://expatriate-networking-h2.vercel.app" },
+        webpush: { headers: { Urgency: "normal" }, fcm_options: { link: "https://expatriate-networking-h2.vercel.app" } },
         tokens,
       };
       sendPromises.push(
