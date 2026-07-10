@@ -781,10 +781,12 @@ export default function App() {
   };
 
   // ── 위즈덤 라이브러리: TIP 작성 ─────────────────────
-  // 작성자는 uid 참조가 아니라 이름 스냅샷으로 저장 (계정이 기수마다 삭제돼도 TIP은 영구 보존)
+  // 작성자 이름은 스냅샷으로 저장 (계정이 기수마다 삭제돼도 TIP은 영구 보존)
+  // authorId는 "내가 쓴 글" 편집/삭제 판별용 (계정 삭제 후에는 자연히 편집 불가해짐)
   const addWisdomTip = async (tipData) => {
     await addDoc(col("wisdomTips"), {
       ...tipData,
+      authorId: uid,
       authorName: myProfile?.name || "익명",
       helpfulCount: 0,
       helpfulBy: [],
@@ -793,6 +795,11 @@ export default function App() {
     });
     // 미션4(생활 TIP 공유) 완료 처리
     try { await updateMission("m4Count", 1); } catch(e) {}
+  };
+
+  // ── 위즈덤 라이브러리: 내가 쓴 TIP 수정 ──────────────
+  const updateWisdomTip = async (tipId, updates) => {
+    try { await updateDoc(docR("wisdomTips", tipId), updates); } catch(e) { console.error("TIP 수정 오류:", e); }
   };
 
   // ── 위즈덤 라이브러리: 도움이 되었어요 토글 ──────────
@@ -814,8 +821,8 @@ export default function App() {
     try { await updateDoc(docR("wisdomTips", tipId), { verified: value }); } catch(e) {}
   };
 
-  // ── 관리자: 위즈덤 TIP 삭제 ──────────────────────────
-  const adminDeleteWisdomTip = async (tipId) => {
+  // ── 위즈덤 TIP 삭제 (관리자 전체 삭제 / 작성자 본인 삭제 공용) ──
+  const deleteWisdomTip = async (tipId) => {
     try { await deleteDoc(docR("wisdomTips", tipId)); } catch(e) {}
   };
 
@@ -1144,7 +1151,7 @@ match /{document=**} {
       case "missions":   return <MissionView myMissions={myMissions} sentCount={sentCount} uid={uid} onUpdate={updateMission} onGoWisdom={() => setView("wisdom")} />;
 
       case "schedule":   return <ScheduleView scheduleData={scheduleData} />;
-      case "wisdom":     return <WisdomView tips={wisdomTips} uid={uid} myProfile={myProfile} onAddTip={addWisdomTip} onToggleHelpful={toggleHelpful} />;
+      case "wisdom":     return <WisdomView tips={wisdomTips} uid={uid} myProfile={myProfile} onAddTip={addWisdomTip} onToggleHelpful={toggleHelpful} onUpdateTip={updateWisdomTip} onDeleteTip={deleteWisdomTip} />;
       default: return null;
     }
   };
@@ -1246,7 +1253,7 @@ match /{document=**} {
         </div>
       )}
       {overlay?.type === "adminAuth"   && <div style={{ position:"fixed", inset:0, zIndex:200 }}><AdminAuth onSuccess={() => { console.log("MOB onSuccess, setting admin"); setIsAdmin(true); setOverlay({ type: "admin" }); console.log("MOB overlay set"); }} onBack={() => setOverlay(null)} /></div>}
-      {overlay?.type === "admin"       && <div style={{ position:"fixed", inset:0, zIndex:200, display:"flex", flexDirection:"column" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} wisdomTips={wisdomTips} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} scheduleData={scheduleData} onSaveSchedule={saveSchedule} onToggleWisdomVerified={adminToggleWisdomVerified} onDeleteWisdomTip={adminDeleteWisdomTip} onResetWisdom={adminResetWisdom} /></div>}
+      {overlay?.type === "admin"       && <div style={{ position:"fixed", inset:0, zIndex:200, display:"flex", flexDirection:"column" }}><AdminView profiles={mergedProfiles} posts={posts} missions={missions} meetings={meetings} wisdomTips={wisdomTips} onBack={() => { setIsAdmin(false); setOverlay(null); }} onUpdateProfile={adminUpdateProfile} onDeleteAccount={adminDeleteAccount} onDeletePost={adminDeletePost} onResetAll={adminResetAll} onClearChats={adminClearChats} scheduleData={scheduleData} onSaveSchedule={saveSchedule} onToggleWisdomVerified={adminToggleWisdomVerified} onDeleteWisdomTip={deleteWisdomTip} onResetWisdom={adminResetWisdom} /></div>}
       {overlay?.type === "chat"        && <div style={S.overlay}><ChatRoom roomId={overlay.data.roomId} name={overlay.data.name} myProfile={myProfile} uid={uid} profiles={mergedProfiles} chats={chats} setChats={setChats} onSend={addMsg} onBack={async () => { setOverlay(null); if (uid) { try { await updateDoc(docR("profiles", uid), { activeRoomId: null }); } catch(e) {} } }} db={db} rooms={rooms} onLeaveRoom={leaveRoom} onInviteToRoom={inviteToRoom} /></div>}
       {overlay?.type === "post"        && <div style={S.overlay}><PostDetail post={overlay.data} profiles={mergedProfiles} uid={uid} myProfile={myProfile} onAddComment={t => addComment(overlay.data.id, t)} onToggleLike={() => toggleLike(overlay.data.id)} onEditPost={(updates) => editPost(overlay.data.id, updates)} onDeletePost={() => { deletePost(overlay.data.id); setOverlay(null); }} onDeleteComment={(cid) => deleteComment(overlay.data.id, cid)} onBack={() => setOverlay(null)} db={db} /></div>}
       {overlay?.type === "newPost"     && <div style={S.overlay}><NewPost onSubmit={async p => { await addPost(p); setOverlay(null); }} onBack={() => setOverlay(null)} /></div>}
@@ -3190,12 +3197,39 @@ const SCHEDULE_DATA = [
   },
 ];
 
-function WisdomView({ tips, uid, myProfile, onAddTip, onToggleHelpful }) {
-  const [category,   setCategory]   = useState(null);  // null = 카테고리 그리드 화면
-  const [showWrite,  setShowWrite]  = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+function WisdomView({ tips, uid, myProfile, onAddTip, onToggleHelpful, onUpdateTip, onDeleteTip }) {
+  const [category,       setCategory]       = useState(null);  // null = 카테고리 그리드 화면
+  const [selectedCountry, setSelectedCountry] = useState(null); // null = 국가 목록 화면, "__ALL__" = 전체보기
+  const [showWrite,      setShowWrite]      = useState(false);
+  const [editingTip,     setEditingTip]     = useState(null);  // 수정 중인 TIP (null이면 신규 작성)
+  const [submitting,     setSubmitting]     = useState(false);
   const emptyForm = { category: WISDOM_CATEGORIES[0].id, title: "", content: "", country: "", source: WISDOM_SOURCES[0], tags: "" };
   const [form, setForm] = useState(emptyForm);
+
+  // 새 TIP 작성 화면 열기 (현재 보고 있는 카테고리/국가를 기본값으로)
+  const openWrite = () => {
+    setEditingTip(null);
+    setForm({
+      ...emptyForm,
+      category: category || emptyForm.category,
+      country: (selectedCountry && selectedCountry !== "__ALL__") ? selectedCountry : "",
+    });
+    setShowWrite(true);
+  };
+
+  // 내가 쓴 TIP 수정 화면 열기
+  const openEdit = (tip) => {
+    setEditingTip(tip);
+    setForm({
+      category: tip.category,
+      title: tip.title || "",
+      content: tip.content || "",
+      country: tip.country || "",
+      source: tip.source || WISDOM_SOURCES[0],
+      tags: (tip.tags || []).join(", "),
+    });
+    setShowWrite(true);
+  };
 
   const submit = async () => {
     if (!form.title.trim() || !form.content.trim() || !form.country.trim()) {
@@ -3203,31 +3237,38 @@ function WisdomView({ tips, uid, myProfile, onAddTip, onToggleHelpful }) {
     }
     setSubmitting(true);
     try {
-      await onAddTip({
+      const payload = {
         category: form.category,
         title: form.title.trim(),
         content: form.content.trim(),
         country: form.country.trim(),
         source: form.source,
         tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
-      });
+      };
+      if (editingTip) {
+        await onUpdateTip(editingTip.id, payload);
+        alert("✅ TIP이 수정되었습니다.");
+      } else {
+        await onAddTip(payload);
+        alert("✅ 소중한 생활 TIP 감사합니다! 위즈덤 라이브러리에 등록되었습니다.");
+      }
       setForm(emptyForm);
+      setEditingTip(null);
       setShowWrite(false);
-      alert("✅ 소중한 생활 TIP 감사합니다! 위즈덤 라이브러리에 등록되었습니다.");
     } catch(e) {
-      alert("등록 중 오류가 발생했습니다: " + e.message);
+      alert((editingTip ? "수정" : "등록") + " 중 오류가 발생했습니다: " + e.message);
     }
     setSubmitting(false);
   };
 
-  // ── 작성 화면 ────────────────────────────────────────
+  // ── 작성/수정 화면 ────────────────────────────────────
   if (showWrite) {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#ffffff", overflow: "hidden" }}>
         <div style={S.overlayHeader}>
-          <button onClick={() => setShowWrite(false)} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 20, padding: 4 }}>✕</button>
-          <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", flex: 1, margin: 0 }}>생활 TIP 남기기</p>
-          <button onClick={submit} disabled={submitting} style={{ ...S.btnAmber, padding: "8px 14px", fontSize: 12, borderRadius: 10, opacity: submitting ? 0.6 : 1 }}>{submitting ? "등록 중..." : "등록"}</button>
+          <button onClick={() => { setShowWrite(false); setEditingTip(null); }} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 20, padding: 4 }}>✕</button>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", flex: 1, margin: 0 }}>{editingTip ? "생활 TIP 수정" : "생활 TIP 남기기"}</p>
+          <button onClick={submit} disabled={submitting} style={{ ...S.btnAmber, padding: "8px 14px", fontSize: 12, borderRadius: 10, opacity: submitting ? 0.6 : 1 }}>{submitting ? (editingTip ? "수정 중..." : "등록 중...") : (editingTip ? "수정 완료" : "등록")}</button>
         </div>
         <div style={{ ...S.overlayBody, paddingBottom: 40 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -3278,20 +3319,57 @@ function WisdomView({ tips, uid, myProfile, onAddTip, onToggleHelpful }) {
     );
   }
 
-  // ── 카테고리별 TIP 목록 화면 ─────────────────────────
-  if (category) {
+  // ── 국가 목록 화면 (카테고리 선택 후, 국가 선택 전) ──
+  if (category && !selectedCountry) {
     const cat = WISDOM_CATEGORIES.find(c => c.id === category);
-    const catTips = tips.filter(t => t.category === category).sort((a,b) => (b.helpfulCount||0) - (a.helpfulCount||0));
+    const catTips = tips.filter(t => t.category === category);
+    const countryCounts = {};
+    catTips.forEach(t => { countryCounts[t.country] = (countryCounts[t.country] || 0) + 1; });
+    const countryList = Object.keys(countryCounts).sort((a, b) => countryCounts[b] - countryCounts[a] || a.localeCompare(b));
     return (
-      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#f5f6f8", overflow: "hidden" }}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#f5f6f8", overflow: "hidden", position: "relative" }}>
         <div style={S.overlayHeader}>
           <button onClick={() => setCategory(null)} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
           <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", flex: 1, margin: 0 }}>{cat?.icon} {cat?.label}</p>
         </div>
         <div style={{ ...S.overlayBody, display: "flex", flexDirection: "column", gap: 10, paddingBottom: 110 }}>
+          <button onClick={() => setSelectedCountry("__ALL__")}
+            style={{ ...S.card, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", border: "1px solid #c5d5e8", background: "#e8f0f8" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#002c5f" }}>🌐 전체보기 (국가 무관)</span>
+            <span style={{ fontSize: 11, color: "#6b7280" }}>{catTips.length}건</span>
+          </button>
+          {countryList.length === 0 && <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic", textAlign: "center", padding: 30 }}>아직 등록된 TIP이 없어요.<br/>첫 번째 TIP을 남겨보세요!</p>}
+          {countryList.map(country => (
+            <button key={country} onClick={() => setSelectedCountry(country)}
+              style={{ ...S.card, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", border: "1px solid #e0e3e8", background: "#ffffff" }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{country}</span>
+              <span style={{ fontSize: 11, color: "#9ca3af" }}>{countryCounts[country]}건 ›</span>
+            </button>
+          ))}
+        </div>
+        <button onClick={openWrite} style={{ position: "absolute", right: 20, bottom: 92, ...S.btnAmber, borderRadius: 999, padding: "14px 20px", boxShadow: "0 6px 20px rgba(0,44,95,0.3)" }}>✍️ TIP 남기기</button>
+      </div>
+    );
+  }
+
+  // ── TIP 목록 화면 (카테고리 + 국가 선택 완료) ────────
+  if (category && selectedCountry) {
+    const cat = WISDOM_CATEGORIES.find(c => c.id === category);
+    const isAll = selectedCountry === "__ALL__";
+    const catTips = tips
+      .filter(t => t.category === category && (isAll || t.country === selectedCountry))
+      .sort((a,b) => (b.helpfulCount||0) - (a.helpfulCount||0));
+    return (
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#f5f6f8", overflow: "hidden", position: "relative" }}>
+        <div style={S.overlayHeader}>
+          <button onClick={() => setSelectedCountry(null)} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
+          <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", flex: 1, margin: 0 }}>{cat?.icon} {cat?.label}{isAll ? "" : ` · ${selectedCountry}`}</p>
+        </div>
+        <div style={{ ...S.overlayBody, display: "flex", flexDirection: "column", gap: 10, paddingBottom: 110 }}>
           {catTips.length === 0 && <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic", textAlign: "center", padding: 30 }}>아직 등록된 TIP이 없어요.<br/>첫 번째 TIP을 남겨보세요!</p>}
           {catTips.map(tip => {
             const iHelped = (tip.helpfulBy || []).includes(uid);
+            const isMine  = uid && tip.authorId === uid;
             return (
               <div key={tip.id} style={{ ...S.card, borderRadius: 18 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
@@ -3299,6 +3377,7 @@ function WisdomView({ tips, uid, myProfile, onAddTip, onToggleHelpful }) {
                   <span style={{ ...S.amberBadge, fontSize: 9 }}>{tip.country}</span>
                   <span style={{ fontSize: 9, color: "#9ca3af" }}>{tip.source}</span>
                   {tip.verified && <span style={{ background: "rgba(16,185,129,0.1)", color: "#059669", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 8 }}>✅ 운영진 확인</span>}
+                  {isMine && <span style={{ background: "rgba(124,58,237,0.1)", color: "#7c3aed", fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 8, marginLeft: "auto" }}>내 글</span>}
                 </div>
                 <p style={{ fontSize: 14, fontWeight: 700, color: "#111827", marginBottom: 6 }}>{tip.title}</p>
                 <p style={{ fontSize: 12, color: "#374151", lineHeight: 1.6, whiteSpace: "pre-wrap", marginBottom: 10 }}>{tip.content}</p>
@@ -3307,18 +3386,30 @@ function WisdomView({ tips, uid, myProfile, onAddTip, onToggleHelpful }) {
                     {tip.tags.map(t => <span key={t} style={{ fontSize: 10, color: "#00aad2" }}>#{t}</span>)}
                   </div>
                 )}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: isMine ? 10 : 0 }}>
                   <p style={{ fontSize: 10, color: "#9ca3af", margin: 0 }}>{tip.authorName} · {timeAgo(tip.createdAt)}</p>
                   <button onClick={() => onToggleHelpful(tip.id)}
                     style={{ background: iHelped ? "#002c5f" : "#ffffff", border: iHelped ? "1px solid #002c5f" : "1.5px solid #c5d5e8", color: iHelped ? "#ffffff" : "#002c5f", fontSize: 11, fontWeight: 700, padding: "6px 12px", borderRadius: 10, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>
                     👍 도움이 되었어요 {tip.helpfulCount || 0}
                   </button>
                 </div>
+                {isMine && (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => openEdit(tip)}
+                      style={{ flex: 1, background: "rgba(0,44,95,0.05)", border: "1px solid #c5d5e8", color: "#002c5f", fontSize: 11, fontWeight: 700, padding: "6px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>
+                      ✏️ 수정
+                    </button>
+                    <button onClick={() => { if (window.confirm("내가 남긴 TIP을 삭제하시겠습니까?")) onDeleteTip(tip.id); }}
+                      style={{ flex: 1, background: "rgba(220,38,38,0.06)", border: "1px solid rgba(239,68,68,0.2)", color: "#c0392b", fontSize: 11, fontWeight: 700, padding: "6px 10px", borderRadius: 9, cursor: "pointer", fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>
+                      🗑 삭제
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
-        <button onClick={() => setShowWrite(true)} style={{ position: "absolute", right: 20, bottom: 92, ...S.btnAmber, borderRadius: 999, padding: "14px 20px", boxShadow: "0 6px 20px rgba(0,44,95,0.3)" }}>✍️ TIP 남기기</button>
+        <button onClick={openWrite} style={{ position: "absolute", right: 20, bottom: 92, ...S.btnAmber, borderRadius: 999, padding: "14px 20px", boxShadow: "0 6px 20px rgba(0,44,95,0.3)" }}>✍️ TIP 남기기</button>
       </div>
     );
   }
@@ -3332,7 +3423,7 @@ function WisdomView({ tips, uid, myProfile, onAddTip, onToggleHelpful }) {
         <div style={{ fontSize: 28, marginBottom: 6 }}>📖</div>
         <h2 style={{ fontSize: 18, fontWeight: 800, color: "#ffffff", margin: 0 }}>위즈덤 라이브러리</h2>
         <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 6 }}>선배주재원들의 생활 노하우가 쌓이는 공간</p>
-        <button onClick={() => setShowWrite(true)} style={{ marginTop: 14, background: "#ffffff", color: "#002c5f", fontWeight: 700, border: "none", borderRadius: 12, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>✍️ 생활 TIP 남기기</button>
+        <button onClick={openWrite} style={{ marginTop: 14, background: "#ffffff", color: "#002c5f", fontWeight: 700, border: "none", borderRadius: 12, padding: "10px 20px", cursor: "pointer", fontSize: 13, fontFamily: "'Noto Sans KR', Inter, sans-serif" }}>✍️ 생활 TIP 남기기</button>
       </div>
 
       {recommended.length > 0 && (
@@ -3340,7 +3431,7 @@ function WisdomView({ tips, uid, myProfile, onAddTip, onToggleHelpful }) {
           <p style={{ fontSize: 12, fontWeight: 700, color: "#002c5f", marginBottom: 10 }}>⭐ 추천 TIP</p>
           <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
             {recommended.map(tip => (
-              <div key={tip.id} onClick={() => setCategory(tip.category)} style={{ ...S.card, borderRadius: 16, minWidth: 220, flexShrink: 0, cursor: "pointer" }}>
+              <div key={tip.id} onClick={() => { setCategory(tip.category); setSelectedCountry(tip.country); }} style={{ ...S.card, borderRadius: 16, minWidth: 220, flexShrink: 0, cursor: "pointer" }}>
                 <span style={{ ...S.amberBadge, fontSize: 9 }}>{tip.country}</span>
                 <p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: "8px 0 4px" }}>{tip.title}</p>
                 <p style={{ fontSize: 10, color: "#9ca3af", margin: 0 }}>👍 {tip.helpfulCount || 0}건</p>
