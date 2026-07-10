@@ -73,6 +73,13 @@ export const S = {
     boxSizing: "border-box",
   },
 
+  // <select> 드롭다운 팝업 목록의 각 옵션 스타일
+  // (일부 브라우저/OS가 다크모드일 때 옵션 목록 배경을 검정으로 렌더링하며 글씨색만 상속하는 문제 방지)
+  option: {
+    background: "#ffffff",
+    color: "#002c5f",
+  },
+
   // 라벨
   lbl: {
     fontSize: 11,

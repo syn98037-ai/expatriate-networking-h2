@@ -1540,28 +1540,28 @@ function AuthView({ onLogin, onRegister, onAdmin, loginError = "" }) {
             <div>
               <label style={lbl}>소속 (계열사)</label>
               <select style={{ ...inp, cursor: "pointer" }} value={prof.org} onChange={e => setProf(f => ({ ...f, org: e.target.value }))}>
-                <option value="">계열사를 선택하세요</option>
-                {HMG_ORGS.map(o => <option key={o} value={o}>{o}</option>)}
+                <option value="" style={S.option}>계열사를 선택하세요</option>
+                {HMG_ORGS.map(o => <option key={o} value={o} style={S.option}>{o}</option>)}
               </select>
             </div>
             <div>
               <label style={lbl}>부임 국가 *</label>
               <select style={{ ...inp, cursor: "pointer" }} value={prof.country} onChange={e => setProf(f => ({ ...f, country: e.target.value, city: "" }))}>
-                <option value="">국가를 선택하세요</option>
-                {COUNTRIES_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+                <option value="" style={S.option}>국가를 선택하세요</option>
+                {COUNTRIES_LIST.map(c => <option key={c} value={c} style={S.option}>{c}</option>)}
               </select>
             </div>
             <div>
               <label style={lbl}>부임 도시 *</label>
               <select style={{ ...inp, cursor: "pointer" }} value={prof.city} onChange={e => setProf(f => ({ ...f, city: e.target.value }))} disabled={!prof.country}>
-                <option value="">{prof.country ? "도시를 선택하세요" : "국가를 먼저 선택하세요"}</option>
-                {(CITIES_MAP[prof.country] || []).map(c => <option key={c} value={c}>{c}</option>)}
+                <option value="" style={S.option}>{prof.country ? "도시를 선택하세요" : "국가를 먼저 선택하세요"}</option>
+                {(CITIES_MAP[prof.country] || []).map(c => <option key={c} value={c} style={S.option}>{c}</option>)}
               </select>
             </div>
             <div>
               <label style={lbl}>주요 고민</label>
               <select style={{ ...inp, cursor: "pointer" }} value={prof.concern} onChange={e => setProf(f => ({ ...f, concern: e.target.value }))}>
-                {CONCERNS.map(c => <option key={c}>{c}</option>)}
+                {CONCERNS.map(c => <option key={c} style={S.option}>{c}</option>)}
               </select>
             </div>
             <div><label style={lbl}>관심사</label><input style={inp} placeholder="예: 골프, 테니스, 맛집 탐방" value={prof.interest} onChange={e => setProf(f => ({ ...f, interest: e.target.value }))} /></div>
@@ -1661,28 +1661,28 @@ function ProfileForm({ initialData, onSave, onBack, onLogout }) {
           <div>
             <label style={S.lbl}>소속 (계열사)</label>
             <select style={{ ...S.inp, cursor: "pointer" }} value={form.org||""} onChange={e => setForm(f => ({ ...f, org: e.target.value }))}>
-              <option value="">계열사를 선택하세요</option>
-              {HMG_ORGS.map(o => <option key={o} value={o}>{o}</option>)}
+              <option value="" style={S.option}>계열사를 선택하세요</option>
+              {HMG_ORGS.map(o => <option key={o} value={o} style={S.option}>{o}</option>)}
             </select>
           </div>
           <div>
             <label style={S.lbl}>부임 국가</label>
             <select style={{ ...S.inp, cursor: "pointer" }} value={form.country||""} onChange={e => setForm(f => ({ ...f, country: e.target.value, city: "" }))}>
-              <option value="">국가를 선택하세요</option>
-              {COUNTRIES_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+              <option value="" style={S.option}>국가를 선택하세요</option>
+              {COUNTRIES_LIST.map(c => <option key={c} value={c} style={S.option}>{c}</option>)}
             </select>
           </div>
           <div>
             <label style={S.lbl}>부임 도시</label>
             <select style={{ ...S.inp, cursor: "pointer" }} value={form.city||""} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} disabled={!form.country}>
-              <option value="">{form.country ? "도시를 선택하세요" : "국가를 먼저 선택하세요"}</option>
-              {(CITIES_MAP[form.country] || []).map(c => <option key={c} value={c}>{c}</option>)}
+              <option value="" style={S.option}>{form.country ? "도시를 선택하세요" : "국가를 먼저 선택하세요"}</option>
+              {(CITIES_MAP[form.country] || []).map(c => <option key={c} value={c} style={S.option}>{c}</option>)}
             </select>
           </div>
           <div>
             <label style={S.lbl}>주요 고민</label>
             <select style={{ ...S.inp, cursor: "pointer" }} value={form.concern} onChange={e => setForm(f => ({ ...f, concern: e.target.value }))}>
-              {CONCERNS.map(c => <option key={c}>{c}</option>)}
+              {CONCERNS.map(c => <option key={c} style={S.option}>{c}</option>)}
             </select>
           </div>
           <div><label style={S.lbl}>관심사</label><input style={S.inp} placeholder="예: 골프, 테니스, 맛집 탐방" value={form.interest||""} onChange={e => setForm(f => ({ ...f, interest: e.target.value }))} /></div>
@@ -1941,7 +1941,7 @@ function AdminView({ profiles, posts, missions, meetings, wisdomTips = [], onBac
                     <div>
                       <label style={S.lbl}>주요 고민</label>
                       <select style={{ ...S.inp, cursor: "pointer" }} value={editForm.concern||""} onChange={e => setEF(f => ({ ...f, concern: e.target.value }))}>
-                        {CONCERNS.map(c => <option key={c}>{c}</option>)}
+                        {CONCERNS.map(c => <option key={c} style={S.option}>{c}</option>)}
                       </select>
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
