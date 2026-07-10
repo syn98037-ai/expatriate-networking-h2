@@ -3288,7 +3288,7 @@ function WisdomView({ tips, uid, myProfile, onAddTip, onToggleHelpful }) {
           <button onClick={() => setCategory(null)} style={{ background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 20, padding: 4 }}>←</button>
           <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", flex: 1, margin: 0 }}>{cat?.icon} {cat?.label}</p>
         </div>
-        <div style={{ ...S.overlayBody, display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ ...S.overlayBody, display: "flex", flexDirection: "column", gap: 10, paddingBottom: 110 }}>
           {catTips.length === 0 && <p style={{ fontSize: 12, color: "#9ca3af", fontStyle: "italic", textAlign: "center", padding: 30 }}>아직 등록된 TIP이 없어요.<br/>첫 번째 TIP을 남겨보세요!</p>}
           {catTips.map(tip => {
             const iHelped = (tip.helpfulBy || []).includes(uid);
@@ -3318,7 +3318,7 @@ function WisdomView({ tips, uid, myProfile, onAddTip, onToggleHelpful }) {
             );
           })}
         </div>
-        <button onClick={() => setShowWrite(true)} style={{ position: "absolute", right: 20, bottom: 20, ...S.btnAmber, borderRadius: 999, padding: "14px 20px", boxShadow: "0 6px 20px rgba(0,44,95,0.3)" }}>✍️ TIP 남기기</button>
+        <button onClick={() => setShowWrite(true)} style={{ position: "absolute", right: 20, bottom: 92, ...S.btnAmber, borderRadius: 999, padding: "14px 20px", boxShadow: "0 6px 20px rgba(0,44,95,0.3)" }}>✍️ TIP 남기기</button>
       </div>
     );
   }
