@@ -1024,10 +1024,10 @@ match /{document=**} {
   const NAV = [
     { id: "dashboard", label: "홈"      },
     { id: "directory", label: "검색"    },
-    { id: "board",     label: "게시판"  },
     { id: "meetings",  label: "티미팅"  },
     { id: "missions",  label: "미션"    },
     { id: "schedule",  label: "시간표"  },
+    { id: "board",     label: "게시판"  },
   ];
 
   const renderMain = () => {
@@ -1872,7 +1872,8 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
               const sentCnt = ms.m1Count || 0;
               const m1done = sentCnt >= 2;
               const m2done = (ms.m2Photos || []).length >= 2;
-              const allDone = m1done && m2done;
+              const m3done = (ms.m3Photos || []).length >= 1;
+              const allDone = m1done && m2done && m3done;
               return (
                 <div key={p.id} style={{ ...S.card, borderRadius: 18 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
@@ -1880,10 +1881,11 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                     <div style={{ flex: 1 }}><p style={{ fontSize: 13, fontWeight: 700, color: "#111827", margin: 0 }}>{p.name}</p><p style={{ fontSize: 10, color: "#6b7280" }}>{p.org}</p></div>
                     {allDone && <span style={{ background: "rgba(16,185,129,0.1)", color: "#002c5f", fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 8 }}>완료</span>}
                   </div>
-                  <div style={{ display: "flex", gap: 6, marginBottom: (ms.m2Photos||[]).length > 0 ? 10 : 0 }}>
+                  <div style={{ display: "flex", gap: 6, marginBottom: ((ms.m2Photos||[]).length > 0 || (ms.m3Photos||[]).length > 0) ? 10 : 0 }}>
                     {[
                       ["티미팅 발송", sentCnt+"/2", m1done, null],
                       ["티미팅 인증", (ms.m2Photos||[]).length+"/2", m2done, ms.m2Photos||[]],
+                      ["캠퍼스 미션", (ms.m3Photos||[]).length+"/1", m3done, ms.m3Photos||[]],
                     ].map(([label, count, done, photos]) => (
                       <div key={label} style={{ flex: 1, background: done ? "rgba(16,185,129,0.08)" : "#ffffff", border: `1px solid ${done ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.07)"}`, borderRadius: 10, padding: "8px 4px", textAlign: "center" }}>
                         <p style={{ fontSize: 9, color: done ? "#059669" : "#64748b", fontWeight: 700, margin: 0 }}>{done ? "✓ " : ""}{label}</p>
@@ -1893,10 +1895,24 @@ function AdminView({ profiles, posts, missions, meetings, onBack, onUpdateProfil
                   </div>
                   {/* 티미팅 인증샷 미리보기 */}
                   {(ms.m2Photos||[]).length > 0 && (
-                    <div>
+                    <div style={{ marginBottom: (ms.m3Photos||[]).length > 0 ? 10 : 0 }}>
                       <p style={{ fontSize: 9, color: "#6b7280", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.06em" }}>티미팅 인증샷</p>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         {(ms.m2Photos||[]).map((photo, idx) => (
+                          <img key={idx} src={photo.img} alt={`인증샷 ${idx+1}`}
+                            style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover", border: "1px solid rgba(56,189,248,0.3)", cursor: "pointer" }}
+                            onClick={() => window.open(photo.img, "_blank")}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* 캠퍼스 미션 인증샷 미리보기 */}
+                  {(ms.m3Photos||[]).length > 0 && (
+                    <div>
+                      <p style={{ fontSize: 9, color: "#6b7280", fontWeight: 700, margin: "0 0 6px", letterSpacing: "0.06em" }}>캠퍼스 미션 인증샷</p>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {(ms.m3Photos||[]).map((photo, idx) => (
                           <img key={idx} src={photo.img} alt={`인증샷 ${idx+1}`}
                             style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover", border: "1px solid rgba(56,189,248,0.3)", cursor: "pointer" }}
                             onClick={() => window.open(photo.img, "_blank")}
@@ -2149,13 +2165,16 @@ function ProfileView({ profile, missions = {}, meetings = [], onBack, onRequest,
   const m1Count = pMissions.m1Count || 0;
   // m2: 인증샷 개수
   const m2Count = (pMissions.m2Photos || []).length;
+  // m3: 캠퍼스 미션 인증샷 개수
+  const m3Count = (pMissions.m3Photos || []).length;
   const m1Done  = m1Count >= 2;
   const m2Done  = m2Count >= 2;
-  const total   = (m1Done ? 1 : 0) + (m2Done ? 1 : 0);
+  const m3Done  = m3Count >= 1;
+  const total   = (m1Done ? 1 : 0) + (m2Done ? 1 : 0) + (m3Done ? 1 : 0);
 
-  const missionStatus = total === 2
+  const missionStatus = total === 3
     ? { label: "미션 완료", color: "#059669", bg: "#d1fae5", icon: "🎉" }
-    : total === 1
+    : total > 0
     ? { label: "미션 진행중", color: "#d97706", bg: "#fef3c7", icon: "⏳" }
     : { label: "미션 진행중", color: "#6b7280", bg: "#f3f4f6", icon: "⏳" };
 
@@ -2189,13 +2208,14 @@ function ProfileView({ profile, missions = {}, meetings = [], onBack, onRequest,
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: missionStatus.color, margin: 0 }}>🏆 네트워킹 미션 현황</p>
               <span style={{ fontSize: 11, fontWeight: 700, color: missionStatus.color, background: "#ffffff", padding: "2px 10px", borderRadius: 20 }}>
-                {missionStatus.icon} {missionStatus.label} ({total}/2)
+                {missionStatus.icon} {missionStatus.label} ({total}/3)
               </span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {[
                 { label: "티미팅 발송", current: m1Count, target: 2, done: m1Done },
                 { label: "티미팅 인증샷", current: m2Count, target: 2, done: m2Done },
+                { label: "캠퍼스 미션", current: m3Count, target: 1, done: m3Done },
               ].map(m => (
                 <div key={m.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 11, color: missionStatus.color, width: 80, flexShrink: 0 }}>{m.label}</span>
@@ -2778,8 +2798,10 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
   const m1Done   = m1Count >= 2;
   const m2Photos = myMissions.m2Photos || [];
   const m2Done   = m2Photos.length >= 2;
+  const m3Photos = myMissions.m3Photos || [];
+  const m3Done   = m3Photos.length >= 1;
 
-  const allDone  = m1Done && m2Done;
+  const allDone  = m1Done && m2Done && m3Done;
 
   const addPhoto = async (key, e) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -2805,7 +2827,8 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="12" y1="7" x2="12" y2="13"/></svg> },
     { id:"m2", num:"02", title:"티미팅 인증샷", desc:"티미팅을 진행한 후 인증샷을 남겨주세요. (2회)", target:2, current:m2Photos.length, done:m2Done, color:"#00aad2", photos:m2Photos, photoKey:"m2Photos",
       icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> },
-
+    { id:"m3", num:"03", title:"캠퍼스 사진 스팟 명소 찾기", desc:"캠퍼스 사진 스팟 명소를 찾아 조별 인증샷을 남겨주세요.", target:1, current:m3Photos.length, done:m3Done, color:"#f59e0b", photos:m3Photos, photoKey:"m3Photos",
+      icon:<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> },
   ];
 
   return (
@@ -2824,9 +2847,9 @@ function MissionView({ myMissions, sentCount, uid, onUpdate }) {
             <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 6 }}>미션을 완료하고 연결을 넓혀보세요</p>
             <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.2)", borderRadius: 3, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${([m1Done,m2Done].filter(Boolean).length / 2) * 100}%`, background: "linear-gradient(90deg,#00aad2,#6ee7b7)", borderRadius: 3, transition: "width 0.6s ease" }} />
+                <div style={{ height: "100%", width: `${([m1Done,m2Done,m3Done].filter(Boolean).length / 3) * 100}%`, background: "linear-gradient(90deg,#00aad2,#6ee7b7)", borderRadius: 3, transition: "width 0.6s ease" }} />
               </div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>{[m1Done,m2Done].filter(Boolean).length}/2</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>{[m1Done,m2Done,m3Done].filter(Boolean).length}/3</span>
             </div>
           </>
         )}
